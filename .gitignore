@@ -1,0 +1,16 @@
+# Betriebssystem
+.DS_Store
+Thumbs.db
+
+# Editoren
+.vscode/
+.idea/
+*.swp
+
+# Temporäres
+tmp/
+*.tmp
+*.log
+
+# Lokale, nicht zu teilende Notizen
+**/private/
