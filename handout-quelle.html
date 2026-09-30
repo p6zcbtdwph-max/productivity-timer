@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Den norwegischen Staatsfonds mit ETFs nachbauen</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 16mm 16mm; }
+  :root{
+    --ink:#16181d; --muted:#5b6170; --line:#d7dae1; --soft:#f2f4f7;
+    --accent:#1f4e79; --accent-soft:#eaf0f6; --hi:#8a6d1f; --hi-soft:#fdf6e4;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    color:var(--ink); font-size:9.4pt; line-height:1.45; margin:0;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  h1{font-size:19pt; line-height:1.15; margin:0 0 2mm; letter-spacing:-.2pt}
+  .sub{color:var(--muted); font-size:9pt; margin:0 0 1.5mm}
+  .disc{color:var(--muted); font-size:7.8pt; font-style:italic; margin:0}
+  .rule{height:2.4pt;background:var(--accent);margin:3.5mm 0 4.5mm;border-radius:2pt}
+  h2{
+    font-size:11.5pt; margin:6mm 0 2.5mm; padding-bottom:1.2mm;
+    border-bottom:1px solid var(--line); break-after:avoid;
+  }
+  h2 .n{color:var(--accent); font-weight:700; margin-right:2mm}
+  h3{font-size:9.8pt; margin:4mm 0 1.5mm; color:var(--accent); break-after:avoid}
+  p{margin:0 0 2.2mm}
+  table{width:100%; border-collapse:collapse; margin:0 0 3mm; font-size:8.5pt; break-inside:avoid}
+  th{
+    text-align:left; background:var(--accent); color:#fff; font-weight:600;
+    padding:1.6mm 2mm; font-size:8.2pt; letter-spacing:.1pt;
+  }
+  td{padding:1.5mm 2mm; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:nth-child(even) td{background:var(--soft)}
+  code, .isin{
+    font-family:"SF Mono",Menlo,Consolas,monospace; font-size:8.1pt;
+    background:#e9edf3; padding:.3mm 1mm; border-radius:1.5pt; white-space:nowrap;
+  }
+  .lead{font-size:9.4pt}
+  ul{margin:0 0 2.5mm; padding-left:4.5mm}
+  li{margin-bottom:1.2mm}
+  .note{
+    background:var(--hi-soft); border-left:2.5pt solid var(--hi);
+    padding:2mm 3mm; font-size:8.4pt; margin:0 0 3mm; break-inside:avoid;
+  }
+  .box{
+    background:var(--accent-soft); border:1px solid #c6d5e4;
+    padding:2.5mm 3mm; margin:0 0 3mm; break-inside:avoid; border-radius:2pt;
+  }
+  .box h3{margin-top:0}
+  .star{
+    background:#fff; border:1.6pt solid var(--accent); border-radius:2.5pt;
+    padding:3mm 3.5mm; margin:0 0 3.5mm; break-inside:avoid;
+  }
+  .badge{
+    display:inline-block; background:var(--accent); color:#fff; font-size:7.4pt;
+    font-weight:700; padding:.6mm 1.8mm; border-radius:1.5pt; letter-spacing:.3pt;
+    vertical-align:2px; margin-left:1.5mm;
+  }
+  .tree{
+    font-family:"SF Mono",Menlo,Consolas,monospace; font-size:8pt; line-height:1.55;
+    background:var(--soft); border:1px solid var(--line); padding:2.5mm 3mm;
+    white-space:pre; margin:0 0 3mm; break-inside:avoid; border-radius:2pt;
+  }
+  .check{font-size:8.6pt}
+  .src{font-size:7.9pt; color:var(--muted); line-height:1.5}
+  .src strong{color:var(--ink)}
+  .tag{color:var(--muted); font-weight:400; font-size:8pt}
+  .ter{font-weight:700; white-space:nowrap}
+  .foot{margin-top:5mm; padding-top:2mm; border-top:1px solid var(--line); font-size:7.6pt; color:var(--muted)}
+  .avoid{break-inside:avoid}
+</style>
+</head>
+<body>
+
+<h1>Den norwegischen Staatsfonds mit ETFs nachbauen</h1>
+<p class="sub"><strong>Handout · Schwerpunkt Aktienseite · Stand: 30. September 2026</strong></p>
+<p class="disc">Keine Anlageberatung. ISIN-, TER- und Indexangaben vor einer Anlage am aktuellen Factsheet des Anbieters prüfen.</p>
+<div class="rule"></div>
+
+<h2><span class="n">1</span>Die Regeln des Fonds</h2>
+<p class="lead">Der <strong>Government Pension Fund Global (GPFG)</strong> gehört dem norwegischen Staat, wird von <strong>NBIM</strong> (Norges Bank Investment Management) verwaltet, und das Finanzministerium gibt die Regeln vor. Diese Trennung ist die eigentliche Erfolgsregel: Strategiewechsel aus Marktstimmung heraus sind unmöglich, weil sie einen politischen Prozess erfordern.</p>
+
+<table>
+<thead><tr><th style="width:21%">Regel</th><th style="width:53%">Inhalt</th><th style="width:26%">Für Privatanleger</th></tr></thead>
+<tbody>
+<tr><td><strong>Strategische Quote</strong></td><td>70 % Aktien / 30 % Anleihen (seit Mai 2019). Dazu wenige Prozent nicht börsennotierte Immobilien und erneuerbare Infrastruktur, finanziert als Abweichung vom Index. Ist-Aktienquote Mitte 2026: rund 72 %</td><td>Zielquote schriftlich festlegen</td></tr>
+<tr><td><strong>Aktien-Benchmark</strong></td><td><strong>FTSE Global All Cap</strong> – Industrie- <em>und</em> Schwellenländer, <strong>Large, Mid und Small Caps</strong>, rund 9.000–10.000 Titel aus ca. 49 Ländern. Marktkapitalisierungsgewichtet mit Länderfaktoren (historisch Europa-Übergewicht)</td><td>1 bis 3 ETFs, siehe Abschnitt 3</td></tr>
+<tr><td><strong>Heimatmarkt ausgeschlossen</strong></td><td>Keine norwegischen Aktien. Grund: Der Staat hängt über Steuern, Equinor und die heimische Wirtschaft ohnehin an Norwegen</td><td>Analogon: Deutschland und Europa <strong>nicht</strong> übergewichten</td></tr>
+<tr><td><strong>Anleihe-Benchmark</strong></td><td>70 % Staats- und staatsnahe, 30 % Unternehmensanleihen. Zweck ist Risikodämpfung und Liquidität, nicht Rendite</td><td>Wenn gewünscht: EUR-Anleihen oder Tagesgeld, nicht die Fondskopie</td></tr>
+<tr><td><strong>Rebalancing</strong></td><td>Weicht die Aktienquote am Monatsende um <strong>mehr als 2 Prozentpunkte</strong> von 70 % ab, wird zurückgewichtet. Neue Öl-Zuflüsse gehen bevorzugt in die untergewichtete Klasse</td><td>Band von ±5 Pp, dazu der laufende Sparplan</td></tr>
+<tr><td><strong>Aktives Management</strong></td><td>Tracking-Error-Limit von rund 1,25 Prozentpunkten – der Fonds ist zu weit über 95 % indexnah</td><td>Keine Einzelwetten</td></tr>
+<tr><td><strong>Kosten</strong></td><td>Rund 0,04–0,05 % p. a. – ein Größenvorteil, kein Können</td><td>Realistisch 0,07–0,25 % p. a.</td></tr>
+<tr><td><strong>Ethik</strong></td><td>Unabhängiger Ethikrat (Etikkrådet) empfiehlt Ausschlüsse: produktbasiert (Tabak, bestimmte Waffen, Kohle über Schwellenwerten) und verhaltensbasiert (Menschenrechte, Umwelt, Korruption). Öl- und Gaskonzerne bleiben bewusst drin und werden über Stimmrechte bearbeitet</td><td>Nur näherungsweise über Screened-Indizes</td></tr>
+<tr><td><strong>Entnahme</strong></td><td>„Handlungsregel": im Schnitt nur die erwartete <strong>reale</strong> Rendite, seit 2017 mit <strong>3 %</strong> angesetzt</td><td>Entnahmeregel im Ruhestand</td></tr>
+</tbody>
+</table>
+
+<div class="note"><strong>Stand 2026, zu prüfen:</strong> Seit 2025 gelten vorläufige ethische Richtlinien. Die Norges Bank trifft vorerst keine neuen Ausschlussentscheidungen, kann bestehende aber aufheben. Aktuellen Stand bei NBIM und Etikkrådet nachsehen.</div>
+
+<p><strong>Die Rendite des Fonds ist unspektakulär</strong> – langfristig grob 4 % real p. a. Der Erfolg kommt aus drei kopierbaren Dingen: hohe Aktienquote über lange Zeit, maximale Streuung zu minimalen Kosten, und ein schriftliches Regelwerk, von dem niemand abweichen darf.</p>
+
+<h2><span class="n">2</span>Was auf der Aktienseite nachzubauen ist</h2>
+<p>Der Benchmark ist <strong>FTSE Global All Cap</strong>. Entscheidend sind drei Punkte:</p>
+<ul>
+<li><strong>„All Cap" heißt: mit Small Caps.</strong> Die gängigen Welt-ETFs lassen sie weg. <em>FTSE All-World</em> ist genau dieser Index <strong>ohne</strong> die rund 10 % Small Caps und deckt etwa 90–95 % der investierbaren Marktkapitalisierung ab, <em>FTSE Global All Cap</em> rund 98–99 %.</li>
+<li><strong>MSCI ACWI IMI</strong> ist der nächste MSCI-Zwilling zu FTSE Global All Cap – ebenfalls Industrieländer, Schwellenländer und Small Caps. Einziger nennenswerter Unterschied: FTSE zählt Südkorea zu den Industrieländern, MSCI zu den Schwellenländern (gut 1 % Gewicht).</li>
+<li><strong>MSCI World ist der falsche Index</strong> für diesen Zweck: keine Schwellenländer, keine Small Caps – obwohl er der bekannteste ist.</li>
+</ul>
+<p>Zur Erwartungshaltung: Breite Streuung und Marktgewichtung machen praktisch die gesamte Rendite aus. Small Caps verschieben das Ergebnis um Zehntelprozentpunkte, Länderfaktoren und Ausschlüsse sind Geschmacksfragen mit kleinem Renditeeffekt.</p>
+
+<h2><span class="n">3</span>Die Umsetzungswege im Überblick</h2>
+<table>
+<thead><tr><th style="width:6%">Weg</th><th style="width:28%">Ansatz</th><th style="width:12%">ETFs</th><th style="width:12%">Kosten p. a.</th><th style="width:42%">Nähe zum Fonds-Benchmark</th></tr></thead>
+<tbody>
+<tr><td><strong>A</strong></td><td>Exakter Index, ein ETF</td><td>1</td><td class="ter">0,07 %</td><td><strong>Deckungsgleich</strong> – derselbe Index, den der Fonds verwendet</td></tr>
+<tr><td><strong>B</strong></td><td>MSCI-Gegenstück, ein ETF</td><td>1</td><td class="ter">0,17 %</td><td>Sehr nah – gleiche Struktur, andere Indexfamilie, lange Historie</td></tr>
+<tr><td><strong>C</strong></td><td>Günstig ohne Small Caps</td><td>1</td><td class="ter">0,07–0,15 %</td><td>Nah – es fehlen rund 10 % Small Caps</td></tr>
+<tr><td><strong>D</strong></td><td>Baukasten aus Bausteinen</td><td>3</td><td class="ter">≈ 0,15 %</td><td>Sehr nah, dazu volle Kontrolle über jede Quote</td></tr>
+<tr><td><strong>E</strong></td><td>Zwei-ETF-Klassiker</td><td>2</td><td class="ter">≈ 0,15 %</td><td>Nah, sofern marktgewichtet; 70/30 ist eine aktive Wette</td></tr>
+<tr><td><strong>F</strong></td><td>Mit Ausschlussfilter</td><td>1</td><td class="ter">0,24 %</td><td>Indexzuschnitt exakt, Ausschlüsse strenger als beim Fonds</td></tr>
+<tr><td><strong>+</strong></td><td>Europa-Tilt als Ergänzung</td><td>+1</td><td class="ter">+ 0,10 %</td><td>Bildet das Europa-Übergewicht des Fonds nach</td></tr>
+</tbody>
+</table>
+
+<div class="star">
+<h3 style="font-size:10.5pt">Weg A — Der Direkttreffer: ein ETF auf genau den Index des Fonds<span class="badge">NEU</span></h3>
+<table style="margin-bottom:2mm">
+<thead><tr><th style="width:44%">ETF</th><th style="width:20%">ISIN</th><th style="width:22%">Index</th><th style="width:14%">TER</th></tr></thead>
+<tbody>
+<tr><td>Vanguard FTSE Global All-Cap UCITS ETF <span class="tag">(Acc, Ticker VALL)</span></td><td><span class="isin">IE000VAHT5T0</span></td><td>FTSE Global All Cap</td><td class="ter">0,07 %</td></tr>
+<tr><td>Vanguard FTSE Global All-Cap UCITS ETF <span class="tag">(ausschüttend, quartalsweise)</span></td><td><span class="isin">IE000CVUM3N6</span></td><td>FTSE Global All Cap</td><td class="ter">0,07 %</td></tr>
+</tbody>
+</table>
+<p style="margin-bottom:1.5mm">Seit <strong>August 2026</strong> gibt es den Index des Fonds als eigenständigen UCITS-ETF: rund <strong>10.000 Titel</strong>, Industrie- und Schwellenländer, Large, Mid <em>und</em> Small Caps, etwa 98–99 % der weltweit investierbaren Marktkapitalisierung – zu <strong>0,07 % TER</strong>. Damit ist der Nachbau des Aktienteils auf <strong>ein Produkt</strong> geschrumpft, und zwar ohne Indexkompromiss. Der Zulauf war entsprechend: rund 2 Mrd. USD im ersten Monat, der erfolgreichste Vanguard-Start weltweit.</p>
+<p style="margin-bottom:0"><strong>Einschränkungen:</strong> Der ETF ist <em>jung</em>. Es gibt noch keine Tracking-Difference-Historie, das Fondsvolumen baut sich gerade erst auf, Handelsspannen können außerhalb der Haupthandelszeiten größer sein als bei den etablierten Produkten. Er repliziert per <strong>Sampling</strong>, kauft also nicht jeden der 10.000 Titel – bei Small Caps ist das üblich und unkritisch, führt aber zu kleinen Abweichungen vom Index.</p>
+</div>
+
+<h3>Weg B — Die etablierte MSCI-Alternative</h3>
+<table>
+<thead><tr><th style="width:44%">ETF</th><th style="width:20%">ISIN</th><th style="width:22%">Index</th><th style="width:14%">TER</th></tr></thead>
+<tbody>
+<tr><td>SPDR MSCI ACWI IMI UCITS ETF <span class="tag">(Acc)</span></td><td><span class="isin">IE00B3YLTY66</span></td><td>MSCI ACWI IMI</td><td class="ter">0,17 %</td></tr>
+</tbody>
+</table>
+<p>Strukturell dasselbe – Industrieländer, Schwellenländer, Small Caps in einem Produkt –, nur mit MSCI- statt FTSE-Klassifikation. Der ETF existiert seit Jahren, hat Milliardenvolumen und eine belastbare Kostenhistorie. Das ist die Wahl für alle, die ein etabliertes Produkt einem neuen vorziehen; der Preis dafür sind 0,10 Prozentpunkte mehr Gebühr.</p>
+
+<h3>Weg C — Günstig und breit, ohne Small Caps</h3>
+<table>
+<thead><tr><th style="width:44%">ETF</th><th style="width:20%">ISIN</th><th style="width:22%">Index</th><th style="width:14%">TER</th></tr></thead>
+<tbody>
+<tr><td>Amundi Prime All Country World UCITS ETF <span class="tag">(Acc)</span></td><td><span class="isin">IE0003XJA0J9</span></td><td>Solactive GBS ACW</td><td class="ter">≈ 0,07 %</td></tr>
+<tr><td>Vanguard FTSE All-World UCITS ETF <span class="tag">(Acc)</span></td><td><span class="isin">IE00BK5BQT80</span></td><td>FTSE All-World</td><td class="ter">0,14 %</td></tr>
+<tr><td>Vanguard FTSE All-World UCITS ETF <span class="tag">(ausschüttend)</span></td><td><span class="isin">IE00B3RBWM25</span></td><td>FTSE All-World</td><td class="ter">0,22 %</td></tr>
+<tr><td>Invesco FTSE All-World UCITS ETF <span class="tag">(Acc)</span></td><td><span class="isin">IE000716YHJ7</span></td><td>FTSE All-World</td><td class="ter">0,15 %</td></tr>
+</tbody>
+</table>
+<p>Der klassische Weg, solange es keinen günstigen All-Cap-ETF gab. Es fehlen rund 10 % Small Caps – strukturell ein Abstrich, renditeseitig historisch im Bereich von Zehntelprozentpunkten pro Jahr. Seit Weg A zum selben Preis verfügbar ist, ist das Kostenargument für die All-World-Variante allerdings weitgehend entfallen.</p>
+
+<h3>Weg D — Baukasten aus drei Bausteinen</h3>
+<table>
+<thead><tr><th style="width:8%">Anteil</th><th style="width:26%">Baustein</th><th style="width:32%">ETF</th><th style="width:20%">ISIN</th><th style="width:14%">TER</th></tr></thead>
+<tbody>
+<tr><td><strong>79 %</strong></td><td>Industrieländer Large/Mid</td><td>Vanguard FTSE Developed World <span class="tag">(Acc)</span></td><td><span class="isin">IE00BK5BQV03</span></td><td class="ter">0,12 %</td></tr>
+<tr><td><strong>11 %</strong></td><td>Schwellenländer inkl. Small Caps</td><td>iShares Core MSCI EM IMI <span class="tag">(Acc)</span></td><td><span class="isin">IE00BKM4GZ66</span></td><td class="ter">0,18 %</td></tr>
+<tr><td><strong>10 %</strong></td><td>Small Caps Industrieländer</td><td>iShares MSCI World Small Cap</td><td><span class="isin">IE00BF4RFH31</span></td><td class="ter">0,35 %</td></tr>
+</tbody>
+</table>
+<p><strong>Mischkosten rund 0,15 % p. a.</strong> Die 10 % Small Caps entsprechen ungefähr ihrem Gewicht im All-Cap-Universum, die 11 % Schwellenländer ihrem Marktgewicht. Der Aufwand lohnt nur aus zwei Gründen: Man will einzelne Quoten bewusst abweichend setzen, oder man will Bausteine getrennt besparen und für die Steuer einzeln verkaufen können. Als reiner Nachbau ist dieser Weg seit Weg A überholt.</p>
+
+<h3>Weg E — Der Zwei-ETF-Klassiker</h3>
+<table>
+<thead><tr><th style="width:8%">Anteil</th><th style="width:26%">Baustein</th><th style="width:32%">ETF</th><th style="width:20%">ISIN</th><th style="width:14%">TER</th></tr></thead>
+<tbody>
+<tr><td><strong>≈ 88 %</strong></td><td>Industrieländer</td><td>Vanguard FTSE Developed World <span class="tag">(Acc)</span></td><td><span class="isin">IE00BK5BQV03</span></td><td class="ter">0,12 %</td></tr>
+<tr><td><strong>≈ 12 %</strong></td><td>Schwellenländer</td><td>Vanguard FTSE Emerging Markets <span class="tag">(Acc)</span></td><td><span class="isin">IE00BK5BR733</span></td><td class="ter">0,17 %</td></tr>
+</tbody>
+</table>
+<p>Die in Deutschland verbreitetste Bauweise, meist als „World + EM". Wichtig zur Einordnung: Das oft empfohlene Verhältnis <strong>70/30</strong> stammt aus einer BIP-Gewichtung und ist eine <em>aktive Wette</em> auf Schwellenländer – der Fonds macht das nicht, er gewichtet nach Marktkapitalisierung. Wer nah am Original bleiben will, nimmt das Marktverhältnis von grob 88/12 und zieht es nicht nach Gefühl nach.</p>
+
+<h3>Weg F — Mit Ausschlussfilter</h3>
+<table>
+<thead><tr><th style="width:44%">ETF</th><th style="width:20%">ISIN</th><th style="width:22%">Index</th><th style="width:14%">TER</th></tr></thead>
+<tbody>
+<tr><td>Vanguard ESG Global All Cap UCITS ETF <span class="tag">(Acc)</span></td><td><span class="isin">IE00BNG8L278</span></td><td>FTSE Global All Cap <strong>Choice</strong></td><td class="ter">0,24 %</td></tr>
+<tr><td>Vanguard ESG Global All Cap UCITS ETF <span class="tag">(ausschüttend)</span></td><td><span class="isin">IE00BNG8L385</span></td><td>FTSE Global All Cap <strong>Choice</strong></td><td class="ter">0,24 %</td></tr>
+</tbody>
+</table>
+<p><strong>Aber:</strong> Der Filter ist nicht der des Ethikrats. FTSE Choice schließt regelbasiert ganze Kategorien aus – unter anderem <strong>fossile Brennstoffe</strong>, Waffen, Tabak – und geht damit weiter als der Fonds, der Öl- und Gaskonzerne bewusst hält und über Stimmrechte bearbeitet. Man bekommt eine strengere, nicht eine deckungsgleiche Auswahl. Das ist eine Wertentscheidung, kein Tracking-Detail.</p>
+
+<h3>Ergänzung — Der Europa-Tilt</h3>
+<table>
+<thead><tr><th style="width:44%">ETF</th><th style="width:20%">ISIN</th><th style="width:22%">Index</th><th style="width:14%">TER</th></tr></thead>
+<tbody>
+<tr><td>Vanguard FTSE Developed Europe UCITS ETF <span class="tag">(Acc)</span></td><td><span class="isin">IE00BK5BQX27</span></td><td>FTSE Developed Europe</td><td class="ter">0,10 %</td></tr>
+<tr><td>iShares Core MSCI Europe UCITS ETF <span class="tag">(Acc)</span></td><td><span class="isin">IE00B4K48X80</span></td><td>MSCI Europe</td><td class="ter">0,12 %</td></tr>
+</tbody>
+</table>
+<p>Der Fonds gewichtet Europa über die Länderfaktoren höher, als es die Marktkapitalisierung hergäbe. Wer das mitnehmen will, legt 5 bis 15 % Europa-ETF neben den Welt-ETF. <strong>Einordnung:</strong> Für einen Anleger im Euroraum ist ein leichter Europa-Tilt als Annäherung an die eigene Ausgabenwährung begründbar – als Renditestrategie ist er es nicht; in der Rückschau hat das Übergewicht den Fonds Rendite gekostet.</p>
+
+<div class="box">
+<h3>Entscheidungsbaum</h3>
+<div class="tree" style="margin-bottom:0">Soll der gesamte Markt inklusive Small Caps abgebildet werden?
+├─ Ja, und möglichst genau und günstig
+│   └─ Vanguard FTSE Global All-Cap (IE000VAHT5T0)          → Weg A
+├─ Ja, aber lieber ein etabliertes Produkt mit Historie
+│   └─ SPDR MSCI ACWI IMI (IE00B3YLTY66)                    → Weg B
+├─ Ja, und mit ethischen Ausschlüssen
+│   └─ Vanguard ESG Global All Cap (IE00BNG8L278)           → Weg F
+├─ Small Caps sind verzichtbar, Hauptsache günstig und breit
+│   └─ Amundi Prime ACW (IE0003XJA0J9) / FTSE All-World     → Weg C
+└─ Ich will einzelne Quoten selbst steuern
+    └─ 3-ETF-Baukasten oder World + EM                      → Weg D / E</div>
+</div>
+
+<h2><span class="n">4</span>Praxis</h2>
+<table>
+<thead><tr><th style="width:24%">Thema</th><th style="width:34%">Empfehlung</th><th style="width:42%">Warum</th></tr></thead>
+<tbody>
+<tr><td>Fondsdomizil</td><td>Irland <span class="isin">IE…</span></td><td>15 statt 30 % US-Quellensteuer auf Dividenden</td></tr>
+<tr><td>Ertragsverwendung</td><td>Thesaurierend in der Ansparphase</td><td>Automatische Wiederanlage; ausschüttend, wenn sonst der Sparerpauschbetrag verfällt</td></tr>
+<tr><td>Kostenmaß</td><td><strong>Tracking Difference</strong>, nicht nur TER</td><td>Wertpapierleihe und Steueroptimierung können die reale Abweichung unter die TER drücken – bei ganz neuen ETFs fehlt diese Historie noch</td></tr>
+<tr><td>Sparplan</td><td>Monatlich</td><td>Entspricht dem „Rebalancing über Zuflüsse" des Fonds</td></tr>
+<tr><td>Rebalancing</td><td>±5 Prozentpunkte, jährliche Prüfung</td><td>Das 2-Pp-Band des Fonds ist nach Kosten und Steuern zu eng</td></tr>
+<tr><td>Produktanzahl</td><td>So wenige wie möglich</td><td>Jeder ETF mehr ist Arbeit und eine Gelegenheit, vom Plan abzuweichen</td></tr>
+<tr><td>Handelszeit</td><td>Zwischen 15:30 und 17:30 Uhr</td><td>Wenn die US-Börsen offen sind, sind die Spannen am engsten – relevant bei jungen ETFs</td></tr>
+<tr><td>Währungsabsicherung</td><td>Nein</td><td>Der Fonds sichert seinen Aktienteil ebenfalls nicht ab</td></tr>
+<tr><td>Norwegen ausschließen</td><td>Nicht nötig</td><td>Norwegen ist 0,1–0,2 % der Weltmarktkapitalisierung; kein UCITS-ETF bietet es an</td></tr>
+<tr><td>Wechsel eines Altbestands</td><td>Nicht automatisch umschichten</td><td>Ein Verkauf löst Steuern aus. Günstiger ist meist: Altbestand halten, neue Sparraten in den neuen ETF lenken</td></tr>
+</tbody>
+</table>
+
+<h2><span class="n">5</span>Quellen</h2>
+<p class="src">
+<strong>Fonds:</strong> NBIM Benchmark-Index · nbim.no/en/investments/benchmark-index/ &nbsp;·&nbsp; NBIM Jahresbericht 2025 und Halbjahresbericht 2026 · nbim.no &nbsp;·&nbsp; Rebalancing-Regeln, Meld. St. 17 (2011–2012) · regjeringen.no &nbsp;·&nbsp; Ausschlüsse: nbim.no/en/responsible-investment/exclusion-of-companies/ und etikkradet.no/excluded-companies/<br>
+<strong>Produkte:</strong> justETF-Profile zu den genannten ISINs · Vanguard-, State-Street-, Amundi-, iShares- und Invesco-Factsheets · bankeronwheels.com zum Start des FTSE-Global-All-Cap-ETF
+</p>
+<p class="src" style="font-style:italic; margin-top:2mm">Recherchehinweis: nbim.no und justetf.com waren aus dem verwendeten Cloud-Container per Netzwerk-Policy nicht direkt abrufbar. Die Fonds- und Produktzahlen beruhen auf Suchergebnis-Auszügen dieser Seiten und auf Sekundärquellen; die als „zu prüfen" markierten Angaben sollten am Primärdokument verifiziert werden.</p>
+
+<p class="foot">Handout · Norwegischer Staatsfonds mit ETFs · Stand 30. September 2026 · Keine Anlageberatung</p>
+
+</body>
+</html>
