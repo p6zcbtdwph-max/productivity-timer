@@ -112,7 +112,7 @@ describe('Verrechnungstöpfe', () => {
     expect(b.mutation).toBeCloseTo(1.25);
     expect(b.prestige).toBeCloseTo(1 + BALANCE.prestige.damagePerLevel);
     expect(b.level).toBeCloseTo(1 + 2 * BALANCE.xp.statPerLevel);
-    expect(b.result).toBeCloseTo(b.base * b.art * b.ausruestung * b.mutation * b.synergie * b.prestige * b.level * b.meta * b.erfolge * b.kompendium);
+    expect(b.result).toBeCloseTo(b.base * b.art * b.ausruestung * b.mutation * b.synergie * b.prestige * b.level * b.meta * b.erfolge * b.kompendium * b.gelaende * b.flug);
     expect(stats.damage).toBeCloseTo(b.result);
   });
 

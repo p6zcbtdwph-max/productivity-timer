@@ -174,6 +174,9 @@ describe('Luft und Erde', () => {
     const mutation = childrenOf('vogel')[0] as string;
     expect(computeStats({ defId: mutation, level: 1, prestige: 0 }).range).toBe(Infinity);
     expect(Number.isFinite(computeStats({ defId: 'hai', level: 1, prestige: 0 }).range)).toBe(true);
+    // Ausgleich: Luft macht weniger Schaden
+    expect(computeStats({ defId: 'vogel', level: 1, prestige: 0 }).breakdown.damage.flug).toBe(BIOME_BONUS.airDamage);
+    expect(computeStats({ defId: 'hai', level: 1, prestige: 0 }).breakdown.damage.flug).toBe(1);
   });
 
   it('ein Vogel trifft Gegner am anderen Ende der Karte', () => {

@@ -66,7 +66,8 @@ Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerech
   - Land: Frosch, Echse, Schlange, Spitzmaus, Igel, Wolf, Elefant, Affe, Skorpion, Spinne, Käfer
   - Erde: Wurm, Tausendfüßer, Skolopender, Saftkugler, Maulwurf
   - Luft: Insekt, Libelle, Biene, Vogel, Fledermaus. **Luft-Arten haben immer globale Reichweite**
-    (sie fliegen und erreichen jedes Ziel auf der Karte).
+    (sie fliegen und erreichen jedes Ziel auf der Karte), machen dafür aber nur 70 % Schaden
+    (Faktor "Flug", einstellbar in `src/data/biomes.ts`).
 - **Hindernisse** blockieren Bauplätze und lassen sich per Klick räumen (1,5 × Turmkosten).
 - **Anhöhen / Kräne**: ×1,2 Reichweite.
 - **Roboter-Anpassung**: Jeder Schaden zählt als Direkt, Fläche, Gift oder Krit. Alle 25 Wellen
@@ -136,6 +137,7 @@ Schaden = Basis(Tier, Archetyp)
         × Erfolgs-Faktor            Karten-Erfolge
         × (1 + Kompendium)          Rekorde aller je gezüchteten Arten
         × Gelände                   Heimat-Biom ×1,3 (Reichweite: Anhöhe ×1,2)
+        × Flug                      Luft-Arten ×0,7
 ```
 
 Feuerrate und Reichweite folgen demselben Muster. Krit-Chance additiv (gedeckelt), Krit-Schaden

@@ -16,6 +16,7 @@
  *           × Erfolgs-Faktor               Karten-Erfolge (alle 50 Bestwellen)
  *           × (1 + Kompendium)             Rekorde aller je gezüchteten Arten
  *           × Gelände                      Heimat-Biom ×1.3 (Schaden), Anhöhe ×1.2 (Reichweite)
+ *           × Flug                         Luft-Arten ×0.7 Schaden (dafür globale Reichweite)
  *
  *   Feuerrate und Reichweite folgen demselben Muster (ohne Mutations-Faktoren).
  *   Krit-Chance: additiv, gedeckelt. Krit-Multiplikator: additiv.
@@ -65,6 +66,7 @@ export interface Breakdown {
   erfolge: number;
   kompendium: number;
   gelaende: number;
+  flug: number;
   result: number;
 }
 
@@ -176,8 +178,8 @@ export function statsFor(ctx: GameContext, tower: Tower): EffectiveStats {
 }
 
 function breakdown(parts: Omit<Breakdown, 'result'>): Breakdown {
-  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge, kompendium, gelaende } = parts;
-  return { ...parts, result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge * kompendium * gelaende };
+  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge, kompendium, gelaende, flug } = parts;
+  return { ...parts, result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge * kompendium * gelaende * flug };
 }
 
 /** Anzahl direkt angrenzender Türme derselben Art. */
@@ -283,6 +285,7 @@ export function computeStats(
     erfolge: env.meta.achievementDamageMult,
     kompendium: 1 + comp.damage,
     gelaende: env.terrain?.biomeMatch ? BIOME_BONUS.damage : 1,
+    flug: hasGlobalRange(tower.defId) ? BIOME_BONUS.airDamage : 1,
   });
   const fireRateB = breakdown({
     base: 1 / base.cooldown,
@@ -296,6 +299,7 @@ export function computeStats(
     erfolge: env.meta.achievementFireRateMult,
     kompendium: 1 + comp.fireRate,
     gelaende: 1,
+    flug: 1,
   });
   const rangeB = breakdown({
     base: base.range,
@@ -309,6 +313,7 @@ export function computeStats(
     erfolge: 1,
     kompendium: 1 + comp.range,
     gelaende: env.terrain?.highGround ? BIOME_BONUS.highGroundRange : 1,
+    flug: 1,
   });
 
   const damage = damageB.result;

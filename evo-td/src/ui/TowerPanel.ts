@@ -196,6 +196,7 @@ function describeBreakdown(b: Breakdown): string {
   factor(b.erfolge, 'Erfolge');
   factor(b.kompendium, 'Kompendium');
   factor(b.gelaende, 'Gelände');
+  factor(b.flug, 'Flug');
   return `${parts.join(' ')} = ${num(b.result)}`;
 }
 
