@@ -1,0 +1,90 @@
+/**
+ * Zentrale Balance-Werte. Alles, was "Zahl" ist und das Spielgefühl steuert,
+ * steht hier, nicht in den Systemen.
+ */
+export const BALANCE = {
+  /** Simulationsschritt in Sekunden. */
+  stepSeconds: 1 / 60,
+
+  map: {
+    cellSize: 40,
+  },
+
+  player: {
+    startGold: 60,
+    startLives: 20,
+  },
+
+  economy: {
+    /** Kosten des ersten Einzellers; jeder weitere Turm wird teurer. */
+    towerBaseCost: 20,
+    towerCostGrowth: 1.25,
+    /** Wellen-Abschlussbonus (wird mit 2^tier skaliert). */
+    waveClearBonus: 8,
+  },
+
+  waves: {
+    /** Sekunden zwischen zwei Wellenstarts (Idle: Wellen kommen von alleine). */
+    interval: 18,
+    /** Abstand zwischen zwei Gegnern einer Welle. */
+    spawnGap: 0.7,
+    baseCount: 4,
+    countPerWave: 0.6,
+    /** Alle N Wellen verdoppeln sich Gegner-HP und -Belohnung (2er-Potenzen). */
+    wavesPerTier: 5,
+    bossEvery: 10,
+  },
+
+  enemies: {
+    baseHp: 12,
+    /** Zellen pro Sekunde. */
+    baseSpeed: 1.4,
+    baseReward: 4,
+  },
+
+  xp: {
+    /** XP pro Schadenspunkt. */
+    perDamage: 0.08,
+    perKill: 6,
+    /** XP für Level 2; danach * levelGrowth pro Level. */
+    levelBase: 20,
+    levelGrowth: 1.45,
+    /** Statbonus (Schaden + Feuerrate) pro Level über 1. */
+    statPerLevel: 0.07,
+  },
+
+  evolution: {
+    /** Sekunden zwischen zwei Evolutionswürfen pro Turm. */
+    checkInterval: 2,
+    baseChance: 0.02,
+    perLevel: 0.012,
+    /** Bonus pro weiterem Turm desselben Typs auf dem Feld. */
+    perSameType: 0.015,
+    maxChance: 0.4,
+  },
+
+  persistence: {
+    autosaveSeconds: 10,
+    storageKey: 'evo-td-save-v1',
+  },
+} as const;
+
+/** Gegner-Tier (0,1,2,...) für eine Wellennummer (1-basiert). */
+export function tierForWave(wave: number): number {
+  return Math.floor((wave - 1) / BALANCE.waves.wavesPerTier);
+}
+
+/** 2er-Potenz-Skalierung für Gegner-HP und Belohnung. */
+export function tierMultiplier(tier: number): number {
+  return 2 ** tier;
+}
+
+/** Kosten für den n-ten gebauten Turm (0-basiert). */
+export function towerCost(towersBuilt: number): number {
+  return Math.round(BALANCE.economy.towerBaseCost * BALANCE.economy.towerCostGrowth ** towersBuilt);
+}
+
+/** XP, die ein Turm braucht, um von `level` auf `level + 1` zu kommen. */
+export function xpForLevel(level: number): number {
+  return Math.round(BALANCE.xp.levelBase * BALANCE.xp.levelGrowth ** (level - 1));
+}

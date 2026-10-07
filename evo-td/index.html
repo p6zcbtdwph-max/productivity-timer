@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evo TD – Tiere gegen Roboter</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header id="hud">
+      <div class="hud-group">
+        <span class="hud-item">💰 <strong id="hud-gold">0</strong></span>
+        <span class="hud-item">❤️ <strong id="hud-lives">0</strong></span>
+        <span class="hud-item">Welle <strong id="hud-wave">–</strong></span>
+        <span class="hud-item muted">nächste in <strong id="hud-countdown">0s</strong></span>
+        <span class="hud-item">Einzeller: <strong id="hud-cost">0</strong> 💰</span>
+      </div>
+      <div class="hud-group">
+        <label class="hud-item toggle"><input type="checkbox" id="hud-autobuild" /> Auto-Bau</label>
+        <button class="btn" id="hud-pause" title="Pause">⏸</button>
+        <button class="btn" data-speed="1">1×</button>
+        <button class="btn" data-speed="2">2×</button>
+        <button class="btn" data-speed="4">4×</button>
+        <button class="btn danger" id="hud-reset" title="Spielstand löschen">Neustart</button>
+      </div>
+    </header>
+
+    <main id="layout">
+      <section id="board">
+        <canvas id="game-canvas"></canvas>
+        <div id="game-over" class="hidden">
+          <h2>Die Roboter haben gewonnen.</h2>
+          <p id="game-over-text"></p>
+          <button class="btn" id="game-over-restart">Neues Spiel</button>
+        </div>
+      </section>
+      <aside id="sidebar">
+        <section id="tower-panel" class="card"></section>
+        <section id="tree-view" class="card"></section>
+        <section class="card">
+          <h2>Protokoll</h2>
+          <ul id="event-log"></ul>
+        </section>
+      </aside>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
