@@ -1,5 +1,7 @@
 import type { Item, ItemQuality } from '../data/items';
 import type { TowerId } from '../data/towers';
+import type { ObstacleKind } from '../data/map';
+import type { DamageCategory } from './GameState';
 import type { ModifierKind } from '../data/upgrades';
 import type { DnaReport } from './systems/MetaSystem';
 import type { Enemy } from './entities/Enemy';
@@ -20,5 +22,7 @@ export interface GameEvents extends Record<string, unknown> {
   waveStarted: { wave: number; tier: number };
   waveCleared: { wave: number; bonus: number };
   gameOver: { wave: number };
+  obstacleCleared: { slot: number; kind: ObstacleKind; cost: number };
+  robotsAdapted: { category: DamageCategory; resist: number };
   runEnded: { report: DnaReport };
 }

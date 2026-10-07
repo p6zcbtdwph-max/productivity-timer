@@ -6,6 +6,7 @@ import type { Game } from '../game/Game';
 import { canEvolve, countSameType, evolutionChanceFor, unlockedChildren } from '../game/systems/EvolutionSystem';
 import { environmentFor, computeStats, resolveBonuses, type BonusSource, type Breakdown, type EffectiveStats } from '../game/systems/StatsSystem';
 import { $, el, formatNumber } from './dom';
+import { BIOME_BONUS, BIOME_NAMES, speciesBiome } from '../data/biomes';
 
 const SOURCE_LABEL: Record<BonusSource, string> = {
   eigen: 'eigen',
@@ -56,7 +57,7 @@ export class TowerPanel {
     const candidates = this.game.fusionCandidatesFor(tower.id);
     const charges = this.game.relocateCharges();
     const key = [
-      tower.id, tower.defId, tower.level, tower.prestige, Math.floor(tower.xp), tower.evolutionLocked, sameType,
+      tower.id, tower.slot, tower.defId, tower.level, tower.prestige, Math.floor(tower.xp), tower.evolutionLocked, sameType,
       tower.kills, env.neighbours.join(','), chance.toFixed(4), candidates.length, charges, activeAction ?? '',
       Math.floor(this.game.state.gold) >= this.game.relocateCost(), unlockedKids.length,
       // globale Einflüsse: Run-Upgrades, Items, Artefakte, Erfolge
@@ -148,6 +149,8 @@ export class TowerPanel {
         el('dd', {}, [`${tower.kills} · ${formatNumber(tower.damageDealt)} Schaden`]),
         el('dt', {}, ['Gleiche Art']),
         el('dd', {}, [`${sameType} auf dem Feld`]),
+        el('dt', {}, ['Gelände']),
+        el('dd', {}, [describeTerrain(this.game, tower.slot, tower.defId)]),
         el('dt', {}, ['Nachbarn']),
         el('dd', {}, [env.neighbours.length ? env.neighbours.map((id) => getTowerDef(id).name).join(', ') : '–']),
       ]),
@@ -192,5 +195,19 @@ function describeBreakdown(b: Breakdown): string {
   factor(b.meta, 'Artefakte');
   factor(b.erfolge, 'Erfolge');
   factor(b.kompendium, 'Kompendium');
+  factor(b.gelaende, 'Gelände');
   return `${parts.join(' ')} = ${num(b.result)}`;
+}
+
+function describeTerrain(game: Game, slot: number, defId: string): string {
+  const parts: string[] = [];
+  const biome = game.map.slotBiome[slot];
+  const home = speciesBiome(defId);
+  if (biome) {
+    parts.push(biome === home ? `${BIOME_NAMES[biome]} (Heimat, ×${BIOME_BONUS.damage} Schaden)` : `${BIOME_NAMES[biome]} (Heimat wäre ${BIOME_NAMES[home]})`);
+  } else {
+    parts.push(`kein Biom · Heimat: ${BIOME_NAMES[home]}`);
+  }
+  if (game.map.highGround.has(slot)) parts.push(`Anhöhe ×${BIOME_BONUS.highGroundRange} Reichweite`);
+  return parts.join(' · ');
 }

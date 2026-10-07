@@ -3,7 +3,7 @@
  */
 import { BALANCE } from './config/balance';
 import { GameLoop } from './core/GameLoop';
-import { START_MAP } from './data/map';
+import { getMap } from './data/map';
 import { Game } from './game/Game';
 import type { GameState } from './game/GameState';
 import { normalizeMeta, type MetaState } from './game/MetaState';
@@ -20,6 +20,7 @@ import { ChambersPanel } from './ui/ChambersPanel';
 import { CompendiumPanel } from './ui/CompendiumPanel';
 import { OfflineReport } from './ui/OfflineReport';
 import { tickPassive } from './game/systems/PassiveSystem';
+import { CATEGORY_NAMES } from './game/systems/AdaptationSystem';
 import { Hud } from './ui/Hud';
 import { ItemsPanel } from './ui/ItemsPanel';
 import { ShopPanel } from './ui/ShopPanel';
@@ -29,10 +30,11 @@ import { TreeView } from './ui/TreeView';
 
 const runSaves = new SaveManager<GameState>(BALANCE.persistence.runKey, BALANCE.persistence.runVersion);
 const metaSaves = new SaveManager<MetaState>(BALANCE.persistence.metaKey, BALANCE.persistence.metaVersion);
-const game = new Game(START_MAP, normalizeMeta(metaSaves.load()), runSaves.load());
+const savedRun = runSaves.load();
+const game = new Game(getMap(savedRun?.mapId), normalizeMeta(metaSaves.load()), savedRun);
 
 const canvas = $<HTMLCanvasElement>('#game-canvas');
-const renderer = new CanvasRenderer(canvas, START_MAP);
+const renderer = new CanvasRenderer(canvas, game.map);
 const modeHint = $('#mode-hint');
 
 // --- UI-Zustand (nicht Teil des Spielzustands) ----------------------------
@@ -128,6 +130,13 @@ const resetGame = (): void => {
   afterNewRun();
 };
 
+/** Karte wechseln: laufenden Run abrechnen, neuen Run auf der Karte starten. */
+const switchMap = (mapId: string): void => {
+  game.switchMap(mapId);
+  renderer.setMap(game.map);
+  afterNewRun();
+};
+
 /** Run abschließen: DNA kassieren, neuen Run starten. */
 const endRun = (): void => {
   game.endRun();
@@ -149,7 +158,7 @@ const towerPanel = new TowerPanel(game, {
 const shopPanel = new ShopPanel(game);
 const itemsPanel = new ItemsPanel(game);
 const treeView = new TreeView(game);
-const globalPanel = new GlobalPanel(game, endRun);
+const globalPanel = new GlobalPanel(game, endRun, switchMap);
 const chambersPanel = new ChambersPanel(game);
 const compendiumPanel = new CompendiumPanel(game);
 const eventLog = new EventLog(game);
@@ -174,6 +183,13 @@ game.bus.on('towerLevelUp', ({ tower }) => {
   if (tower.level % 10 === 0) renderer.float(tower.x, tower.y - 0.4, `Lvl ${tower.level}`, '#80deea', 1.5);
 });
 game.bus.on('enemyRevived', ({ enemy }) => renderer.float(enemy.x, enemy.y, 'Titan!', '#ffffff'));
+game.bus.on('robotsAdapted', ({ category, resist }) => {
+  renderer.float(game.map.cols / 2, 1, `🤖 ${CATEGORY_NAMES[category]} −${Math.round(resist * 100)} %`, '#ff5252', 3);
+});
+game.bus.on('obstacleCleared', ({ slot, cost }) => {
+  const cell = game.map.buildSlots[slot];
+  if (cell) renderer.float(cell.x + 0.5, cell.y + 0.5, `−${cost}`, '#ffd54f');
+});
 game.bus.on('enemyLeaked', ({ enemy }) => renderer.float(enemy.x - 0.5, enemy.y, enemy.defId === 'boss' ? '-3 ❤' : '-1 ❤', '#ff5252', 1.5));
 
 // --- Eingabe ----------------------------------------------------------------
@@ -205,6 +221,10 @@ canvas.addEventListener('click', (e) => {
   if (existing) {
     selectedTowerId = existing.id;
     tabs.show('tower');
+    return;
+  }
+  if (game.obstacleAt(slot)) {
+    game.clearObstacle(slot);
     return;
   }
   const built = game.build(slot);

@@ -49,7 +49,8 @@ export function updateCombat(ctx: GameContext, dt: number): void {
     for (let i = 0; i < shots; i++) {
       const target = candidates[i] as Enemy;
       let damage = stats.damage;
-      if (stats.critChance > 0 && ctx.rng.chance(stats.critChance)) damage *= stats.critMultiplier;
+      const crit = stats.critChance > 0 && ctx.rng.chance(stats.critChance);
+      if (crit) damage *= stats.critMultiplier;
       state.projectiles.push({
         id: allocId(state),
         x: tower.x,
@@ -60,6 +61,7 @@ export function updateCombat(ctx: GameContext, dt: number): void {
         sourceTowerId: tower.id,
         splashRadius: stats.splashRadius,
         shieldBreaker: stats.shieldBreaker,
+        crit,
         onHit: stats.onHit,
         color,
       });

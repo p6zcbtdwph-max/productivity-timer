@@ -24,7 +24,34 @@ export interface WaveState {
   aliveFromCurrent: number;
 }
 
+/** Schadensarten, an die sich Roboter anpassen können (Roboterfabrik). */
+export type DamageCategory = 'direkt' | 'flaeche' | 'gift' | 'krit';
+export const DAMAGE_CATEGORIES: readonly DamageCategory[] = ['direkt', 'flaeche', 'gift', 'krit'];
+
+export interface AdaptationState {
+  /** Resistenz je Schadensart (0..max). */
+  resist: Record<DamageCategory, number>;
+  /** Schaden je Art seit der letzten Anpassung. */
+  tally: Record<DamageCategory, number>;
+  /** Bereits durchgeführte Anpassungen (fehlt in alten Ständen = 0). */
+  stage?: number;
+}
+
+export function createAdaptation(): AdaptationState {
+  return {
+    resist: { direkt: 0, flaeche: 0, gift: 0, krit: 0 },
+    tally: { direkt: 0, flaeche: 0, gift: 0, krit: 0 },
+    stage: 0,
+  };
+}
+
 export interface GameState {
+  /** Karte dieses Runs (fehlt in alten Spielständen = Urmeer). */
+  mapId?: string;
+  /** Geräumte Hindernisse (Bauplatz-Indizes). */
+  clearedObstacles?: number[];
+  /** Roboter-Anpassung (nur auf Karten mit Anpassungs-Modus). */
+  adaptation?: AdaptationState;
   seed: number;
   rngState: number;
   /** Simulierte Spielzeit in Sekunden. */
@@ -67,8 +94,12 @@ export interface GameState {
 export function createInitialState(
   seed: number,
   start: { gold: number; lives: number } = { gold: BALANCE.player.startGold, lives: BALANCE.player.startLives },
+  mapId = 'urmeer',
 ): GameState {
   return {
+    mapId,
+    clearedObstacles: [],
+    adaptation: createAdaptation(),
     seed,
     rngState: seed,
     time: 0,

@@ -12,12 +12,13 @@ import type { GameEvents } from './events';
 import type { GameContext } from './GameContext';
 import { createInitialState, type GameState } from './GameState';
 import { createInitialMeta, type MetaState } from './MetaState';
-import { bestWaveOn, buyMetaUpgrade, computeDna, metaValues, settleRun, unlockArtifact, unlockTower, type DnaReport } from './systems/MetaSystem';
+import { bestWaveOn, isMapUnlocked, buyMetaUpgrade, computeDna, metaValues, settleRun, unlockArtifact, unlockTower, type DnaReport } from './systems/MetaSystem';
 import { updateAutoUpgrades } from './systems/AutoSystem';
 import { recordSpecies } from './systems/CompendiumSystem';
 import type { MetaUpgradeId } from '../data/meta';
 import { fuseTowers, fusionCandidates, updateAutoFusion } from './systems/FusionSystem';
-import { buildTower, canBuild, currentTowerCost, updateAutoBuild } from './systems/BuildSystem';
+import { buildTower, canBuild, clearObstacle, currentTowerCost, obstacleAt, obstacleClearCost, updateAutoBuild } from './systems/BuildSystem';
+import { MAPS, type ObstacleDef } from '../data/map';
 import { updateCombat } from './systems/CombatSystem';
 import { updateElements } from './systems/ElementSystem';
 import { evolveTower, updateEvolution } from './systems/EvolutionSystem';
@@ -45,7 +46,7 @@ export class Game {
   private readonly statsCache = new Map<number, EffectiveStats>();
 
   constructor(
-    readonly map: MapDef,
+    public map: MapDef,
     readonly meta: MetaState = createInitialMeta(),
     state?: GameState,
   ) {
@@ -76,7 +77,7 @@ export class Game {
 
   private freshState(): GameState {
     const values = metaValues(this.meta);
-    const state = createInitialState(Date.now() >>> 0, { gold: values.startGold, lives: values.startLives });
+    const state = createInitialState(Date.now() >>> 0, { gold: values.startGold, lives: values.startLives }, this.map.id);
     state.bestWaveAtStart = bestWaveOn(this.meta, this.map.id);
     return state;
   }
@@ -199,6 +200,29 @@ export class Game {
     this.bus.emit('runEnded', { report });
     this.reset();
     return report;
+  }
+
+  /** Wechselt die Karte: der laufende Run wird abgerechnet (DNA), dann startet ein neuer Run dort. */
+  switchMap(mapId: string): DnaReport | undefined {
+    const target = MAPS.find((m) => m.id === mapId);
+    if (!target || target.id === this.map.id || !isMapUnlocked(this.meta, target)) return undefined;
+    const report = this.state.wave.current > 0 ? settleRun(this.meta, this.map.id, this.state.wave.current) : undefined;
+    if (report) this.bus.emit('runEnded', { report });
+    this.map = target;
+    this.reset();
+    return report;
+  }
+
+  clearObstacle(slot: number): boolean {
+    return clearObstacle(this.ctx, slot);
+  }
+
+  obstacleAt(slot: number): ObstacleDef | undefined {
+    return obstacleAt(this.ctx, slot);
+  }
+
+  obstacleClearCost(): number {
+    return obstacleClearCost(this.ctx);
   }
 
   unlock(id: TowerId): boolean {

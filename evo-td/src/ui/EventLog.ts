@@ -2,6 +2,7 @@
 import { describeItem, QUALITY_DEFS } from '../data/items';
 import { getTowerDef } from '../data/towers';
 import { UPGRADE_DEFS } from '../data/upgrades';
+import { CATEGORY_NAMES } from '../game/systems/AdaptationSystem';
 import type { Game } from '../game/Game';
 import { $, el } from './dom';
 
@@ -35,6 +36,10 @@ export class EventLog {
       if (report.newMilestones > 0) this.push(`🏆 Neuer Karten-Erfolg: +${report.newMilestones * 10} % Schaden`, 'evo');
       if (report.autoBought.length > 0) this.push(`📜 Auto-Kauf: ${report.autoBought.length} Artefakt-Stufen`);
     });
+    game.bus.on('robotsAdapted', ({ category, resist }) => {
+      this.push(`🤖 Die Roboter passen sich an: ${CATEGORY_NAMES[category]}-Schaden −${Math.round(resist * 100)} %`, 'bad');
+    });
+    game.bus.on('obstacleCleared', ({ cost }) => this.push(`🪓 Hindernis geräumt (−${cost} Gold)`));
     game.bus.on('enemyRevived', () => this.push('Titan-Kern: ein Roboter steht wieder auf.', 'bad'));
     game.bus.on('enemyLeaked', () => this.push('Ein Roboter ist durchgebrochen!', 'bad'));
     game.bus.on('gameOver', ({ wave }) => this.push(`Game Over in Welle ${wave}.`, 'bad'));

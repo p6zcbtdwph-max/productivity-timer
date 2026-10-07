@@ -43,7 +43,7 @@ export function updateStatuses(ctx: GameContext, dt: number): void {
       status.remaining -= dt;
       if (status.kind === 'poison') {
         // Gift-Kills werden keinem Turm gutgeschrieben (sourceTowerId = 0).
-        applyDamage(ctx, enemy, status.dps * dt, 0);
+        applyDamage(ctx, enemy, status.dps * dt, 0, { category: 'gift' });
         // Ein Element (Titan) kann beim Tod die Statusliste leeren.
         if (enemy.statuses[s] !== status) break;
       }

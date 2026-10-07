@@ -3,6 +3,8 @@ import { tierForWave } from '../config/balance';
 import type { Game } from '../game/Game';
 import type { GameLoop } from '../core/GameLoop';
 import { $, formatNumber } from './dom';
+import { DAMAGE_CATEGORIES } from '../game/GameState';
+import { CATEGORY_NAMES } from '../game/systems/AdaptationSystem';
 
 export class Hud {
   private readonly gold = $('#hud-gold');
@@ -12,6 +14,8 @@ export class Hud {
   private readonly cost = $('#hud-cost');
   private readonly relocates = $('#hud-relocates');
   private readonly dna = $('#hud-dna');
+  private readonly mapName = $('#hud-map');
+  private readonly adapt = $('#hud-adapt');
   private readonly autoBuild = $<HTMLInputElement>('#hud-autobuild');
   private readonly speedButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-speed]'));
   private readonly pauseButton = $<HTMLButtonElement>('#hud-pause');
@@ -45,6 +49,15 @@ export class Hud {
     this.cost.textContent = formatNumber(this.game.towerCost());
     this.relocates.textContent = String(this.game.relocateCharges());
     this.dna.textContent = formatNumber(this.game.meta.dna);
+    this.mapName.textContent = this.game.map.name;
+    const mode = this.game.map.adaptive;
+    this.adapt.classList.toggle('hidden', !mode);
+    if (mode) {
+      const resist = state.adaptation?.resist;
+      const parts = DAMAGE_CATEGORIES.filter((c) => (resist?.[c] ?? 0) > 0).map((c) => `${CATEGORY_NAMES[c]} −${Math.round((resist?.[c] ?? 0) * 100)} %`);
+      const next = mode.every - (state.wave.current % mode.every);
+      this.adapt.textContent = `🤖 ${parts.length ? parts.join(', ') : 'keine Resistenz'} · Anpassung in ${next} W.`;
+    }
     this.autoBuild.checked = state.autoBuild;
     for (const button of this.speedButtons) {
       button.classList.toggle('active', !this.loop.paused && Number(button.dataset['speed']) === this.loop.speed);

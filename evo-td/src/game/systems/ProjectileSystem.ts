@@ -13,7 +13,8 @@ function hit(ctx: GameContext, projectile: Projectile, target: Enemy): void {
   const victims: Enemy[] = r > 0 ? ctx.state.enemies.filter((e) => distSq(e, target) <= r * r) : [target];
   for (const victim of victims) {
     applyOnHit(victim, projectile.onHit);
-    applyDamage(ctx, victim, projectile.damage, projectile.sourceTowerId, { shieldBreaker: projectile.shieldBreaker });
+    const category = projectile.crit ? 'krit' : r > 0 ? 'flaeche' : 'direkt';
+    applyDamage(ctx, victim, projectile.damage, projectile.sourceTowerId, { shieldBreaker: projectile.shieldBreaker, category });
   }
 }
 

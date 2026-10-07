@@ -5,7 +5,8 @@
 import { BALANCE } from '../config/balance';
 import { getElementDef } from '../data/elements';
 import { getEnemyDef } from '../data/enemies';
-import type { MapDef } from '../data/map';
+import type { MapDef, ObstacleKind } from '../data/map';
+import { BIOME_COLORS } from '../data/biomes';
 import { cellKey } from '../data/map';
 import { getTowerDef } from '../data/towers';
 import { statsFor } from '../game/systems/StatsSystem';
@@ -35,6 +36,13 @@ const COLORS = {
   lock: '#ffd54f',
 } as const;
 
+const OBSTACLE_STYLE: Readonly<Record<ObstacleKind, { color: string; letter: string; name: string }>> = {
+  baum: { color: '#2e7d32', letter: 'B', name: 'Baum' },
+  fels: { color: '#8d8d8d', letter: 'F', name: 'Fels' },
+  riff: { color: '#ff8a80', letter: 'R', name: 'Riff' },
+  schrott: { color: '#6d4c41', letter: 'S', name: 'Schrott' },
+};
+
 interface FloatingText {
   x: number;
   y: number;
@@ -62,13 +70,21 @@ export class CanvasRenderer {
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
-    private readonly map: MapDef,
+    private map: MapDef,
   ) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas 2D nicht verfügbar');
     this.ctx = ctx;
     canvas.width = map.cols * this.cell;
     canvas.height = map.rows * this.cell;
+  }
+
+  /** Andere Karte anzeigen (Kartenwechsel). */
+  setMap(map: MapDef): void {
+    this.map = map;
+    this.canvas.width = map.cols * this.cell;
+    this.canvas.height = map.rows * this.cell;
+    this.floaters = [];
   }
 
   /** Pixel -> Bauplatz-Index (oder undefined). */
@@ -85,7 +101,7 @@ export class CanvasRenderer {
   render(game: Game, options: RenderOptions): void {
     const { ctx, cell } = this;
     const { state } = game;
-    ctx.fillStyle = COLORS.background;
+    ctx.fillStyle = this.map.tint;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.drawGrid();
@@ -247,9 +263,10 @@ export class CanvasRenderer {
         ctx.strokeRect(x * cell + 0.5, y * cell + 0.5, cell - 1, cell - 1);
       }
     }
-    const start = map.waypoints[0];
-    const end = map.waypoints[map.waypoints.length - 1];
-    if (start && end) {
+    for (const path of map.paths) {
+      const start = path[0];
+      const end = path[path.length - 1];
+      if (!start || !end) continue;
       ctx.fillStyle = '#ff5252';
       ctx.fillRect(start.x * cell - 6, start.y * cell - 6, 12, 12);
       ctx.fillStyle = '#9be7a0';
@@ -260,6 +277,45 @@ export class CanvasRenderer {
   private drawSlots(game: Game, options: RenderOptions): void {
     const { ctx, cell, map } = this;
     map.buildSlots.forEach((slot, index) => {
+      const x = slot.x * cell;
+      const y = slot.y * cell;
+      // Biom als Untergrund (auch unter Türmen sichtbar)
+      const biome = map.slotBiome[index];
+      if (biome) {
+        ctx.fillStyle = BIOME_COLORS[biome];
+        ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+      }
+      // Anhöhe: kleines Dreieck in der Ecke
+      if (map.highGround.has(index)) {
+        ctx.fillStyle = '#d7ccc8';
+        ctx.beginPath();
+        ctx.moveTo(x + 2, y + cell - 2);
+        ctx.lineTo(x + 10, y + cell - 2);
+        ctx.lineTo(x + 6, y + cell - 10);
+        ctx.closePath();
+        ctx.fill();
+      }
+      const obstacle = game.obstacleAt(index);
+      if (obstacle) {
+        const style = OBSTACLE_STYLE[obstacle.kind];
+        ctx.fillStyle = style.color;
+        ctx.fillRect(x + 5, y + 5, cell - 10, cell - 10);
+        ctx.fillStyle = '#000';
+        ctx.font = `bold ${Math.round(cell * 0.35)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(style.letter, x + cell / 2, y + cell / 2 + 1);
+        ctx.textBaseline = 'alphabetic';
+        if (index === options.hoveredSlot) {
+          const cost = game.obstacleClearCost();
+          ctx.fillStyle = game.state.gold >= cost ? COLORS.slotHoverOk : COLORS.slotHoverBad;
+          ctx.fillRect(x + 4, y + 4, cell - 8, cell - 8);
+          ctx.fillStyle = '#fff';
+          ctx.font = `bold ${Math.round(cell * 0.28)}px system-ui, sans-serif`;
+          ctx.fillText(`${style.name}: ${cost}💰`, x + cell / 2, y - 4);
+        }
+        return;
+      }
       const occupied = game.state.towers.some((t) => t.slot === index);
       if (occupied) return;
       if (index === options.hoveredSlot) {
@@ -270,7 +326,8 @@ export class CanvasRenderer {
       } else {
         ctx.fillStyle = COLORS.slot;
       }
-      ctx.fillRect(slot.x * cell + 4, slot.y * cell + 4, cell - 8, cell - 8);
+      ctx.fillRect(x + 4, y + 4, cell - 8, cell - 8);
     });
   }
+
 }

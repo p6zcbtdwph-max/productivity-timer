@@ -22,7 +22,7 @@ export function updateMovement(ctx: GameContext, dt: number): void {
     let remaining = effectiveSpeed(enemy) * dt;
 
     while (remaining > 0) {
-      const target = map.waypoints[enemy.waypointIndex];
+      const target = map.paths[enemy.pathIndex ?? 0]?.[enemy.waypointIndex];
       if (!target) {
         state.enemies.splice(i, 1);
         state.lives -= enemy.defId === 'boss' ? BALANCE.player.bossLeakLives : 1;

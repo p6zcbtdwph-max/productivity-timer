@@ -2,15 +2,20 @@
 import { ARTIFACT_ORDER } from '../data/meta';
 import type { Game } from '../game/Game';
 import { overallBestWave } from '../game/MetaState';
+import { MAPS } from '../data/map';
 import {
   achievementStatus,
   artifactState,
+  bestWaveOn,
+  isMapUnlocked,
   canUnlockArtifact,
   metaLevel,
   metaUpgradePrice,
   metaValues,
 } from '../game/systems/MetaSystem';
 import { $, el, formatNumber } from './dom';
+
+const ACH_LABEL = { damage: 'Schaden', fireRate: 'Feuerrate', dna: 'DNA' } as const;
 
 /** Wie viele gesperrte Artefakte hinter dem nächsten noch angedeutet werden. */
 const TEASER_COUNT = 1;
@@ -22,6 +27,7 @@ export class GlobalPanel {
   constructor(
     private readonly game: Game,
     private readonly onEndRun: () => void,
+    private readonly onSwitchMap: (mapId: string) => void,
   ) {}
 
   invalidate(): void {
@@ -31,7 +37,7 @@ export class GlobalPanel {
   render(): void {
     const { meta } = this.game;
     const preview = this.game.dnaPreview();
-    const key = JSON.stringify([meta.dna, meta.bestWaveByMap, meta.upgrades, meta.autoArtifacts, meta.autoFusionEnabled, preview.total]);
+    const key = JSON.stringify([meta.dna, meta.bestWaveByMap, meta.upgrades, meta.autoArtifacts, meta.autoFusionEnabled, preview.total, this.game.map.id]);
     if (key === this.lastKey) return;
     this.lastKey = key;
     const values = metaValues(meta);
@@ -42,14 +48,41 @@ export class GlobalPanel {
       if (confirm(`Run jetzt beenden und ${preview.total} DNA kassieren? Der Run-Fortschritt geht verloren.`)) this.onEndRun();
     });
 
+    // --- Karten ------------------------------------------------------------
+    const maps = el('ul', { className: 'shop-list' });
+    for (const map of MAPS) {
+      const unlocked = isMapUnlocked(meta, map);
+      const active = map.id === this.game.map.id;
+      let control: Node;
+      if (active) control = el('span', { className: 'muted small' }, ['aktiv']);
+      else if (!unlocked) control = el('span', { className: 'muted small' }, [`🔒 ${MAPS.find((m) => m.id === map.unlock?.mapId)?.name ?? ''} Welle ${map.unlock?.wave ?? 0}`]);
+      else {
+        const b = el('button', { className: 'btn small' }, ['Spielen']);
+        b.addEventListener('click', () => {
+          const msg = preview.wave > 0
+            ? `Zur Karte ${map.name} wechseln? Der laufende Run endet mit +${preview.total} DNA.`
+            : `Zur Karte ${map.name} wechseln?`;
+          if (confirm(msg)) this.onSwitchMap(map.id);
+        });
+        control = b;
+      }
+      maps.append(
+        el('li', { className: active ? 'artifact next' : unlocked ? '' : 'artifact locked' }, [
+          el('span', {}, [el('strong', {}, [map.name]), el('span', { className: 'muted small' }, [` Bestwelle ${bestWaveOn(meta, map.id)}`])]),
+          control,
+          el('span', { className: 'desc' }, [map.description]),
+        ]),
+      );
+    }
+
     // --- Erfolge -----------------------------------------------------------
     const achievements = el('ul', { className: 'shop-list' });
     for (const a of achievementStatus(meta)) {
       achievements.append(
         el('li', {}, [
-          el('span', {}, [`🏆 ${a.mapName}: `, el('strong', {}, [`+${Math.round(a.bonus * 100)} % Schaden`])]),
+          el('span', {}, [`🏆 ${a.mapName}: `, el('strong', {}, [`+${Math.round(a.bonus * 100)} % ${ACH_LABEL[a.kind]}`])]),
           el('span', { className: 'muted small' }, [`${a.milestones}×`]),
-          el('span', { className: 'desc' }, [`Bestwelle ${a.bestWave}. Nächster Erfolg bei Welle ${a.nextAt} (+10 % Schaden, eigener Topf).`]),
+          el('span', { className: 'desc' }, [`Bestwelle ${a.bestWave}. Nächster Erfolg bei Welle ${a.nextAt} (+${Math.round((MAPS.find((m) => m.id === a.mapId)?.achievement.perMilestone ?? 0) * 100)} % ${ACH_LABEL[a.kind]}).`]),
         ]),
       );
     }
@@ -149,6 +182,8 @@ export class GlobalPanel {
         `bereits erreichte nur ${formatNumber(preview.fromRepeatedWaves)}.`,
       ]),
       endButton,
+      el('h2', { style: 'margin-top:14px' }, ['Karten']),
+      maps,
       el('h2', { style: 'margin-top:14px' }, ['Erfolge']),
       achievements,
       el('h2', { style: 'margin-top:14px' }, ['Artefakte']),

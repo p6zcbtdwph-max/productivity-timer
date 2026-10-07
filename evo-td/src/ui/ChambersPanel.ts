@@ -3,7 +3,7 @@ import { MAPS } from '../data/map';
 import { getTowerDef } from '../data/towers';
 import type { Game } from '../game/Game';
 import type { PassiveAnimal } from '../game/MetaState';
-import { bestWaveOn, metaValues } from '../game/systems/MetaSystem';
+import { bestWaveOn, isMapUnlocked, metaValues } from '../game/systems/MetaSystem';
 import {
   animalCost,
   animalDnaPerHour,
@@ -77,7 +77,7 @@ export class ChambersPanel {
         : `Im Schnitt eine Evolution alle ${hours(1 / rate)}.`;
       const lock = el('button', { className: animal.evolutionLocked ? 'btn small warn' : 'btn small' }, [animal.evolutionLocked ? '▶ Weiter' : '⏸ Stopp']);
       lock.addEventListener('click', this.act(() => toggleChamberLock(meta, animal.id)));
-      const moves = MAPS.map((map) => {
+      const moves = MAPS.filter((map) => isMapUnlocked(meta, map)).map((map) => {
         const full = mapSlotsUsed(meta, map.id) >= values.mapSlots;
         const b = el('button', { className: 'btn small', disabled: full }, [`→ Revier ${map.name}`]);
         b.addEventListener('click', this.act(() => assignToMap(meta, animal.id, map.id)));
@@ -106,6 +106,10 @@ export class ChambersPanel {
     // --- Reviere -------------------------------------------------------------
     const territories = el('ul', { className: 'shop-list' });
     for (const map of MAPS) {
+      if (!isMapUnlocked(meta, map)) {
+        territories.append(el('li', { className: 'artifact locked' }, [el('span', { className: 'muted' }, [`🔒 ${map.name}`])]));
+        continue;
+      }
       const residents = meta.passive.animals.filter((a) => a.mapId === map.id);
       territories.append(
         el('li', {}, [

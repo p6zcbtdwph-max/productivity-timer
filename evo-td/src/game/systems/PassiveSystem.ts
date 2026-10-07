@@ -12,7 +12,7 @@ import { Rng } from '../../core/Rng';
 import { MAPS } from '../../data/map';
 import { getTowerDef, ROOT_TOWER, type TowerId } from '../../data/towers';
 import type { MetaState, PassiveAnimal } from '../MetaState';
-import { bestWaveOn, isUnlocked, metaValues } from './MetaSystem';
+import { bestWaveOn, isMapUnlocked, isUnlocked, metaValues } from './MetaSystem';
 import { childrenOf } from '../../data/towers';
 import { recordSpecies } from './CompendiumSystem';
 
@@ -92,7 +92,8 @@ export function mapSlotsUsed(meta: MetaState, mapId: string): number {
 export function assignToMap(meta: MetaState, animalId: number, mapId: string): boolean {
   const animal = meta.passive.animals.find((a) => a.id === animalId);
   if (!animal || animal.mapId === mapId) return false;
-  if (!MAPS.some((m) => m.id === mapId)) return false;
+  const map = MAPS.find((m) => m.id === mapId);
+  if (!map || !isMapUnlocked(meta, map)) return false;
   if (mapSlotsUsed(meta, mapId) >= metaValues(meta).mapSlots) return false;
   animal.chamber = null;
   animal.mapId = mapId;

@@ -49,6 +49,27 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
 - **Karten-Erfolge**: alle 50 Bestwellen auf einer Karte gibt es dauerhaft den Bonus der Karte.
   Urmeer: +10 % Schaden je Erfolg, als eigener Topf.
 
+## Karten
+
+Jede Karte hat eigene Wege, eigene Objekte und einen eigenen Modus (angelehnt an Bloons TD).
+Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerechnet.
+
+| Karte | Wege | Objekte | Modus | Erfolg je 50 Bestwellen | Freischaltung |
+|---|---|---|---|---|---|
+| Urmeer | ein S-Pfad | – | – | +10 % Schaden | immer |
+| Urkontinent | Weg teilt sich (Gebirge / Küste) | Bäume, Felsen, Riffe; Anhöhen | **Biome**: Luft, Land, Wasser | +5 % Feuerrate | Urmeer Welle 60 |
+| Roboterfabrik | zwei Eingänge laufen zusammen | Schrott; Kräne | **Roboter-Anpassung** | +10 % DNA | Urkontinent Welle 60 |
+
+- **Biome**: Jede Art hat ein Heimat-Biom (Fische, Haie, Rochen, Muscheln: Wasser; Säuger,
+  Echsen, Spinnen: Land; Insekten, Libelle, Vogel: Luft; Mutationen erben es). Auf einem Platz
+  im Heimat-Biom ×1,3 Schaden (Topf "Gelände").
+- **Hindernisse** blockieren Bauplätze und lassen sich per Klick räumen (1,5 × Turmkosten).
+- **Anhöhen / Kräne**: ×1,2 Reichweite.
+- **Roboter-Anpassung**: Jeder Schaden zählt als Direkt, Fläche, Gift oder Krit. Alle 25 Wellen
+  werden die Roboter gegen die Art mit dem meisten Schaden um 20 % resistenter (max. 80 %).
+  Das HUD zeigt die Resistenzen und die Wellen bis zur nächsten Anpassung.
+- Reviere und Erfolge gelten je Karte; Tiere lassen sich nur freigeschalteten Karten zuweisen.
+
 ## Passiv-Modus: Evolutionskammern, Reviere, Winterruhe
 
 - **Evolutionskammern** (Reiter "Kammern"): Kammern mit DNA freischalten (50, dann ×4, maximal 8).
@@ -110,6 +131,7 @@ Schaden = Basis(Tier, Archetyp)
         × Artefakt-Faktor           Raubtierzahn
         × Erfolgs-Faktor            Karten-Erfolge
         × (1 + Kompendium)          Rekorde aller je gezüchteten Arten
+        × Gelände                   Heimat-Biom ×1,3 (Reichweite: Anhöhe ×1,2)
 ```
 
 Feuerrate und Reichweite folgen demselben Muster. Krit-Chance additiv (gedeckelt), Krit-Schaden
@@ -178,4 +200,4 @@ Grundregeln:
 
 - Balance-Pass auf den Meta-Loop mit der Headless-Simulation (Run-Länge, DNA-Tempo).
 - Weitere Elemente (Teilung, Tarnung, Flug) in `data/elements.ts`, Boss-Elemente kombiniert.
-- Zweite Karte, echte Sprites statt Blöcken, später Tauri-Bundle für den Mac.
+- Weitere Karten, echte Sprites statt Blöcken, später Tauri-Bundle für den Mac.

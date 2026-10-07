@@ -4,6 +4,7 @@
  */
 import { BALANCE } from '../config/balance';
 import { ARTIFACT_ORDER } from '../data/meta';
+import { MAPS } from '../data/map';
 import { BASE_TOWER_IDS, childrenOf, getTowerDef, type TowerId } from '../data/towers';
 import type { GameLoop } from '../core/GameLoop';
 import type { Game } from '../game/Game';
@@ -68,6 +69,11 @@ export class DevPanel {
         this.button('Arten bis T6 frei', () => unlockTowersUpTo(6)),
         this.button('Alle Artefakte', () => {
           for (const a of ARTIFACT_ORDER) if (g.meta.upgrades[a.id] === 0) g.meta.upgrades[a.id] = 1;
+        }),
+        this.button('Alle Karten frei', () => {
+          for (const map of MAPS) {
+            if (map.unlock) g.meta.bestWaveByMap[map.unlock.mapId] = Math.max(g.meta.bestWaveByMap[map.unlock.mapId] ?? 0, map.unlock.wave);
+          }
         }),
         this.button('Kompendium füllen', () => {
           for (const id of BASE_TOWER_IDS) g.meta.compendium[id] = { maxLevel: 50, maxPrestige: 1 };

@@ -21,6 +21,8 @@ export interface Enemy {
   speed: number;
   /** Gold bei Kill (inkl. Element-Multiplikator). */
   reward: number;
+  /** Welcher Weg der Karte (fehlt in alten Spielständen = 0). */
+  pathIndex?: number;
   /** Index des nächsten Wegpunkts. */
   waypointIndex: number;
   x: number;

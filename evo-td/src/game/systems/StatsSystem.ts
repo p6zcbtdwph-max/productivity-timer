@@ -15,6 +15,7 @@
  *           × Meta-Faktor                  Artefakte (Globaler Shop)
  *           × Erfolgs-Faktor               Karten-Erfolge (alle 50 Bestwellen)
  *           × (1 + Kompendium)             Rekorde aller je gezüchteten Arten
+ *           × Gelände                      Heimat-Biom ×1.3 (Schaden), Anhöhe ×1.2 (Reichweite)
  *
  *   Feuerrate und Reichweite folgen demselben Muster (ohne Mutations-Faktoren).
  *   Krit-Chance: additiv, gedeckelt. Krit-Multiplikator: additiv.
@@ -30,6 +31,7 @@ import { baseStatsFor, getTowerDef, lineageOf, siblingsOf, type Targeting, type 
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { levelMultiplier } from './LevelSystem';
+import { BIOME_BONUS, speciesBiome } from '../../data/biomes';
 import { metaValues, type MetaValues } from './MetaSystem';
 import { globalModifiers, NO_MODIFIERS, type GlobalModifiers } from './ModifierSystem';
 import { createInitialMeta } from '../MetaState';
@@ -62,6 +64,7 @@ export interface Breakdown {
   meta: number;
   erfolge: number;
   kompendium: number;
+  gelaende: number;
   result: number;
 }
 
@@ -87,6 +90,8 @@ export interface StatsEnvironment {
   neighbours: readonly TowerId[];
   modifiers: GlobalModifiers;
   meta: MetaValues;
+  /** Gelände des Bauplatzes (Biom-Treffer, Anhöhe). */
+  terrain?: { biomeMatch: boolean; highGround: boolean };
 }
 
 export const EMPTY_ENVIRONMENT: StatsEnvironment = {
@@ -145,8 +150,17 @@ export function neighbourDefIds(ctx: GameContext, tower: Pick<Tower, 'id' | 'slo
   return result;
 }
 
-export function environmentFor(ctx: GameContext, tower: Pick<Tower, 'id' | 'slot'>): StatsEnvironment {
-  return { neighbours: neighbourDefIds(ctx, tower), modifiers: globalModifiers(ctx.state), meta: metaValues(ctx.meta) };
+export function environmentFor(ctx: GameContext, tower: Pick<Tower, 'id' | 'slot' | 'defId'>): StatsEnvironment {
+  const slotBiome = ctx.map.slotBiome[tower.slot] ?? null;
+  return {
+    neighbours: neighbourDefIds(ctx, tower),
+    modifiers: globalModifiers(ctx.state),
+    meta: metaValues(ctx.meta),
+    terrain: {
+      biomeMatch: slotBiome !== null && slotBiome === speciesBiome(tower.defId),
+      highGround: ctx.map.highGround.has(tower.slot),
+    },
+  };
 }
 
 export function statsFor(ctx: GameContext, tower: Tower): EffectiveStats {
@@ -162,8 +176,8 @@ export function statsFor(ctx: GameContext, tower: Tower): EffectiveStats {
 }
 
 function breakdown(parts: Omit<Breakdown, 'result'>): Breakdown {
-  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge, kompendium } = parts;
-  return { ...parts, result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge * kompendium };
+  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge, kompendium, gelaende } = parts;
+  return { ...parts, result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge * kompendium * gelaende };
 }
 
 /** Anzahl direkt angrenzender Türme derselben Art. */
@@ -268,6 +282,7 @@ export function computeStats(
     meta: env.meta.damageMult,
     erfolge: env.meta.achievementDamageMult,
     kompendium: 1 + comp.damage,
+    gelaende: env.terrain?.biomeMatch ? BIOME_BONUS.damage : 1,
   });
   const fireRateB = breakdown({
     base: 1 / base.cooldown,
@@ -278,8 +293,9 @@ export function computeStats(
     prestige: 1 + p.fireRatePerLevel * tower.prestige,
     level,
     meta: env.meta.fireRateMult,
-    erfolge: 1,
+    erfolge: env.meta.achievementFireRateMult,
     kompendium: 1 + comp.fireRate,
+    gelaende: 1,
   });
   const rangeB = breakdown({
     base: base.range,
@@ -292,6 +308,7 @@ export function computeStats(
     meta: 1,
     erfolge: 1,
     kompendium: 1 + comp.range,
+    gelaende: env.terrain?.highGround ? BIOME_BONUS.highGroundRange : 1,
   });
 
   const damage = damageB.result;

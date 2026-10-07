@@ -4,7 +4,7 @@
  * abgeleiteten Werte.
  */
 import { BALANCE } from '../../config/balance';
-import { MAPS } from '../../data/map';
+import { MAPS, type MapAchievementDef, type MapDef } from '../../data/map';
 import {
   ARTIFACT_ORDER,
   dnaForWave,
@@ -30,6 +30,7 @@ export function bestWaveOn(meta: MetaState, mapId: string): number {
 export interface AchievementStatus {
   mapId: string;
   mapName: string;
+  kind: MapAchievementDef['kind'];
   bestWave: number;
   milestones: number;
   nextAt: number;
@@ -44,6 +45,7 @@ export function achievementStatus(meta: MetaState): AchievementStatus[] {
     return {
       mapId: map.id,
       mapName: map.name,
+      kind: map.achievement.kind,
       bestWave: best,
       milestones,
       nextAt: (milestones + 1) * map.achievement.every,
@@ -62,8 +64,10 @@ export interface MetaValues {
   /** Multiplikativer Topf "Meta" (Artefakte) auf Schaden bzw. Feuerrate. */
   damageMult: number;
   fireRateMult: number;
-  /** Multiplikativer Topf "Erfolge" (Karten-Erfolge) auf den Schaden. */
+  /** Multiplikativer Topf "Erfolge" (Karten-Erfolge) auf Schaden, Feuerrate und DNA. */
   achievementDamageMult: number;
+  achievementFireRateMult: number;
+  achievementDnaMult: number;
   /** Additiv auf die Stärke sekundärer Boni (+0.05 je Stufe). */
   inheritance: number;
   itemLuckMult: number;
@@ -86,8 +90,8 @@ export interface MetaValues {
 export function metaValues(meta: MetaState): MetaValues {
   const d = META_UPGRADE_DEFS;
   const lv = (id: MetaUpgradeId): number => metaLevel(meta, id);
-  let achievementDamage = 0;
-  for (const a of achievementStatus(meta)) achievementDamage += a.bonus;
+  const ach = { damage: 0, fireRate: 0, dna: 0 };
+  for (const a of achievementStatus(meta)) ach[a.kind] += a.bonus;
   return {
     startGold: BALANCE.player.startGold + d.startGold.perLevel * lv('startGold'),
     startLives: BALANCE.player.startLives + d.startLives.perLevel * lv('startLives'),
@@ -95,7 +99,9 @@ export function metaValues(meta: MetaState): MetaValues {
     evolutionBase: d.evolutionBase.perLevel * lv('evolutionBase'),
     damageMult: 1 + d.damage.perLevel * lv('damage'),
     fireRateMult: 1 + d.fireRate.perLevel * lv('fireRate'),
-    achievementDamageMult: 1 + achievementDamage,
+    achievementDamageMult: 1 + ach.damage,
+    achievementFireRateMult: 1 + ach.fireRate,
+    achievementDnaMult: 1 + ach.dna,
     inheritance: d.inheritance.perLevel * lv('inheritance'),
     itemLuckMult: 1 + d.itemLuck.perLevel * lv('itemLuck'),
     itemSlots: BALANCE.shop.itemSlots + d.itemSlots.perLevel * lv('itemSlots'),
@@ -139,7 +145,8 @@ export function computeDna(meta: MetaState, mapId: string, wave: number): DnaRep
     if (w > best) fromNew += dnaForWave(w);
     else fromRepeated += dnaForWave(w) * REPEAT_WAVE_FACTOR;
   }
-  const multiplier = metaValues(meta).dnaMult;
+  const values = metaValues(meta);
+  const multiplier = values.dnaMult * values.achievementDnaMult;
   const newRounded = Math.round(fromNew * multiplier);
   const repeatRounded = Math.round(fromRepeated * multiplier);
   const every = MAPS.find((m) => m.id === mapId)?.achievement.every ?? Infinity;
@@ -165,6 +172,12 @@ export function settleRun(meta: MetaState, mapId: string, wave: number): DnaRepo
   meta.runs++;
   report.autoBought = runAutoArtifacts(meta);
   return report;
+}
+
+// --- Karten ------------------------------------------------------------------
+
+export function isMapUnlocked(meta: MetaState, map: MapDef): boolean {
+  return !map.unlock || bestWaveOn(meta, map.unlock.mapId) >= map.unlock.wave;
 }
 
 // --- Arten freischalten -------------------------------------------------------

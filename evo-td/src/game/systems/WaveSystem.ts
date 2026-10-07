@@ -12,6 +12,7 @@ import type { GameContext } from '../GameContext';
 import { allocId } from '../GameState';
 import type { Rng } from '../../core/Rng';
 import { metaValues } from './MetaSystem';
+import { adaptRobots } from './AdaptationSystem';
 
 export interface SpawnOrder {
   defId: EnemyId;
@@ -45,7 +46,8 @@ export function composeWave(wave: number, rng: Rng): SpawnOrder[] {
 export function spawnEnemy(ctx: GameContext, order: SpawnOrder, wave: number): Enemy {
   const def = getEnemyDef(order.defId);
   const mult = tierMultiplier(tierForWave(wave));
-  const start = ctx.map.waypoints[0];
+  const pathIndex = ctx.state.nextEntityId % ctx.map.paths.length;
+  const start = ctx.map.paths[pathIndex]?.[0];
   if (!start) throw new Error('Karte hat keine Wegpunkte');
   const element = order.element ? getElementDef(order.element) : undefined;
   const hp = BALANCE.enemies.baseHp * def.hpMult * mult;
@@ -62,6 +64,7 @@ export function spawnEnemy(ctx: GameContext, order: SpawnOrder, wave: number): E
     speed: BALANCE.enemies.baseSpeed * def.speedMult * (1 - comp.enemySlow),
     healMultiplier: 1 - comp.antiHeal,
     reward: Math.max(1, Math.round(BALANCE.enemies.baseReward * def.rewardMult * mult * (element?.rewardMultiplier ?? 1))),
+    pathIndex,
     waypointIndex: 1,
     x: start.x,
     y: start.y,
@@ -95,6 +98,7 @@ export function updateWaves(ctx: GameContext, dt: number): void {
     wave.spawnTimer = 0;
     wave.aliveFromCurrent = 0;
     ctx.bus.emit('waveStarted', { wave: wave.current, tier: tierForWave(wave.current) });
+    adaptRobots(ctx);
   }
 }
 

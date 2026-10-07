@@ -4,14 +4,42 @@ import { metaValues } from './MetaSystem';
 import { ROOT_TOWER } from '../../data/towers';
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
+import type { ObstacleDef } from '../../data/map';
 import { allocId } from '../GameState';
 
 export function currentTowerCost(ctx: GameContext): number {
   return Math.round(BALANCE.economy.towerBaseCost * metaValues(ctx.meta).towerCostGrowth ** ctx.state.towersBuilt);
 }
 
+/** Hindernis auf diesem Platz, solange es nicht geräumt ist. */
+export function obstacleAt(ctx: GameContext, slot: number): ObstacleDef | undefined {
+  const obstacle = ctx.map.obstacles.find((o) => o.slot === slot);
+  if (!obstacle || (ctx.state.clearedObstacles ?? []).includes(slot)) return undefined;
+  return obstacle;
+}
+
 export function isSlotFree(ctx: GameContext, slot: number): boolean {
-  return slot >= 0 && slot < ctx.map.buildSlots.length && !ctx.state.towers.some((t) => t.slot === slot);
+  return (
+    slot >= 0 &&
+    slot < ctx.map.buildSlots.length &&
+    !obstacleAt(ctx, slot) &&
+    !ctx.state.towers.some((t) => t.slot === slot)
+  );
+}
+
+/** Räumen kostet das 1,5-fache des nächsten Turms (mindestens 50 Gold). */
+export function obstacleClearCost(ctx: GameContext): number {
+  return Math.max(50, Math.round(currentTowerCost(ctx) * 1.5));
+}
+
+export function clearObstacle(ctx: GameContext, slot: number): boolean {
+  const obstacle = obstacleAt(ctx, slot);
+  const cost = obstacleClearCost(ctx);
+  if (!obstacle || ctx.state.gameOver || ctx.state.gold < cost) return false;
+  ctx.state.gold -= cost;
+  (ctx.state.clearedObstacles ??= []).push(slot);
+  ctx.bus.emit('obstacleCleared', { slot, kind: obstacle.kind, cost });
+  return true;
 }
 
 export function canBuild(ctx: GameContext, slot: number): boolean {

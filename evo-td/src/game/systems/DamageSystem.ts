@@ -10,10 +10,14 @@ import type { GameContext } from '../GameContext';
 import { grantXp } from './LevelSystem';
 import { statsFor } from './StatsSystem';
 import { onEnemyRemoved } from './WaveSystem';
+import { applyResistance } from './AdaptationSystem';
+import type { DamageCategory } from '../GameState';
 
 export interface DamageOptions {
   /** Zusatzschaden gegen Schilde (1 = +100 %). */
   shieldBreaker?: number;
+  /** Schadensart für die Roboter-Anpassung (Standard: direkt). */
+  category?: DamageCategory;
 }
 
 export function applyDamage(
@@ -24,7 +28,7 @@ export function applyDamage(
   options: DamageOptions = {},
 ): void {
   if (enemy.hp <= 0) return;
-  let remaining = rawDamage;
+  let remaining = applyResistance(ctx, rawDamage, options.category ?? 'direkt');
 
   // 1. Schild zuerst abbauen.
   if (enemy.shield > 0) {
