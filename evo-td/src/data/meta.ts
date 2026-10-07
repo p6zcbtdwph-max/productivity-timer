@@ -20,7 +20,12 @@ export type MetaUpgradeId =
   | 'dnaGain'
   | 'autoArtifacts'
   | 'relocate'
-  | 'itemSlots';
+  | 'itemSlots'
+  | 'hatchery'
+  | 'territory'
+  | 'amber'
+  | 'hibernation'
+  | 'winterFur';
 
 export interface MetaUpgradeDef {
   id: MetaUpgradeId;
@@ -47,10 +52,15 @@ export const ARTIFACT_ORDER: readonly MetaUpgradeDef[] = [
   { id: 'startLives', name: 'Schildkrötenpanzer', icon: '🐢', description: '+1 Startleben je Stufe.', perLevel: 1, maxLevel: 15, unlockWave: 20, unlockCost: 60, levelCost: 30, levelGrowth: 1.6 },
   { id: 'autoUpgrades', name: 'Instinkt', icon: '🧠', description: 'Schaltet Auto-Kauf für Run-Upgrades frei (im Shop pro Upgrade wählbar).', perLevel: 1, maxLevel: 1, unlockWave: 25, unlockCost: 100, levelCost: 0, levelGrowth: 1 },
   { id: 'fireRate', name: 'Kolibriherz', icon: '❤️', description: 'Feuerrate ×(1 + 0,05 je Stufe), eigener Topf.', perLevel: 0.05, maxLevel: 100, unlockWave: 30, unlockCost: 120, levelCost: 25, levelGrowth: 1.3 },
+  { id: 'hatchery', name: 'Brutwärme', icon: '🥚', description: 'Evolutionskammern entwickeln sich ×(1 + 0,25 je Stufe) schneller.', perLevel: 0.25, maxLevel: 20, unlockWave: 35, unlockCost: 150, levelCost: 30, levelGrowth: 1.45 },
   { id: 'inheritance', name: 'Fossil', icon: '🦴', description: '+5 % Stärke aller geerbten und Nachbar-Boni je Stufe.', perLevel: 0.05, maxLevel: 40, unlockWave: 40, unlockCost: 200, levelCost: 40, levelGrowth: 1.4 },
+  { id: 'territory', name: 'Revierstein', icon: '🗿', description: '+1 Revierplatz je Karte und Stufe.', perLevel: 1, maxLevel: 7, unlockWave: 45, unlockCost: 250, levelCost: 200, levelGrowth: 2.2 },
   { id: 'towerCost', name: 'Zellkern', icon: '🔬', description: 'Turmkosten wachsen je Stufe 1 % langsamer.', perLevel: 0.01, maxLevel: 12, unlockWave: 50, unlockCost: 300, levelCost: 60, levelGrowth: 1.7 },
+  { id: 'amber', name: 'Bernstein', icon: '🟠', description: '+15 % passive DNA aus Revieren je Stufe.', perLevel: 0.15, maxLevel: 40, unlockWave: 55, unlockCost: 350, levelCost: 60, levelGrowth: 1.4 },
   { id: 'autoFusion', name: 'Symbiose-Koralle', icon: '🪸', description: 'Schaltet Auto-Fusion frei.', perLevel: 1, maxLevel: 1, unlockWave: 60, unlockCost: 400, levelCost: 0, levelGrowth: 1 },
+  { id: 'hibernation', name: 'Winterschlaf-Höhle', icon: '🕳️', description: '+2 Stunden Offline-Obergrenze je Stufe (Basis 8 h).', perLevel: 2, maxLevel: 8, unlockWave: 70, unlockCost: 500, levelCost: 150, levelGrowth: 1.8 },
   { id: 'itemLuck', name: 'Vierblättriger Klee', icon: '🍀', description: 'Item-Aufwertungschancen ×(1 + 0,1 je Stufe).', perLevel: 0.1, maxLevel: 20, unlockWave: 75, unlockCost: 600, levelCost: 80, levelGrowth: 1.6 },
+  { id: 'winterFur', name: 'Winterfell', icon: '🧥', description: '+5 % Kraft während der Winterruhe je Stufe (Basis 50 %).', perLevel: 0.05, maxLevel: 10, unlockWave: 85, unlockCost: 800, levelCost: 200, levelGrowth: 1.6 },
   { id: 'dnaGain', name: 'Doppelhelix', icon: '🧬', description: '+10 % DNA am Run-Ende je Stufe.', perLevel: 0.1, maxLevel: 30, unlockWave: 90, unlockCost: 900, levelCost: 100, levelGrowth: 1.5 },
   { id: 'autoArtifacts', name: 'Gedächtnis', icon: '📜', description: 'Schaltet Auto-Kauf für Artefakt-Stufen am Run-Ende frei (pro Artefakt wählbar).', perLevel: 1, maxLevel: 1, unlockWave: 100, unlockCost: 1200, levelCost: 0, levelGrowth: 1 },
   { id: 'relocate', name: 'Zugvogelfeder', icon: '🪶', description: 'Verlegung eine Welle früher je Stufe (mindestens alle 2).', perLevel: 1, maxLevel: 3, unlockWave: 125, unlockCost: 1600, levelCost: 800, levelGrowth: 2.5 },

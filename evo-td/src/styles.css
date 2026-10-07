@@ -395,3 +395,38 @@ body {
     align-self: start;
   }
 }
+
+#offline-report {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+}
+
+#offline-report .card {
+  width: min(460px, 92%);
+}
+
+#offline-body ul {
+  margin: 6px 0;
+  padding-left: 18px;
+  line-height: 1.5;
+}
+
+.progress {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+#offline-bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.15s;
+}

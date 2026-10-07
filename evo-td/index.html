@@ -32,6 +32,17 @@
         <canvas id="game-canvas"></canvas>
         <div id="mode-hint" class="hidden"></div>
         <div id="dev-panel" class="card hidden"></div>
+        <div id="offline-report" class="hidden">
+          <div class="card">
+            <h2>❄️ Während du weg warst</h2>
+            <div id="offline-body"></div>
+            <div class="progress"><div id="offline-bar"></div></div>
+            <div class="actions">
+              <button class="btn" id="offline-skip">Rest überspringen</button>
+              <button class="btn hidden" id="offline-ok">Weiter</button>
+            </div>
+          </div>
+        </div>
         <div id="game-over" class="hidden">
           <h2>Die Roboter haben gewonnen.</h2>
           <p id="game-over-text"></p>
@@ -49,6 +60,7 @@
           <button class="tab" data-tab="items">Items</button>
           <button class="tab" data-tab="tree">Stammbaum</button>
           <button class="tab" data-tab="global">Global</button>
+          <button class="tab" data-tab="chambers">Kammern</button>
           <button class="tab" data-tab="log">Protokoll</button>
         </nav>
         <section data-panel="tower">
@@ -66,6 +78,9 @@
         </section>
         <section data-panel="global" class="hidden">
           <div id="global-panel" class="card"></div>
+        </section>
+        <section data-panel="chambers" class="hidden">
+          <div id="chambers-panel" class="card"></div>
         </section>
         <section data-panel="log" class="hidden">
           <div class="card">

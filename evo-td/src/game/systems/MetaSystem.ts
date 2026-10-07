@@ -72,6 +72,12 @@ export interface MetaValues {
   autoFusion: boolean;
   autoUpgrades: boolean;
   autoArtifacts: boolean;
+  /** Passiv-Modus */
+  chamberSpeedMult: number;
+  mapSlots: number;
+  passiveDnaMult: number;
+  offlineCapSeconds: number;
+  offlinePower: number;
 }
 
 export function metaValues(meta: MetaState): MetaValues {
@@ -95,6 +101,11 @@ export function metaValues(meta: MetaState): MetaValues {
     autoFusion: lv('autoFusion') > 0,
     autoUpgrades: lv('autoUpgrades') > 0,
     autoArtifacts: lv('autoArtifacts') > 0,
+    chamberSpeedMult: 1 + d.hatchery.perLevel * lv('hatchery'),
+    mapSlots: BALANCE.passive.mapSlots + d.territory.perLevel * lv('territory'),
+    passiveDnaMult: 1 + d.amber.perLevel * lv('amber'),
+    offlineCapSeconds: (BALANCE.passive.offlineCapHours + d.hibernation.perLevel * lv('hibernation')) * 3600,
+    offlinePower: Math.min(1, BALANCE.passive.offlinePower + d.winterFur.perLevel * lv('winterFur')),
   };
 }
 

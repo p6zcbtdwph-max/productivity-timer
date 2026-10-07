@@ -120,12 +120,35 @@ export const BALANCE = {
     maxChance: 0.4,
   },
 
+  /** Evolutionskammern, Reviere und Winterruhe (Passiv-Modus, läuft in Echtzeit). */
+  passive: {
+    /** Erste Kammer kostet so viel DNA, jede weitere das `chamberGrowth`-fache. */
+    chamberBaseCost: 50,
+    chamberGrowth: 4,
+    maxChambers: 8,
+    /** Einzeller für die Kammer: Preis wächst mit jedem Kauf. */
+    animalBaseCost: 25,
+    animalCostGrowth: 1.35,
+    /** Evolutionen pro Stunde auf Tier 0; halbiert sich je Tier. */
+    evolutionsPerHour: 2,
+    /** DNA pro Stunde eines Tier-0-Tiers im Revier; ×2 je Tier, ×(1 + Bestwelle/50). */
+    dnaPerHour: 0.5,
+    /** Revierplätze je Karte ohne Artefakt. */
+    mapSlots: 1,
+    /** Offline-Obergrenze ohne Artefakt (Stunden). */
+    offlineCapHours: 8,
+    /** Kraft der Türme während der Winterruhe ohne Artefakt. */
+    offlinePower: 0.5,
+    /** Kürzere Abwesenheiten werden ohne Bericht verrechnet. */
+    reportAfterSeconds: 60,
+  },
+
   persistence: {
     autosaveSeconds: 10,
     runKey: 'evo-td-run',
     runVersion: 4,
     metaKey: 'evo-td-meta',
-    metaVersion: 1,
+    metaVersion: 2,
   },
 } as const;
 

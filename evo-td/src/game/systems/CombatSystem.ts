@@ -32,6 +32,10 @@ export function updateCombat(ctx: GameContext, dt: number): void {
   for (const tower of state.towers) {
     tower.cooldown -= dt;
     if (tower.cooldown > 0) continue;
+    if (state.enemies.length === 0) {
+      tower.cooldown = 0;
+      continue;
+    }
 
     const stats = statsFor(ctx, tower);
     const candidates = sortByTargeting(tower, stats.targeting, enemiesInRange(tower, stats.range, state.enemies));

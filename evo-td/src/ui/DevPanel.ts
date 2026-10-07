@@ -82,6 +82,11 @@ export class DevPanel {
           this.loop.speed = 16;
           this.loop.paused = false;
         }),
+        this.button('Zeit +1 h (Winterruhe testen)', () => {
+          g.meta.lastSeen -= 3600_000;
+          g.meta.passive.lastTick -= 3600_000;
+          document.dispatchEvent(new Event('visibilitychange'));
+        }),
         this.button('Alles löschen', () => {
           if (confirm('Run UND globalen Fortschritt (DNA, Artefakte, Freischaltungen) löschen?')) this.onWipe();
         }),

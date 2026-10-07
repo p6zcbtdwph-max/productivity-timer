@@ -16,6 +16,9 @@ import { DevPanel } from './ui/DevPanel';
 import { ElementLegend } from './ui/ElementLegend';
 import { EventLog } from './ui/EventLog';
 import { GlobalPanel } from './ui/GlobalPanel';
+import { ChambersPanel } from './ui/ChambersPanel';
+import { OfflineReport } from './ui/OfflineReport';
+import { tickPassive } from './game/systems/PassiveSystem';
 import { Hud } from './ui/Hud';
 import { ItemsPanel } from './ui/ItemsPanel';
 import { ShopPanel } from './ui/ShopPanel';
@@ -52,10 +55,21 @@ function setAction(action: TowerAction | undefined): void {
   modeHint.classList.remove('hidden');
 }
 
+let passiveTimer = 0;
 const loop = new GameLoop(
   BALANCE.stepSeconds,
   (dt) => game.update(dt),
   () => {
+    // Echtzeit: Kammern und Reviere einmal pro Sekunde abrechnen, solange die Seite sichtbar ist.
+    const now = Date.now();
+    game.meta.lastSeen = now;
+    renderer.muted = game.simulating;
+    if (now - passiveTimer >= 1000) {
+      passiveTimer = now;
+      const report = tickPassive(game.meta, now);
+      for (const e of report.evolutions) eventLog.push(`🥚 Kammer: ${getTowerDef(e.from).name} → ${getTowerDef(e.to).name}`, 'evo');
+      if (report.evolutions.length > 0) chambersPanel.invalidate();
+    }
     const highlightTowerIds = activeAction === 'fuse' && selectedTowerId !== undefined
       ? game.fusionCandidatesFor(selectedTowerId).map((t) => t.id)
       : [];
@@ -81,6 +95,9 @@ const loop = new GameLoop(
         break;
       case 'global':
         globalPanel.render();
+        break;
+      case 'chambers':
+        chambersPanel.render();
         break;
     }
   },
@@ -126,9 +143,11 @@ const shopPanel = new ShopPanel(game);
 const itemsPanel = new ItemsPanel(game);
 const treeView = new TreeView(game);
 const globalPanel = new GlobalPanel(game, endRun);
+const chambersPanel = new ChambersPanel(game);
 const eventLog = new EventLog(game);
 new ElementLegend();
 new DevPanel(game, loop, () => {
+  game.invalidateStats();
   towerPanel.invalidate();
   treeView.invalidate();
   globalPanel.invalidate();
@@ -228,7 +247,21 @@ const saveAll = (): void => {
 setInterval(saveAll, BALANCE.persistence.autosaveSeconds * 1000);
 window.addEventListener('beforeunload', saveAll);
 
+// --- Winterruhe: Abwesenheit beim Start und beim Zurückkehren in den Tab ------
+
+const offlineReport = new OfflineReport(game, loop, () => {
+  towerPanel.invalidate();
+  chambersPanel.invalidate();
+  globalPanel.invalidate();
+});
+const startedAwayFrom = game.meta.lastSeen;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') void offlineReport.resume(game.meta.lastSeen);
+  else saveAll();
+});
+
 loop.start();
+void offlineReport.resume(startedAwayFrom);
 
 // Für Tests und Debugging in der Browser-Konsole: window.evoTd.game
 (window as unknown as { evoTd: unknown }).evoTd = { game, loop };

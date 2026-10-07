@@ -148,7 +148,15 @@ export function environmentFor(ctx: GameContext, tower: Pick<Tower, 'id' | 'slot
 }
 
 export function statsFor(ctx: GameContext, tower: Tower): EffectiveStats {
-  return computeStats(tower, environmentFor(ctx, tower));
+  const cached = ctx.statsCache?.get(tower.id);
+  if (cached) return cached;
+  const stats = computeStats(tower, environmentFor(ctx, tower));
+  if (ctx.power !== undefined && ctx.power !== 1) {
+    stats.damage *= ctx.power;
+    if (stats.onHit.poison) stats.onHit.poison = { ...stats.onHit.poison, dps: stats.onHit.poison.dps * ctx.power };
+  }
+  ctx.statsCache?.set(tower.id, stats);
+  return stats;
 }
 
 function breakdown(parts: Omit<Breakdown, 'result'>): Breakdown {

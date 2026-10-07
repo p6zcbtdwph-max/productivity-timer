@@ -50,9 +50,12 @@ export class CanvasRenderer {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly cell = BALANCE.map.cellSize;
   private floaters: FloatingText[] = [];
+  /** Unterdrückt neue schwebende Texte (z.B. während der Winterruhe). */
+  muted = false;
 
   /** Schwebender Text in Zellenkoordinaten (rein optisch, kein Spielzustand). */
   float(x: number, y: number, text: string, color: string, ttl = 1.2): void {
+    if (this.muted) return;
     this.floaters.push({ x, y, text, color, born: performance.now(), ttl: ttl * 1000 });
     if (this.floaters.length > MAX_FLOATERS) this.floaters.shift();
   }

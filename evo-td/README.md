@@ -39,14 +39,32 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
 - **Artefakte** in fester Reihenfolge. Das nächste Artefakt braucht das vorige, eine Bestwelle
   und DNA; danach lässt es sich mit DNA weiter aufstufen. Reihenfolge (Bestwelle):
   Goldener Kiesel (0), Ursuppe (10), Raubtierzahn (15), Schildkrötenpanzer (20),
-  **Instinkt** (25, Auto-Kauf im Run), Kolibriherz (30), Fossil (40), Zellkern (50),
-  **Symbiose-Koralle** (60, Auto-Fusion), Vierblättriger Klee (75), Doppelhelix (90),
+  **Instinkt** (25, Auto-Kauf im Run), Kolibriherz (30), Brutwärme (35), Fossil (40),
+  Revierstein (45), Zellkern (50), Bernstein (55), **Symbiose-Koralle** (60, Auto-Fusion),
+  Winterschlaf-Höhle (70), Vierblättriger Klee (75), Winterfell (85), Doppelhelix (90),
   **Gedächtnis** (100, Auto-Kauf von Artefakt-Stufen am Run-Ende), Zugvogelfeder (125), Beutel (150).
 - **Auto-Modi**: Instinkt kauft jede Sekunde das billigste der im Shop angehakten Run-Upgrades
   und hält bei Auto-Bau Gold für den nächsten Turm zurück. Gedächtnis kauft am Run-Ende die
   angehakten Artefakt-Stufen, billigste zuerst.
 - **Karten-Erfolge**: alle 50 Bestwellen auf einer Karte gibt es dauerhaft den Bonus der Karte.
   Urmeer: +10 % Schaden je Erfolg, als eigener Topf.
+
+## Passiv-Modus: Evolutionskammern, Reviere, Winterruhe
+
+- **Evolutionskammern** (Reiter "Kammern"): Kammern mit DNA freischalten (50, dann ×4, maximal 8).
+  In eine Kammer kauft man einen Einzeller für DNA (Preis steigt je Kauf). Er entwickelt sich
+  in Echtzeit, auch bei geschlossenem Spiel, zufällig zu **freigeschalteten** Nachfahren.
+  Tier 0 entwickelt sich im Schnitt 2× pro Stunde, jedes Tier halbiert das Tempo. Evolution
+  pro Kammer stoppbar.
+- **Reviere**: Tiere aus der Kammer weist man einer Karte zu. Dort bringen sie DNA pro Stunde:
+  `0,5 × 2^Tier × (1 + Bestwelle der Karte / 50)`. Ein Platz je Karte, mehr per Artefakt.
+- **Winterruhe**: Kehrst du nach mindestens einer Minute zurück (Tab oder neu geöffnet), wird
+  der laufende Run mit 50 % Kraft nachgerechnet. Bricht ein Roboter durch, wird auf den Anfang
+  dieser Welle zurückgesetzt und angehalten: offline stirbt der Run nie. Obergrenze 8 Stunden.
+  Ein Bericht zeigt DNA, Kammer-Evolutionen, Wellen, Gold und wo die Wand war.
+- **Artefakte dazu**: Brutwärme (Kammer-Tempo), Revierstein (+Revierplätze), Bernstein
+  (+passive DNA), Winterschlaf-Höhle (+2 h Offline je Stufe), Winterfell (+5 % Offline-Kraft je Stufe).
+- Entwickler-Panel: "Zeit +1 h" simuliert eine Stunde Abwesenheit.
 
 ## Stammbaum: 33 Basisarten + Mutationen
 
@@ -137,6 +155,5 @@ Grundregeln:
 ## Nächste Schritte (Ideen)
 
 - Balance-Pass auf den Meta-Loop mit der Headless-Simulation (Run-Länge, DNA-Tempo).
-- Passive Einnahmen / Offline-Fortschritt.
 - Weitere Elemente (Teilung, Tarnung, Flug) in `data/elements.ts`, Boss-Elemente kombiniert.
 - Zweite Karte, echte Sprites statt Blöcken, später Tauri-Bundle für den Mac.

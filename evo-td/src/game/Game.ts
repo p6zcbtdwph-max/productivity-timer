@@ -7,6 +7,7 @@ import { Rng } from '../core/Rng';
 import type { MapDef } from '../data/map';
 import type { TowerId } from '../data/towers';
 import type { Tower } from './entities/Tower';
+import type { EffectiveStats } from './systems/StatsSystem';
 import type { GameEvents } from './events';
 import type { GameContext } from './GameContext';
 import { createInitialState, type GameState } from './GameState';
@@ -32,6 +33,15 @@ export class Game {
   readonly bus = new EventBus<GameEvents>();
   readonly rng: Rng;
   state: GameState;
+  /** Kraftfaktor auf den Schaden; die Winterruhe setzt ihn offline herab. */
+  private power = 1;
+  /** Wahr, solange die Winterruhe nachrechnet (UI unterdrückt dann Effekte). */
+  simulating = false;
+  /**
+   * Turmwerte über Schritte hinweg zwischengespeichert. Wird bei allem geleert,
+   * was Werte ändern kann (Bau, Evolution, Level, Fusion, Verlegen, Käufe).
+   */
+  private readonly statsCache = new Map<number, EffectiveStats>();
 
   constructor(
     readonly map: MapDef,
@@ -40,6 +50,21 @@ export class Game {
   ) {
     this.state = state ?? this.freshState();
     this.rng = new Rng(this.state.rngState);
+    const clear = (): void => this.invalidateStats();
+    for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused', 'towerRelocated', 'upgradeBought'] as const) {
+      this.bus.on(event, clear);
+    }
+  }
+
+  /** Muss gerufen werden, wenn etwas außerhalb der Spielsysteme Werte ändert (UI, Entwickler-Panel). */
+  invalidateStats(): void {
+    this.statsCache.clear();
+  }
+
+  setPower(power: number): void {
+    if (power === this.power) return;
+    this.power = power;
+    this.invalidateStats();
   }
 
   private freshState(): GameState {
@@ -50,7 +75,7 @@ export class Game {
   }
 
   get ctx(): GameContext {
-    return { state: this.state, meta: this.meta, map: this.map, rng: this.rng, bus: this.bus };
+    return { state: this.state, meta: this.meta, map: this.map, rng: this.rng, bus: this.bus, statsCache: this.statsCache, power: this.power };
   }
 
   /** Ein Simulationsschritt. Reihenfolge ist bewusst gewählt (siehe Kommentare). */
@@ -137,6 +162,7 @@ export class Game {
   }
 
   toggleEquip(itemId: number): boolean {
+    this.invalidateStats();
     return toggleEquip(this.ctx, itemId);
   }
 
@@ -148,6 +174,7 @@ export class Game {
 
   /** Startet einen neuen Run (ohne DNA-Abrechnung). */
   reset(): void {
+    this.invalidateStats();
     this.state = this.freshState();
     this.rng.setState(this.state.rngState);
   }
@@ -172,10 +199,12 @@ export class Game {
   }
 
   buyMetaUpgrade(id: MetaUpgradeId): boolean {
+    this.invalidateStats();
     return buyMetaUpgrade(this.meta, id);
   }
 
   unlockArtifact(id: MetaUpgradeId): boolean {
+    this.invalidateStats();
     return unlockArtifact(this.meta, id);
   }
 
@@ -197,6 +226,7 @@ export class Game {
 
   /** Lädt einen gespeicherten Zustand (ersetzt den aktuellen). */
   load(state: GameState): void {
+    this.invalidateStats();
     this.state = state;
     this.rng.setState(state.rngState);
   }
