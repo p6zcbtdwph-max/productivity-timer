@@ -57,12 +57,16 @@ Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerech
 | Karte | Wege | Objekte | Modus | Erfolg je 50 Bestwellen | Freischaltung |
 |---|---|---|---|---|---|
 | Urmeer | ein S-Pfad | – | – | +10 % Schaden | immer |
-| Urkontinent | Weg teilt sich (Gebirge / Küste) | Bäume, Felsen, Riffe; Anhöhen | **Biome**: Luft, Land, Wasser | +5 % Feuerrate | Urmeer Welle 60 |
+| Urkontinent | Weg teilt sich (Gebirge / Küste) | Bäume, Felsen, Riffe; Anhöhen | **Biome**: Luft, Land, Erde, Wasser | +5 % Feuerrate | Urmeer Welle 60 |
 | Roboterfabrik | zwei Eingänge laufen zusammen | Schrott; Kräne | **Roboter-Anpassung** | +10 % DNA | Urkontinent Welle 60 |
 
-- **Biome**: Jede Art hat ein Heimat-Biom (Fische, Haie, Rochen, Muscheln: Wasser; Säuger,
-  Echsen, Spinnen: Land; Insekten, Libelle, Vogel: Luft; Mutationen erben es). Auf einem Platz
-  im Heimat-Biom ×1,3 Schaden (Topf "Gelände").
+- **Biome**: Jede Art hat ein Heimat-Biom; Mutationen erben es. Auf einem Platz im Heimat-Biom
+  ×1,3 Schaden (Topf "Gelände").
+  - Wasser: Einzeller, Fische, Haie, Rochen, Muscheln, Tintenfische, Krokodil
+  - Land: Frosch, Echse, Schlange, Spitzmaus, Igel, Wolf, Elefant, Affe, Skorpion, Spinne, Käfer
+  - Erde: Wurm, Tausendfüßer, Skolopender, Saftkugler, Maulwurf
+  - Luft: Insekt, Libelle, Biene, Vogel, Fledermaus. **Luft-Arten haben immer globale Reichweite**
+    (sie fliegen und erreichen jedes Ziel auf der Karte).
 - **Hindernisse** blockieren Bauplätze und lassen sich per Klick räumen (1,5 × Turmkosten).
 - **Anhöhen / Kräne**: ×1,2 Reichweite.
 - **Roboter-Anpassung**: Jeder Schaden zählt als Direkt, Fläche, Gift oder Krit. Alle 25 Wellen
@@ -108,7 +112,7 @@ ihrer Eigenschaft:
 Stärke: `Grundwert × (Rekord-Level + 25 × Rekord-Prestige) × (1 + 0,5 × Tier)`.
 Basisarten stehen immer in der Liste, Mutationen erst, wenn man sie hatte.
 
-## Stammbaum: 33 Basisarten + Mutationen
+## Stammbaum: 40 Basisarten + Mutationen
 
 Basisarten bis Tier 4 sind von Hand gepflegt (echte Stammesgeschichte, siehe `src/data/towers.ts`).
 Ab Tier 5 teilt sich jede Endform in zwei **Mutationen** (Alpha, Titan, Blitz, Adleraugen, Gift,

@@ -31,7 +31,7 @@ import { baseStatsFor, getTowerDef, lineageOf, siblingsOf, type Targeting, type 
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { levelMultiplier } from './LevelSystem';
-import { BIOME_BONUS, speciesBiome } from '../../data/biomes';
+import { BIOME_BONUS, hasGlobalRange, speciesBiome } from '../../data/biomes';
 import { metaValues, type MetaValues } from './MetaSystem';
 import { globalModifiers, NO_MODIFIERS, type GlobalModifiers } from './ModifierSystem';
 import { createInitialMeta } from '../MetaState';
@@ -320,7 +320,7 @@ export function computeStats(
   return {
     damage,
     cooldown: 1 / fireRateB.result,
-    range: rangeB.result,
+    range: hasGlobalRange(tower.defId) ? Infinity : rangeB.result,
     projectileSpeed: base.projectileSpeed,
     critChance: Math.min(0.9, critChance + comp.critChance),
     critMultiplier: (critChance + comp.critChance > 0 ? Math.max(2, critMultiplier) : critMultiplier) + critBonus + comp.critDamage,

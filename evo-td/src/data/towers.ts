@@ -17,14 +17,16 @@
  *  │  │  └─ Muschel (Bivalvia) ─ Auster, Riesenmuschel
  *  │  └─ Trilobit (Arthropoda)
  *  │     ├─ Seeskorpion (Eurypterida) ─ Skorpion, Spinne
- *  │     └─ Insekt (Insecta) ─ Käfer, Libelle
+ *  │     ├─ Insekt (Insecta) ─ Käfer, Libelle, Biene
+ *  │     └─ Tausendfüßer (Myriapoda) ─ Skolopender, Saftkugler
  *  └─ Fisch (Chordata)
  *     ├─ Knorpelfisch (Chondrichthyes)
  *     │  ├─ Hai ─ Weißer Hai, Hammerhai
  *     │  └─ Rochen ─ Manta, Zitterrochen
  *     └─ Frosch (Tetrapoda)
  *        ├─ Echse (Sauropsida) ─ Krokodil, Vogel, Schlange
- *        └─ Spitzmaus (Synapsida) ─ Wolf, Elefant, Affe
+ *        ├─ Spitzmaus (Synapsida) ─ Wolf, Elefant, Affe
+ *        └─ Igel (Insektenfresser) ─ Maulwurf, Fledermaus
  */
 import type { BonusDef } from './bonuses';
 
@@ -44,6 +46,8 @@ export type BaseTowerId =
   | 'rochen'
   | 'echse'
   | 'spitzmaus'
+  | 'tausendfuesser'
+  | 'igel'
   | 'oktopus'
   | 'kalmar'
   | 'auster'
@@ -61,7 +65,12 @@ export type BaseTowerId =
   | 'schlange'
   | 'wolf'
   | 'elefant'
-  | 'affe';
+  | 'affe'
+  | 'biene'
+  | 'skolopender'
+  | 'saftkugler'
+  | 'maulwurf'
+  | 'fledermaus';
 
 /**
  * Kennung einer Art. Basisarten sind `BaseTowerId`; ab Tier BASE_MAX_TIER+1
@@ -305,6 +314,29 @@ const DEFS: Readonly<Record<BaseTowerId, Def>> = {
     description: 'Warmblütig und rastlos. Hoher Stoffwechsel, hohe Feuerrate.',
   },
 
+  tausendfuesser: {
+    name: 'Tausendfüßer',
+    lineage: 'Myriapoda',
+    tier: 3,
+    parent: 'trilobit',
+    archetype: 'ausgewogen',
+    targeting: 'first',
+    bonus: { kind: 'poison', percentOfDamage: 0.35, duration: 3 },
+    color: '#a0522d',
+    description: 'Lebt im Boden und kommt von unten. Jeder Biss sondert ätzendes Sekret ab.',
+  },
+  igel: {
+    name: 'Igel',
+    lineage: 'Erinaceidae (Insektenfresser)',
+    tier: 3,
+    parent: 'frosch',
+    archetype: 'schwer',
+    targeting: 'first',
+    bonus: { kind: 'shieldBreaker', percent: 0.4 },
+    color: '#bcaaa4',
+    description: 'Tausende Stacheln durchbohren jede Panzerung. Verwandt mit Maulwurf und Spitzmaus.',
+  },
+
   // --- Tier 4 (Endformen) ---------------------------------------------------
   oktopus: {
     name: 'Oktopus',
@@ -503,6 +535,61 @@ const DEFS: Readonly<Record<BaseTowerId, Def>> = {
     bonus: { kind: 'crit', chance: 0.35, multiplier: 3 },
     color: '#f4a261',
     description: 'Werkzeuggebrauch und Köpfchen: findet jede Schwachstelle.',
+  },
+  biene: {
+    name: 'Biene',
+    lineage: 'Apidae',
+    tier: 4,
+    parent: 'insekt',
+    archetype: 'schnell',
+    targeting: 'first',
+    bonus: { kind: 'gold', percent: 0.35 },
+    color: '#ffca28',
+    description: 'Fliegt überall hin und bringt Honig heim: mehr Gold aus jedem Abschuss.',
+  },
+  skolopender: {
+    name: 'Skolopender',
+    lineage: 'Scolopendromorpha',
+    tier: 4,
+    parent: 'tausendfuesser',
+    archetype: 'schnell',
+    targeting: 'first',
+    bonus: { kind: 'poison', percentOfDamage: 0.55, duration: 4 },
+    color: '#e65100',
+    description: 'Jagt unterirdisch mit Giftklauen. Das Gift frisst sich durch jede Leitung.',
+  },
+  saftkugler: {
+    name: 'Saftkugler',
+    lineage: 'Glomerida',
+    tier: 4,
+    parent: 'tausendfuesser',
+    archetype: 'schwer',
+    targeting: 'first',
+    bonus: { kind: 'splash', radius: 1.1 },
+    color: '#6d4c41',
+    description: 'Rollt sich zur Kugel und walzt durch ganze Gruppen.',
+  },
+  maulwurf: {
+    name: 'Maulwurf',
+    lineage: 'Talpidae',
+    tier: 4,
+    parent: 'igel',
+    archetype: 'schwer',
+    targeting: 'first',
+    bonus: { kind: 'slow', amount: 0.35, duration: 2 },
+    color: '#4e342e',
+    description: 'Untergräbt den Weg: Roboter sacken in die Gänge ein und kommen kaum voran.',
+  },
+  fledermaus: {
+    name: 'Fledermaus',
+    lineage: 'Chiroptera',
+    tier: 4,
+    parent: 'igel',
+    archetype: 'schnell',
+    targeting: 'first',
+    bonus: { kind: 'multi', extraTargets: 1 },
+    color: '#7e57c2',
+    description: 'Ortet per Echo jedes Ziel auf der Karte und greift zwei gleichzeitig an.',
   },
 };
 

@@ -3,7 +3,7 @@
  * (angelehnt an Bloons TD):
  *
  *  - Urmeer:       ein S-Pfad, keine Besonderheiten (Einstieg).
- *  - Urkontinent:  der Weg teilt sich; drei Biome (Luft, Land, Wasser); Bäume,
+ *  - Urkontinent:  der Weg teilt sich; vier Biome (Luft, Land, Erde, Wasser); Bäume,
  *                  Felsen und Riffe blockieren Plätze; Anhöhen geben Reichweite.
  *  - Roboterfabrik: zwei Eingänge laufen zusammen; die Roboter passen sich an
  *                  die Schadensart an, mit der du am meisten Schaden machst;
@@ -14,7 +14,7 @@
  */
 import type { Vec2 } from '../core/Vec2';
 
-export type Biome = 'luft' | 'land' | 'wasser';
+export type Biome = 'luft' | 'land' | 'erde' | 'wasser';
 
 /** Erfolgsbonus einer Karte: alle `every` Bestwellen +`perMilestone` (immer derselbe Typ pro Karte). */
 export interface MapAchievementDef {
@@ -180,7 +180,7 @@ export const START_MAP: MapDef = createMap({
 export const CONTINENT_MAP: MapDef = createMap({
   id: 'urkontinent',
   name: 'Urkontinent',
-  description: 'Der Weg teilt sich über Gebirge und Küste. Arten in ihrem Heimat-Biom (Luft, Land, Wasser) schlagen härter zu. Bäume, Felsen und Riffe lassen sich räumen, Anhöhen geben Reichweite.',
+  description: 'Der Weg teilt sich über Gebirge und Küste. Arten in ihrem Heimat-Biom (Luft, Land, Erde, Wasser) schlagen härter zu. Bäume, Felsen und Riffe lassen sich räumen, Anhöhen geben Reichweite.',
   achievement: { kind: 'fireRate', every: 50, perMilestone: 0.05 },
   unlock: { mapId: 'urmeer', wave: 60 },
   cols: 20,
@@ -205,7 +205,8 @@ export const CONTINENT_MAP: MapDef = createMap({
   ],
   biomes: [
     { biome: 'luft', x0: 0, y0: 0, x1: 19, y1: 3 },
-    { biome: 'land', x0: 0, y0: 4, x1: 19, y1: 7 },
+    { biome: 'land', x0: 0, y0: 4, x1: 9, y1: 7 },
+    { biome: 'erde', x0: 10, y0: 4, x1: 19, y1: 7 },
     { biome: 'wasser', x0: 0, y0: 8, x1: 19, y1: 11 },
   ],
   obstacles: [

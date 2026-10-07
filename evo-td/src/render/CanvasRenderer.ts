@@ -110,8 +110,10 @@ export class CanvasRenderer {
 
     const selected = state.towers.find((t) => t.id === options.selectedTowerId);
     if (selected) {
+      const range = statsFor(game.ctx, selected).range;
       ctx.beginPath();
-      ctx.arc(selected.x * cell, selected.y * cell, statsFor(game.ctx, selected).range * cell, 0, Math.PI * 2);
+      if (Number.isFinite(range)) ctx.arc(selected.x * cell, selected.y * cell, range * cell, 0, Math.PI * 2);
+      else ctx.rect(0, 0, this.canvas.width, this.canvas.height);
       ctx.fillStyle = COLORS.range;
       ctx.fill();
     }

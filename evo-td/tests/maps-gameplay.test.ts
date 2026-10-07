@@ -163,3 +163,41 @@ describe('Kartenwahl', () => {
     expect(v.achievementDamageMult).toBe(1);
   });
 });
+
+describe('Luft und Erde', () => {
+  it('Luft-Arten (auch Mutationen) haben globale Reichweite, andere nicht', async () => {
+    const { BASE_TOWER_IDS, childrenOf } = await import('../src/data/towers');
+    const { computeStats } = await import('../src/game/systems/StatsSystem');
+    const air = BASE_TOWER_IDS.filter((id) => speciesBiome(id) === 'luft');
+    expect(air.length).toBeGreaterThanOrEqual(5);
+    for (const id of air) expect(computeStats({ defId: id, level: 1, prestige: 0 }).range).toBe(Infinity);
+    const mutation = childrenOf('vogel')[0] as string;
+    expect(computeStats({ defId: mutation, level: 1, prestige: 0 }).range).toBe(Infinity);
+    expect(Number.isFinite(computeStats({ defId: 'hai', level: 1, prestige: 0 }).range)).toBe(true);
+  });
+
+  it('ein Vogel trifft Gegner am anderen Ende der Karte', () => {
+    const game = gameOn(START_MAP);
+    const t = game.build(START_MAP.buildSlots.length - 1); // hinterste Ecke
+    if (!t) throw new Error('Bau fehlgeschlagen');
+    game.forceEvolve(t.id, 'vogel');
+    const enemy = spawnEnemy(game.ctx, { defId: 'boss', element: null }, 1); // am Start
+    enemy.hp = enemy.maxHp = 1e9;
+    expect(Math.hypot(enemy.x - t.x, enemy.y - t.y)).toBeGreaterThan(15);
+    for (let i = 0; i < 180; i++) game.update(BALANCE.stepSeconds);
+    expect(enemy.hp).toBeLessThan(1e9);
+  });
+
+  it('Erde: Erdbewohner haben ihr Biom, der Urkontinent hat Erd-Plätze', () => {
+    for (const id of ['wurm', 'tausendfuesser', 'skolopender', 'saftkugler', 'maulwurf']) expect(speciesBiome(id)).toBe('erde');
+    const game = gameOn();
+    const earth = CONTINENT_MAP.slotBiome.findIndex(
+      (b, i) => b === 'erde' && !CONTINENT_MAP.highGround.has(i) && !CONTINENT_MAP.obstacles.some((o) => o.slot === i),
+    );
+    expect(earth).toBeGreaterThanOrEqual(0);
+    const t = game.build(earth);
+    if (!t) throw new Error('Bau fehlgeschlagen');
+    game.forceEvolve(t.id, 'wurm');
+    expect(statsFor(game.ctx, t).breakdown.damage.gelaende).toBe(BIOME_BONUS.damage);
+  });
+});

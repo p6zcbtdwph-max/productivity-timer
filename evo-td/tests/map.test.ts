@@ -35,7 +35,7 @@ describe('Karten', () => {
     // Urkontinent: Weg teilt sich (gleicher Start), Fabrik: zwei Eingänge (verschiedene Starts)
     expect(kontinent.paths[0]?.[0]).toEqual(kontinent.paths[1]?.[0]);
     expect(fabrik.paths[0]?.[0]).not.toEqual(fabrik.paths[1]?.[0]);
-    expect(new Set(kontinent.slotBiome.filter(Boolean)).size).toBe(3);
+    expect(new Set(kontinent.slotBiome.filter(Boolean)).size).toBe(4);
     expect(kontinent.obstacles.length).toBeGreaterThan(0);
     expect(fabrik.obstacles.every((o) => o.kind === 'schrott')).toBe(true);
     expect(fabrik.adaptive).toBeDefined();

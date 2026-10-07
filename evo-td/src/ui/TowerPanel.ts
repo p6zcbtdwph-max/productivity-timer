@@ -142,7 +142,7 @@ export class TowerPanel {
         el('dt', {}, ['Feuerrate']),
         el('dd', {}, [`${(1 / stats.cooldown).toFixed(2)}/s`]),
         el('dt', {}, ['Reichweite']),
-        el('dd', {}, [`${stats.range.toFixed(1)} Zellen`]),
+        el('dd', {}, [Number.isFinite(stats.range) ? `${stats.range.toFixed(1)} Zellen` : 'global (fliegt)']),
         el('dt', {}, ['Angriff']),
         el('dd', {}, [describeAttack(stats)]),
         el('dt', {}, ['Kills']),
@@ -184,7 +184,7 @@ function describeBreakdown(b: Breakdown): string {
   const num = (n: number): string => (Math.abs(n) < 100 ? n.toFixed(2) : formatNumber(n));
   const parts = [num(b.base)];
   const factor = (value: number, label: string): void => {
-    if (Math.abs(value - 1) > 0.0005) parts.push(`× ${value.toFixed(2)} (${label})`);
+    if (Math.abs(value - 1) >= 0.005) parts.push(`× ${value.toFixed(2)} (${label})`);
   };
   factor(b.art, 'Art');
   factor(b.ausruestung, 'Ausrüstung');
