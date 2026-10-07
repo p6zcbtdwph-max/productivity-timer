@@ -30,7 +30,7 @@ export function evolutionChanceFor(ctx: GameContext, tower: Tower): number {
     tower.level,
     countSameType(ctx.state.towers, tower.defId),
     tower.prestige,
-    globalModifiers(ctx.state).evolution + metaValues(ctx.meta).evolutionBase,
+    globalModifiers(ctx.state).evolution + metaValues(ctx.meta).evolutionBase + metaValues(ctx.meta).passiveSum.evolution,
   );
 }
 

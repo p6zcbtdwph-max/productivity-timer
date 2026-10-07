@@ -1,5 +1,6 @@
 import type { Item, ItemQuality } from '../data/items';
 import type { TowerId } from '../data/towers';
+import type { TreeId } from '../data/garden';
 import type { ObstacleKind } from '../data/map';
 import type { DamageCategory } from './GameState';
 import type { ModifierKind } from '../data/upgrades';
@@ -22,6 +23,7 @@ export interface GameEvents extends Record<string, unknown> {
   waveStarted: { wave: number; tier: number };
   waveCleared: { wave: number; bonus: number };
   gameOver: { wave: number };
+  seedFound: { tree: TreeId; wave: number };
   obstacleCleared: { slot: number; kind: ObstacleKind; cost: number };
   robotsAdapted: { category: DamageCategory; resist: number };
   runEnded: { report: DnaReport };

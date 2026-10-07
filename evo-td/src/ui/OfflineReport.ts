@@ -5,6 +5,7 @@
 import { BALANCE } from '../config/balance';
 import type { GameLoop } from '../core/GameLoop';
 import { getTowerDef } from '../data/towers';
+import { TREE_DEFS } from '../data/garden';
 import type { Game } from '../game/Game';
 import { simulateOfflineRun, type OfflineRunReport } from '../game/OfflineRun';
 import { metaValues } from '../game/systems/MetaSystem';
@@ -82,6 +83,10 @@ export class OfflineReport {
 
     const list = el('ul');
     if (passive.dna > 0) list.append(el('li', {}, [`🗺 Reviere: +${formatNumber(passive.dna)} DNA`]));
+    if (passive.garden.resin > 0) list.append(el('li', {}, [`🍯 Garten: +${formatNumber(passive.garden.resin)} Harz`]));
+    for (const g of passive.garden.levelUps) {
+      list.append(el('li', {}, [`🌳 ${TREE_DEFS[g.tree].name} ist auf Level ${g.level} gewachsen`]));
+    }
     for (const e of passive.evolutions) {
       list.append(el('li', {}, [`🥚 Kammer: ${getTowerDef(e.from).name} → ${getTowerDef(e.to).name}`]));
     }

@@ -15,6 +15,7 @@ import type { MetaState, PassiveAnimal } from '../MetaState';
 import { bestWaveOn, isMapUnlocked, isUnlocked, metaValues } from './MetaSystem';
 import { childrenOf } from '../../data/towers';
 import { recordSpecies } from './CompendiumSystem';
+import { tickGarden, type GardenReport } from './GardenSystem';
 
 const P = BALANCE.passive;
 
@@ -129,6 +130,7 @@ export interface PassiveReport {
   cappedSeconds: number;
   dna: number;
   evolutions: { animalId: number; from: TowerId; to: TowerId }[];
+  garden: GardenReport;
 }
 
 /**
@@ -142,8 +144,9 @@ export function tickPassive(meta: MetaState, nowMs: number): PassiveReport {
   passive.lastTick = nowMs;
   const cap = metaValues(meta).offlineCapSeconds;
   const seconds = Math.min(raw, cap);
-  const report: PassiveReport = { seconds, cappedSeconds: raw - seconds, dna: 0, evolutions: [] };
+  const report: PassiveReport = { seconds, cappedSeconds: raw - seconds, dna: 0, evolutions: [], garden: { resin: 0, levelUps: [] } };
   if (seconds <= 0) return report;
+  report.garden = tickGarden(meta, seconds);
 
   // DNA aus Revieren (mit den Werten vom Beginn des Zeitraums)
   const earned = (totalDnaPerHour(meta) * seconds) / 3600 + passive.dnaFraction;

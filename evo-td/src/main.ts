@@ -18,6 +18,8 @@ import { EventLog } from './ui/EventLog';
 import { GlobalPanel } from './ui/GlobalPanel';
 import { ChambersPanel } from './ui/ChambersPanel';
 import { CompendiumPanel } from './ui/CompendiumPanel';
+import { GardenPanel } from './ui/GardenPanel';
+import { TREE_DEFS } from './data/garden';
 import { OfflineReport } from './ui/OfflineReport';
 import { tickPassive } from './game/systems/PassiveSystem';
 import { CATEGORY_NAMES } from './game/systems/AdaptationSystem';
@@ -75,6 +77,8 @@ const loop = new GameLoop(
         chambersPanel.invalidate();
         game.invalidateStats();
       }
+      for (const g of report.garden.levelUps) eventLog.push(`🌳 ${TREE_DEFS[g.tree].name} ist auf Level ${g.level} gewachsen`, 'evo');
+      if (report.garden.levelUps.length > 0) game.invalidateStats();
     }
     const highlightTowerIds = activeAction === 'fuse' && selectedTowerId !== undefined
       ? game.fusionCandidatesFor(selectedTowerId).map((t) => t.id)
@@ -107,6 +111,9 @@ const loop = new GameLoop(
         break;
       case 'compendium':
         compendiumPanel.render();
+        break;
+      case 'garden':
+        gardenPanel.render();
         break;
     }
   },
@@ -161,6 +168,7 @@ const treeView = new TreeView(game);
 const globalPanel = new GlobalPanel(game, endRun, switchMap);
 const chambersPanel = new ChambersPanel(game);
 const compendiumPanel = new CompendiumPanel(game);
+const gardenPanel = new GardenPanel(game, () => game.invalidateStats());
 const eventLog = new EventLog(game);
 new ElementLegend();
 new DevPanel(game, loop, () => {
@@ -183,6 +191,10 @@ game.bus.on('towerLevelUp', ({ tower }) => {
   if (tower.level % 10 === 0) renderer.float(tower.x, tower.y - 0.4, `Lvl ${tower.level}`, '#80deea', 1.5);
 });
 game.bus.on('enemyRevived', ({ enemy }) => renderer.float(enemy.x, enemy.y, 'Titan!', '#ffffff'));
+game.bus.on('seedFound', ({ tree }) => {
+  renderer.float(game.map.cols / 2, 1.5, `🌰 ${TREE_DEFS[tree].name}-Samen!`, '#9be7a0', 2.5);
+  gardenPanel.invalidate();
+});
 game.bus.on('robotsAdapted', ({ category, resist }) => {
   renderer.float(game.map.cols / 2, 1, `🤖 ${CATEGORY_NAMES[category]} −${Math.round(resist * 100)} %`, '#ff5252', 3);
 });

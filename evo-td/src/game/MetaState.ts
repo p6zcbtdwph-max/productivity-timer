@@ -5,6 +5,7 @@
 import { META_UPGRADE_IDS, type MetaUpgradeId } from '../data/meta';
 import type { CompendiumRecord } from '../data/compendium';
 import type { TowerId } from '../data/towers';
+import type { TreeId } from '../data/garden';
 import type { ModifierKind } from '../data/upgrades';
 
 export interface MetaState {
@@ -28,6 +29,29 @@ export interface MetaState {
   passive: PassiveState;
   /** Rekorde je Art (Kompendium). */
   compendium: Record<TowerId, CompendiumRecord>;
+  garden: GardenState;
+}
+
+export interface GardenPot {
+  tree: TreeId | null;
+  level: number;
+  /** Stunden Fortschritt zum nächsten Level. */
+  growth: number;
+}
+
+export interface GardenState {
+  pots: GardenPot[];
+  /** Gefundene, noch nicht gepflanzte Samen. */
+  seeds: Partial<Record<TreeId, number>>;
+  /** Harz (Währung), ganzzahlig ausgezahlt. */
+  resin: number;
+  resinFraction: number;
+  resinEarned: number;
+  seedsFound: number;
+}
+
+export function createGarden(): GardenState {
+  return { pots: [], seeds: {}, resin: 0, resinFraction: 0, resinEarned: 0, seedsFound: 0 };
 }
 
 /** Ein Tier aus der Evolutionskammer: entweder in einer Kammer oder in einem Revier. */
@@ -77,6 +101,7 @@ export function createInitialMeta(): MetaState {
       dnaEarned: 0,
     },
     compendium: {},
+    garden: createGarden(),
   };
 }
 
@@ -94,6 +119,7 @@ export function normalizeMeta(loaded: Partial<MetaState> | undefined): MetaState
     autoUpgrades: { ...fresh.autoUpgrades, ...loaded.autoUpgrades },
     passive: { ...fresh.passive, ...loaded.passive },
     compendium: { ...loaded.compendium },
+    garden: { ...fresh.garden, ...loaded.garden },
   };
 }
 

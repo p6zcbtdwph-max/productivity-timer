@@ -2,6 +2,7 @@
 import { describeItem, QUALITY_DEFS } from '../data/items';
 import { getTowerDef } from '../data/towers';
 import { UPGRADE_DEFS } from '../data/upgrades';
+import { RARITIES, TREE_DEFS } from '../data/garden';
 import { CATEGORY_NAMES } from '../game/systems/AdaptationSystem';
 import type { Game } from '../game/Game';
 import { $, el } from './dom';
@@ -40,6 +41,10 @@ export class EventLog {
       this.push(`🤖 Die Roboter passen sich an: ${CATEGORY_NAMES[category]}-Schaden −${Math.round(resist * 100)} %`, 'bad');
     });
     game.bus.on('obstacleCleared', ({ cost }) => this.push(`🪓 Hindernis geräumt (−${cost} Gold)`));
+    game.bus.on('seedFound', ({ tree, wave }) => {
+      const def = TREE_DEFS[tree];
+      this.push(`🌰 Samen gefunden (Welle ${wave}): ${def.name}, ${RARITIES[def.rarity].name}`, 'evo');
+    });
     game.bus.on('enemyRevived', () => this.push('Titan-Kern: ein Roboter steht wieder auf.', 'bad'));
     game.bus.on('enemyLeaked', () => this.push('Ein Roboter ist durchgebrochen!', 'bad'));
     game.bus.on('gameOver', ({ wave }) => this.push(`Game Over in Welle ${wave}.`, 'bad'));

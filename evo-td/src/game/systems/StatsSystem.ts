@@ -17,6 +17,7 @@
  *           × (1 + Kompendium)             Rekorde aller je gezüchteten Arten
  *           × Gelände                      Heimat-Biom ×1.3 (Schaden), Anhöhe ×1.2 (Reichweite)
  *           × Flug                         Luft-Arten ×0.7 Schaden (dafür globale Reichweite)
+ *           × (1 + Garten)                 Bäume im Garten
  *
  *   Feuerrate und Reichweite folgen demselben Muster (ohne Mutations-Faktoren).
  *   Krit-Chance: additiv, gedeckelt. Krit-Multiplikator: additiv.
@@ -67,6 +68,7 @@ export interface Breakdown {
   kompendium: number;
   gelaende: number;
   flug: number;
+  garten: number;
   result: number;
 }
 
@@ -178,8 +180,11 @@ export function statsFor(ctx: GameContext, tower: Tower): EffectiveStats {
 }
 
 function breakdown(parts: Omit<Breakdown, 'result'>): Breakdown {
-  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge, kompendium, gelaende, flug } = parts;
-  return { ...parts, result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge * kompendium * gelaende * flug };
+  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge, kompendium, gelaende, flug, garten } = parts;
+  return {
+    ...parts,
+    result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge * kompendium * gelaende * flug * garten,
+  };
 }
 
 /** Anzahl direkt angrenzender Türme derselben Art. */
@@ -271,6 +276,7 @@ export function computeStats(
   }
 
   const comp = env.meta.compendium;
+  const extra = env.meta.passiveSum;
   const twins = twinCount(tower.defId, env);
   const syn = BALANCE.synergy;
   const damageB = breakdown({
@@ -286,6 +292,7 @@ export function computeStats(
     kompendium: 1 + comp.damage,
     gelaende: env.terrain?.biomeMatch ? BIOME_BONUS.damage : 1,
     flug: hasGlobalRange(tower.defId) ? BIOME_BONUS.airDamage : 1,
+    garten: 1 + env.meta.garden.damage,
   });
   const fireRateB = breakdown({
     base: 1 / base.cooldown,
@@ -300,6 +307,7 @@ export function computeStats(
     kompendium: 1 + comp.fireRate,
     gelaende: 1,
     flug: 1,
+    garten: 1 + env.meta.garden.fireRate,
   });
   const rangeB = breakdown({
     base: base.range,
@@ -314,6 +322,7 @@ export function computeStats(
     kompendium: 1 + comp.range,
     gelaende: env.terrain?.highGround ? BIOME_BONUS.highGroundRange : 1,
     flug: 1,
+    garten: 1 + env.meta.garden.range,
   });
 
   const damage = damageB.result;
@@ -327,13 +336,13 @@ export function computeStats(
     cooldown: 1 / fireRateB.result,
     range: hasGlobalRange(tower.defId) ? Infinity : rangeB.result,
     projectileSpeed: base.projectileSpeed,
-    critChance: Math.min(0.9, critChance + comp.critChance),
-    critMultiplier: (critChance + comp.critChance > 0 ? Math.max(2, critMultiplier) : critMultiplier) + critBonus + comp.critDamage,
+    critChance: Math.min(0.9, critChance + extra.critChance),
+    critMultiplier: (critChance + extra.critChance > 0 ? Math.max(2, critMultiplier) : critMultiplier) + critBonus + extra.critDamage,
     targets: 1 + Math.round(extraTargets),
     splashRadius,
-    shieldBreaker: shieldBreaker + comp.shieldBreaker,
-    goldMultiplier: (1 + artGold) * (1 + m.passive) * (1 + comp.gold),
-    xpMultiplier: (1 + artXp) * (1 + m.passive) * (1 + comp.xp),
+    shieldBreaker: shieldBreaker + extra.shieldBreaker,
+    goldMultiplier: (1 + artGold) * (1 + m.passive) * (1 + extra.gold),
+    xpMultiplier: (1 + artXp) * (1 + m.passive) * (1 + extra.xp),
     onHit,
     targeting: def.targeting,
     breakdown: { damage: damageB, fireRate: fireRateB, range: rangeB },

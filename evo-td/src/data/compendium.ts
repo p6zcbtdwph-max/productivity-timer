@@ -15,7 +15,8 @@ export type CompendiumEffect =
   | 'xp'
   | 'enemySlow'
   | 'shieldBreaker'
-  | 'antiHeal';
+  | 'antiHeal'
+  | 'evolution';
 
 export interface CompendiumEffectDef {
   id: CompendiumEffect;
@@ -41,6 +42,8 @@ export const COMPENDIUM_EFFECTS: Readonly<Record<CompendiumEffect, CompendiumEff
   enemySlow: { id: 'enemySlow', name: 'Roboter langsamer', perPoint: 0.0001, cap: 0.3, format: (v) => `-${pct(v)} Robotertempo` },
   shieldBreaker: { id: 'shieldBreaker', name: 'Schildbrecher', perPoint: 0.001, format: (v) => `+${pct(v)} gegen Schilde` },
   antiHeal: { id: 'antiHeal', name: 'Anti-Heilung', perPoint: 0.0003, cap: 0.6, format: (v) => `-${pct(v)} Nanobot-Heilung` },
+  /** Nur aus dem Garten (Farn): absolute Evolutionschance. */
+  evolution: { id: 'evolution', name: 'Evolutionschance', perPoint: 0, cap: 0.1, format: (v) => `+${pct(v, 2)} Evolutionschance` },
 };
 
 export const COMPENDIUM_EFFECT_IDS = Object.keys(COMPENDIUM_EFFECTS) as CompendiumEffect[];

@@ -17,6 +17,7 @@
         <span class="hud-item">Einzeller: <strong id="hud-cost">0</strong> 💰</span>
         <span class="hud-item" title="Verlegungen">🚚 <strong id="hud-relocates">0</strong></span>
         <span class="hud-item" title="DNA (Globaler Shop)">🧬 <strong id="hud-dna">0</strong></span>
+        <span class="hud-item" title="Harz (Garten)">🍯 <strong id="hud-resin">0</strong></span>
         <span class="hud-item hidden" id="hud-adapt" title="Roboter-Resistenzen (Roboterfabrik)"></span>
       </div>
       <div class="hud-group">
@@ -64,6 +65,7 @@
           <button class="tab" data-tab="global">Global</button>
           <button class="tab" data-tab="chambers">Kammern</button>
           <button class="tab" data-tab="compendium">Kompendium</button>
+          <button class="tab" data-tab="garden">Garten</button>
           <button class="tab" data-tab="log">Protokoll</button>
         </nav>
         <section data-panel="tower">
@@ -87,6 +89,9 @@
         </section>
         <section data-panel="compendium" class="hidden">
           <div id="compendium-panel" class="card"></div>
+        </section>
+        <section data-panel="garden" class="hidden">
+          <div id="garden-panel" class="card"></div>
         </section>
         <section data-panel="log" class="hidden">
           <div class="card">

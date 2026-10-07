@@ -435,3 +435,12 @@ body {
   padding-top: 3px;
   padding-bottom: 3px;
 }
+
+.seed-chip {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2px 8px;
+  margin: 2px 4px 2px 0;
+  font-size: 0.85rem;
+}

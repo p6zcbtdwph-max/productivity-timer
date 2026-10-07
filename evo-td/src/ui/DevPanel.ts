@@ -5,6 +5,8 @@
 import { BALANCE } from '../config/balance';
 import { ARTIFACT_ORDER } from '../data/meta';
 import { MAPS } from '../data/map';
+import { Rng } from '../core/Rng';
+import { rollTree, tickGarden } from '../game/systems/GardenSystem';
 import { BASE_TOWER_IDS, childrenOf, getTowerDef, type TowerId } from '../data/towers';
 import type { GameLoop } from '../core/GameLoop';
 import type { Game } from '../game/Game';
@@ -70,6 +72,14 @@ export class DevPanel {
         this.button('Alle Artefakte', () => {
           for (const a of ARTIFACT_ORDER) if (g.meta.upgrades[a.id] === 0) g.meta.upgrades[a.id] = 1;
         }),
+        this.button('+5 Samen', () => {
+          const rng = new Rng(Date.now() >>> 0);
+          for (let i = 0; i < 5; i++) {
+            const tree = rollTree(rng);
+            g.meta.garden.seeds[tree] = (g.meta.garden.seeds[tree] ?? 0) + 1;
+          }
+        }),
+        this.button('Garten +24 h', () => tickGarden(g.meta, 24 * 3600)),
         this.button('Alle Karten frei', () => {
           for (const map of MAPS) {
             if (map.unlock) g.meta.bestWaveByMap[map.unlock.mapId] = Math.max(g.meta.bestWaveByMap[map.unlock.mapId] ?? 0, map.unlock.wave);

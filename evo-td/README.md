@@ -92,6 +92,32 @@ Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerech
   (+passive DNA), Winterschlaf-Höhle (+2 h Offline je Stufe), Winterfell (+5 % Offline-Kraft je Stufe).
 - Entwickler-Panel: "Zeit +1 h" simuliert eine Stunde Abwesenheit.
 
+## Garten
+
+Reiter "Garten": Bäume aus der Pflanzen-Evolution wachsen in Töpfen.
+
+- **Töpfe** mit DNA freischalten (30, dann ×3, maximal 6).
+- **Samen** findet man zufällig nach geschafften Wellen (ab Welle 5: 4 %, Bosswellen 40 %).
+  Seltenheit: häufig 70 %, selten 22 %, sehr selten 7 %, legendär 1 %. Samen bleiben über Runs erhalten.
+- **Wachstum** in Echtzeit (auch offline, wie Kammern): Level n → n+1 dauert n Stunden
+  (Level 10 nach ~2 Tagen, Level 30 nach ~3 Wochen), maximal Level 100.
+- **Boni** steigen mit Level und Seltenheit (×1 / ×1,5 / ×2 / ×3). Schaden, Feuerrate und
+  Reichweite als eigener Topf "Garten", der Rest wirkt wie Kompendium-Boni.
+- **Harz** (🍯): neue Währung, `0,2 × Level × Seltenheit` pro Stunde und Baum. Verwendung folgt.
+
+| Baum | Seltenheit | Bonus je Level |
+|---|---|---|
+| Moos | häufig | +1 % Gold |
+| Farn | häufig | +0,05 % Evolutionschance |
+| Schachtelhalm | häufig | +1 % XP |
+| Ginkgo | selten | +0,4 % Reichweite |
+| Kiefer | selten | +0,8 % Feuerrate |
+| Eiche | selten | +1 % Schaden |
+| Magnolie | sehr selten | +0,2 % Krit-Chance |
+| Mammutbaum | legendär | +1,2 % Schaden |
+
+Entwickler-Panel: "+5 Samen" und "Garten +24 h".
+
 ## Kompendium
 
 Reiter "Kompendium": jede Art, die du je hattest (Run, Winterruhe oder Evolutionskammer), mit
@@ -138,6 +164,7 @@ Schaden = Basis(Tier, Archetyp)
         × (1 + Kompendium)          Rekorde aller je gezüchteten Arten
         × Gelände                   Heimat-Biom ×1,3 (Reichweite: Anhöhe ×1,2)
         × Flug                      Luft-Arten ×0,7
+        × (1 + Garten)              Bäume im Garten
 ```
 
 Feuerrate und Reichweite folgen demselben Muster. Krit-Chance additiv (gedeckelt), Krit-Schaden

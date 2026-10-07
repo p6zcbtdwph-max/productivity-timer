@@ -13,6 +13,7 @@ import { allocId } from '../GameState';
 import type { Rng } from '../../core/Rng';
 import { metaValues } from './MetaSystem';
 import { adaptRobots } from './AdaptationSystem';
+import { maybeDropSeed } from './GardenSystem';
 
 export interface SpawnOrder {
   defId: EnemyId;
@@ -51,7 +52,7 @@ export function spawnEnemy(ctx: GameContext, order: SpawnOrder, wave: number): E
   if (!start) throw new Error('Karte hat keine Wegpunkte');
   const element = order.element ? getElementDef(order.element) : undefined;
   const hp = BALANCE.enemies.baseHp * def.hpMult * mult;
-  const comp = metaValues(ctx.meta).compendium;
+  const comp = metaValues(ctx.meta).passiveSum;
   const enemy: Enemy = {
     id: allocId(ctx.state),
     defId: order.defId,
@@ -111,5 +112,6 @@ export function onEnemyRemoved(ctx: GameContext): void {
     ctx.state.gold += bonus;
     ctx.state.stats.goldEarned += bonus;
     ctx.bus.emit('waveCleared', { wave: wave.current, bonus });
+    maybeDropSeed(ctx, wave.current, wave.current % BALANCE.waves.bossEvery === 0);
   }
 }

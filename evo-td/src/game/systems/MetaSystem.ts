@@ -16,6 +16,7 @@ import {
 import { getTowerDef, parentOf, unlockCost, UNLOCK_FROM_TIER, type TowerId } from '../../data/towers';
 import { overallBestWave, type MetaState } from '../MetaState';
 import { compendiumTotals, type CompendiumTotals } from './CompendiumSystem';
+import { gardenTotals } from './GardenSystem';
 
 export function metaLevel(meta: MetaState, id: MetaUpgradeId): number {
   return meta.upgrades[id] ?? 0;
@@ -85,11 +86,20 @@ export interface MetaValues {
   offlinePower: number;
   /** Kompendium-Boni aller je gezüchteten Arten. */
   compendium: CompendiumTotals;
+  /** Boni der Bäume im Garten. */
+  garden: CompendiumTotals;
+  /** Kompendium + Garten für alle Effekte ohne eigenen Topf (Krit, Gold, XP, ...). */
+  passiveSum: CompendiumTotals;
 }
 
 export function metaValues(meta: MetaState): MetaValues {
   const d = META_UPGRADE_DEFS;
   const lv = (id: MetaUpgradeId): number => metaLevel(meta, id);
+  const compendium = compendiumTotals(meta);
+  const garden = gardenTotals(meta);
+  const passiveSum = Object.fromEntries(
+    (Object.keys(compendium) as (keyof CompendiumTotals)[]).map((k) => [k, compendium[k] + garden[k]]),
+  ) as CompendiumTotals;
   const ach = { damage: 0, fireRate: 0, dna: 0 };
   for (const a of achievementStatus(meta)) ach[a.kind] += a.bonus;
   return {
@@ -115,7 +125,9 @@ export function metaValues(meta: MetaState): MetaValues {
     passiveDnaMult: 1 + d.amber.perLevel * lv('amber'),
     offlineCapSeconds: (BALANCE.passive.offlineCapHours + d.hibernation.perLevel * lv('hibernation')) * 3600,
     offlinePower: Math.min(1, BALANCE.passive.offlinePower + d.winterFur.perLevel * lv('winterFur')),
-    compendium: compendiumTotals(meta),
+    compendium,
+    garden,
+    passiveSum,
   };
 }
 
