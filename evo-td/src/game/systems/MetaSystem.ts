@@ -16,7 +16,7 @@ import {
 import { getTowerDef, parentOf, unlockCost, UNLOCK_FROM_TIER, type TowerId } from '../../data/towers';
 import { overallBestWave, type MetaState } from '../MetaState';
 import { compendiumTotals, type CompendiumTotals } from './CompendiumSystem';
-import { gardenTotals } from './GardenSystem';
+import { gardenTotals, gardenUpgradeValues } from './GardenSystem';
 
 export function metaLevel(meta: MetaState, id: MetaUpgradeId): number {
   return meta.upgrades[id] ?? 0;
@@ -95,6 +95,7 @@ export interface MetaValues {
 export function metaValues(meta: MetaState): MetaValues {
   const d = META_UPGRADE_DEFS;
   const lv = (id: MetaUpgradeId): number => metaLevel(meta, id);
+  const care = gardenUpgradeValues(meta);
   const compendium = compendiumTotals(meta);
   const garden = gardenTotals(meta);
   const passiveSum = Object.fromEntries(
@@ -120,10 +121,10 @@ export function metaValues(meta: MetaState): MetaValues {
     autoFusion: lv('autoFusion') > 0,
     autoUpgrades: lv('autoUpgrades') > 0,
     autoArtifacts: lv('autoArtifacts') > 0,
-    chamberSpeedMult: 1 + d.hatchery.perLevel * lv('hatchery'),
+    chamberSpeedMult: (1 + d.hatchery.perLevel * lv('hatchery')) * care.chamberSpeedMult,
     mapSlots: BALANCE.passive.mapSlots + d.territory.perLevel * lv('territory'),
-    passiveDnaMult: 1 + d.amber.perLevel * lv('amber'),
-    offlineCapSeconds: (BALANCE.passive.offlineCapHours + d.hibernation.perLevel * lv('hibernation')) * 3600,
+    passiveDnaMult: (1 + d.amber.perLevel * lv('amber')) * care.territoryDnaMult,
+    offlineCapSeconds: (BALANCE.passive.offlineCapHours + d.hibernation.perLevel * lv('hibernation') + care.offlineHours) * 3600,
     offlinePower: Math.min(1, BALANCE.passive.offlinePower + d.winterFur.perLevel * lv('winterFur')),
     compendium,
     garden,

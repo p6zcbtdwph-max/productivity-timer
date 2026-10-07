@@ -1,8 +1,18 @@
 /** Garten: Töpfe, Samen, Bäume, Harz. */
 import { COMPENDIUM_EFFECT_IDS, COMPENDIUM_EFFECTS } from '../data/compendium';
-import { GARDEN, hoursForNextLevel, RARITIES, resinPerHour, TREE_DEFS, TREE_IDS, treeBonus, type TreeId } from '../data/garden';
+import { GARDEN, GARDEN_UPGRADES, hoursForNextLevel, RARITIES, resinPerHour, TREE_DEFS, TREE_IDS, treeBonus, type TreeId } from '../data/garden';
 import type { Game } from '../game/Game';
-import { gardenTotals, plantSeed, potUnlockCost, unlockPot, uproot } from '../game/systems/GardenSystem';
+import {
+  buyGardenUpgrade,
+  gardenTotals,
+  gardenUpgradeLevel,
+  gardenUpgradePrice,
+  gardenUpgradeValues,
+  plantSeed,
+  potUnlockCost,
+  unlockPot,
+  uproot,
+} from '../game/systems/GardenSystem';
 import { $, el, formatNumber } from './dom';
 
 function duration(hours: number): string {
@@ -37,11 +47,12 @@ export class GardenPanel {
   render(): void {
     const { meta } = this.game;
     const garden = meta.garden;
-    const key = JSON.stringify([meta.dna, garden.resin, garden.seeds, garden.pots.map((p) => [p.tree, p.level, Math.floor(p.growth * 60)])]);
+    const key = JSON.stringify([garden.resin, garden.seeds, garden.upgrades, garden.pots.map((p) => [p.tree, p.level, Math.floor(p.growth * 60)])]);
     if (key === this.lastKey) return;
     this.lastKey = key;
 
-    const resinRate = garden.pots.reduce((sum, p) => sum + (p.tree ? resinPerHour(p.tree, p.level) : 0), 0);
+    const care = gardenUpgradeValues(meta);
+    const resinRate = garden.pots.reduce((sum, p) => sum + (p.tree ? resinPerHour(p.tree, p.level) : 0), 0) * care.resinMult;
 
     // --- Gesamtbonus ---------------------------------------------------------
     const totals = gardenTotals(meta);
@@ -78,7 +89,7 @@ export class GardenPanel {
       const tree = TREE_DEFS[pot.tree as TreeId];
       const rarity = RARITIES[tree.rarity];
       const need = hoursForNextLevel(pot.level);
-      const progress = pot.level >= GARDEN.maxLevel ? 'ausgewachsen' : `Level ${pot.level + 1} in ${duration(need - pot.growth)} (${Math.floor((pot.growth / need) * 100)} %)`;
+      const progress = pot.level >= GARDEN.maxLevel ? 'ausgewachsen' : `Level ${pot.level + 1} in ${duration((need - pot.growth) / care.growthMult)} (${Math.floor((pot.growth / need) * 100)} %)`;
       const dig = el('button', { className: 'btn small danger' }, ['Ausgraben']);
       dig.addEventListener('click', () => {
         if (confirm(`${tree.name} (Level ${pot.level}) ausgraben? Der Baum ist dann verloren.`)) this.act(() => uproot(meta, index))();
@@ -93,7 +104,7 @@ export class GardenPanel {
           ]),
           dig,
           el('span', { className: 'desc' }, [
-            `${COMPENDIUM_EFFECTS[tree.effect].format(treeBonus(pot.tree as TreeId, pot.level))} · ${resinPerHour(pot.tree as TreeId, pot.level).toFixed(1)} Harz/h · ${progress}`,
+            `${COMPENDIUM_EFFECTS[tree.effect].format(treeBonus(pot.tree as TreeId, pot.level) * care.bonusMult)} · ${(resinPerHour(pot.tree as TreeId, pot.level) * care.resinMult).toFixed(1)} Harz/h · ${progress}`,
           ]),
           el('span', { className: 'desc muted' }, [`${tree.lineage}. ${tree.description}`]),
         ]),
@@ -101,15 +112,37 @@ export class GardenPanel {
     });
     const nextPot = potUnlockCost(meta);
     if (nextPot !== undefined) {
-      const b = el('button', { className: 'btn small', disabled: meta.dna < nextPot }, [`${formatNumber(nextPot)} 🧬`]);
+      const b = el('button', { className: 'btn small', disabled: garden.resin < nextPot }, [`${formatNumber(nextPot)} 🍯`]);
       b.addEventListener('click', this.act(() => unlockPot(meta)));
       pots.append(el('li', {}, [el('span', {}, [`🔒 Topf ${garden.pots.length + 1} freischalten`]), b]));
     }
 
+    // --- Pflege (Harz) ---------------------------------------------------------
+    const careList = (group: 'garten' | 'passiv'): HTMLUListElement => {
+      const list = el('ul', { className: 'shop-list' });
+      for (const def of GARDEN_UPGRADES.filter((u) => u.group === group)) {
+        const level = gardenUpgradeLevel(meta, def.id);
+        const price = gardenUpgradePrice(meta, def.id);
+        const control =
+          price === undefined
+            ? el('span', { className: 'muted small' }, ['max'])
+            : el('button', { className: 'btn small', disabled: garden.resin < price }, [`${formatNumber(price)} 🍯`]);
+        if (price !== undefined) control.addEventListener('click', this.act(() => buyGardenUpgrade(meta, def.id)));
+        list.append(
+          el('li', {}, [
+            el('span', {}, [`${def.name} `, el('span', { className: 'muted' }, [`${level}/${def.maxLevel}`])]),
+            control,
+            el('span', { className: 'desc' }, [def.description]),
+          ]),
+        );
+      }
+      return list;
+    };
+
     this.root.replaceChildren(
       el('h2', {}, [`🌳 Garten · 🍯 ${formatNumber(garden.resin)} Harz`]),
       el('p', { className: 'muted small' }, [
-        `+${resinRate.toFixed(1)} Harz/h. Harz ist eine neue Währung, ihre Verwendung kommt später. `,
+        `+${resinRate.toFixed(1)} Harz/h. Mit Harz schaltest du Töpfe frei und verbesserst Garten und Passiv-Modus. `,
         'Bäume wachsen in Echtzeit, auch wenn das Spiel geschlossen ist, aber langsam: Level n → n+1 dauert n Stunden.',
       ]),
       el('h3', {}, ['Bonus aller Bäume']),
@@ -118,6 +151,10 @@ export class GardenPanel {
       seeds,
       el('h3', {}, ['Töpfe']),
       pots,
+      el('h3', {}, ['Pflege: Garten']),
+      careList('garten'),
+      el('h3', {}, ['Pflege: Passiv-Modus']),
+      careList('passiv'),
     );
   }
 }

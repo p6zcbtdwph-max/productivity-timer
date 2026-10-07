@@ -5,7 +5,7 @@ import { START_MAP } from '../src/data/map';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
 import { createInitialMeta, normalizeMeta } from '../src/game/MetaState';
-import { gardenTotals, plantSeed, potUnlockCost, rollTree, seedChance, tickGarden, unlockPot, uproot } from '../src/game/systems/GardenSystem';
+import { buyGardenUpgrade, gardenTotals, gardenUpgradePrice, plantSeed, potUnlockCost, rollTree, seedChance, tickGarden, unlockPot, uproot } from '../src/game/systems/GardenSystem';
 import { metaValues } from '../src/game/systems/MetaSystem';
 import { tickPassive } from '../src/game/systems/PassiveSystem';
 import { computeStats, EMPTY_ENVIRONMENT } from '../src/game/systems/StatsSystem';
@@ -14,21 +14,25 @@ import { onEnemyRemoved } from '../src/game/systems/WaveSystem';
 const HOUR = 3600;
 
 function withPot() {
-  const meta = createInitialMeta();
-  meta.dna = 1e9;
-  unlockPot(meta);
+  const meta = createInitialMeta(); // startet mit einem Topf
   meta.garden.seeds.eiche = 2;
   return meta;
 }
 
 describe('Garten: Töpfe und Pflanzen', () => {
-  it('Töpfe kosten DNA, ×3 je Topf, mit Obergrenze', () => {
+  it('Start mit einem Topf; weitere nur für Harz (nicht DNA), ×3 je Topf, mit Obergrenze', () => {
     const meta = createInitialMeta();
+    expect(meta.garden.pots).toHaveLength(1);
     meta.dna = 1e9;
+    expect(unlockPot(meta)).toBe(false); // DNA zählt nicht
     expect(potUnlockCost(meta)).toBe(GARDEN.potBaseCost);
-    unlockPot(meta);
+    meta.garden.resin = 1e9;
+    expect(unlockPot(meta)).toBe(true);
+    expect(meta.garden.resin).toBe(1e9 - GARDEN.potBaseCost);
+    expect(meta.dna).toBe(1e9);
     expect(potUnlockCost(meta)).toBe(GARDEN.potBaseCost * GARDEN.potGrowth);
-    for (let i = 1; i < GARDEN.maxPots; i++) unlockPot(meta);
+    while (unlockPot(meta));
+    expect(meta.garden.pots).toHaveLength(GARDEN.maxPots);
     expect(potUnlockCost(meta)).toBeUndefined();
   });
 
@@ -42,10 +46,13 @@ describe('Garten: Töpfe und Pflanzen', () => {
     expect(meta.garden.pots[0]?.tree).toBeNull();
   });
 
-  it('alte Spielstände bekommen einen leeren Garten', () => {
+  it('alte Spielstände bekommen einen Garten mit Start-Topf', () => {
     const old = createInitialMeta() as Partial<ReturnType<typeof createInitialMeta>>;
     delete old.garden;
-    expect(normalizeMeta(old).garden.pots).toEqual([]);
+    expect(normalizeMeta(old).garden.pots).toHaveLength(1);
+    const empty = createInitialMeta();
+    empty.garden.pots = [];
+    expect(normalizeMeta(empty).garden.pots).toHaveLength(1);
   });
 });
 
@@ -142,5 +149,67 @@ describe('Garten: Samenfund', () => {
     }
     expect(found).toBeGreaterThan(5);
     expect(meta.garden.seedsFound).toBe(found);
+  });
+});
+
+describe('Pflege (Harz)', () => {
+  it('kostet Harz mit steigendem Preis und Obergrenze', () => {
+    const meta = createInitialMeta();
+    expect(buyGardenUpgrade(meta, 'duenger')).toBe(false);
+    meta.garden.resin = 1e9;
+    const first = gardenUpgradePrice(meta, 'duenger') ?? 0;
+    expect(buyGardenUpgrade(meta, 'duenger')).toBe(true);
+    expect(gardenUpgradePrice(meta, 'duenger')).toBeGreaterThan(first);
+    while (buyGardenUpgrade(meta, 'laubdecke'));
+    expect(gardenUpgradePrice(meta, 'laubdecke')).toBeUndefined();
+  });
+
+  it('Dünger beschleunigt das Wachstum, Harzkanäle nicht das Wachstum aber das Harz', () => {
+    const a = withPot();
+    const b = withPot();
+    plantSeed(a, 0, 'eiche');
+    plantSeed(b, 0, 'eiche');
+    b.garden.upgrades.duenger = 20; // ×4
+    tickGarden(a, 10 * HOUR);
+    tickGarden(b, 10 * HOUR);
+    expect(b.garden.pots[0]?.level).toBeGreaterThan(a.garden.pots[0]?.level ?? 0);
+
+    const c = withPot();
+    plantSeed(c, 0, 'eiche');
+    (c.garden.pots[0] as { level: number }).level = 50;
+    const plain = tickGarden(structuredClone(c), HOUR).resin;
+    c.garden.upgrades.harzkanal = 20; // ×4
+    expect(tickGarden(c, HOUR).resin).toBeGreaterThanOrEqual(plain * 4 - 1);
+  });
+
+  it('Kompost verstärkt Baum-Boni, Vogelfutter und Veredelung wirken auf Samen', () => {
+    const meta = withPot();
+    plantSeed(meta, 0, 'eiche');
+    (meta.garden.pots[0] as { level: number }).level = 10;
+    const before = gardenTotals(meta).damage;
+    meta.garden.upgrades.kompost = 10; // ×2
+    expect(gardenTotals(meta).damage).toBeCloseTo(before * 2);
+
+    const rng = new Rng(3);
+    const lucky = new Rng(3);
+    let rare = 0;
+    let rareLucky = 0;
+    for (let i = 0; i < 20_000; i++) {
+      if (TREE_DEFS[rollTree(rng)].rarity !== 'haeufig') rare++;
+      if (TREE_DEFS[rollTree(lucky, 2)].rarity !== 'haeufig') rareLucky++;
+    }
+    expect(rareLucky).toBeGreaterThan(rare * 1.5);
+  });
+
+  it('Passiv-Pflege wirkt auf Kammern, Reviere und Offline-Zeit', () => {
+    const meta = createInitialMeta();
+    const before = metaValues(meta);
+    meta.garden.upgrades.nistmaterial = 10;
+    meta.garden.upgrades.wildwechsel = 10;
+    meta.garden.upgrades.laubdecke = 3;
+    const after = metaValues(meta);
+    expect(after.chamberSpeedMult).toBeCloseTo(before.chamberSpeedMult * 2);
+    expect(after.passiveDnaMult).toBeCloseTo(before.passiveDnaMult * 2);
+    expect(after.offlineCapSeconds).toBe(before.offlineCapSeconds + 3 * HOUR);
   });
 });

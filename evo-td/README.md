@@ -96,14 +96,28 @@ Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerech
 
 Reiter "Garten": Bäume aus der Pflanzen-Evolution wachsen in Töpfen.
 
-- **Töpfe** mit DNA freischalten (30, dann ×3, maximal 6).
+- **Töpfe**: Man beginnt mit einem Topf. Weitere nur für **Harz** (20, dann ×3, maximal 6).
 - **Samen** findet man zufällig nach geschafften Wellen (ab Welle 5: 4 %, Bosswellen 40 %).
   Seltenheit: häufig 70 %, selten 22 %, sehr selten 7 %, legendär 1 %. Samen bleiben über Runs erhalten.
 - **Wachstum** in Echtzeit (auch offline, wie Kammern): Level n → n+1 dauert n Stunden
   (Level 10 nach ~2 Tagen, Level 30 nach ~3 Wochen), maximal Level 100.
 - **Boni** steigen mit Level und Seltenheit (×1 / ×1,5 / ×2 / ×3). Schaden, Feuerrate und
   Reichweite als eigener Topf "Garten", der Rest wirkt wie Kompendium-Boni.
-- **Harz** (🍯): neue Währung, `0,2 × Level × Seltenheit` pro Stunde und Baum. Verwendung folgt.
+- **Harz** (🍯): Währung für Garten und Passiv-Modus, `0,2 × Level × Seltenheit` pro Stunde und Baum.
+- **Pflege** (für Harz, mit Stufen):
+
+  | Pflege | Wirkung je Stufe | Max |
+  |---|---|---|
+  | Dünger | Bäume wachsen +15 % schneller | 20 |
+  | Kompost | Baum-Boni +10 % | 30 |
+  | Harzkanäle | +15 % Harz | 20 |
+  | Vogelfutter | +15 % Samenchance | 15 |
+  | Veredelung | seltene Samen +15 % wahrscheinlicher | 15 |
+  | Nistmaterial | Evolutionskammern +10 % schneller | 20 |
+  | Wildwechsel | +10 % DNA aus Revieren | 20 |
+  | Laubdecke | +1 h Offline-Obergrenze | 8 |
+
+  Die Passiv-Pflege wirkt zusätzlich zu den Artefakten (multiplikativ bzw. additiv bei Stunden).
 
 | Baum | Seltenheit | Bonus je Level |
 |---|---|---|
@@ -116,7 +130,7 @@ Reiter "Garten": Bäume aus der Pflanzen-Evolution wachsen in Töpfen.
 | Magnolie | sehr selten | +0,2 % Krit-Chance |
 | Mammutbaum | legendär | +1,2 % Schaden |
 
-Entwickler-Panel: "+5 Samen" und "Garten +24 h".
+Entwickler-Panel: "+500 Harz", "+5 Samen" und "Garten +24 h".
 
 ## Kompendium
 

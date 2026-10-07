@@ -5,7 +5,7 @@
 import { META_UPGRADE_IDS, type MetaUpgradeId } from '../data/meta';
 import type { CompendiumRecord } from '../data/compendium';
 import type { TowerId } from '../data/towers';
-import type { TreeId } from '../data/garden';
+import type { GardenUpgradeId, TreeId } from '../data/garden';
 import type { ModifierKind } from '../data/upgrades';
 
 export interface MetaState {
@@ -48,10 +48,20 @@ export interface GardenState {
   resinFraction: number;
   resinEarned: number;
   seedsFound: number;
+  /** Pflege-Stufen (für Harz gekauft). */
+  upgrades: Partial<Record<GardenUpgradeId, number>>;
 }
 
 export function createGarden(): GardenState {
-  return { pots: [], seeds: {}, resin: 0, resinFraction: 0, resinEarned: 0, seedsFound: 0 };
+  return {
+    pots: [{ tree: null, level: 0, growth: 0 }],
+    seeds: {},
+    resin: 0,
+    resinFraction: 0,
+    resinEarned: 0,
+    seedsFound: 0,
+    upgrades: {},
+  };
 }
 
 /** Ein Tier aus der Evolutionskammer: entweder in einer Kammer oder in einem Revier. */
@@ -119,7 +129,15 @@ export function normalizeMeta(loaded: Partial<MetaState> | undefined): MetaState
     autoUpgrades: { ...fresh.autoUpgrades, ...loaded.autoUpgrades },
     passive: { ...fresh.passive, ...loaded.passive },
     compendium: { ...loaded.compendium },
-    garden: { ...fresh.garden, ...loaded.garden },
+    garden: normalizeGarden({ ...fresh.garden, ...loaded.garden }),
+  };
+}
+
+function normalizeGarden(garden: GardenState): GardenState {
+  return {
+    ...garden,
+    pots: garden.pots.length > 0 ? garden.pots : [{ tree: null, level: 0, growth: 0 }],
+    upgrades: { ...garden.upgrades },
   };
 }
 

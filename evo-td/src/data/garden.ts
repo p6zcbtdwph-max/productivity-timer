@@ -52,8 +52,8 @@ export const TREE_DEFS: Readonly<Record<TreeId, TreeDef>> = {
 export const TREE_IDS = Object.keys(TREE_DEFS) as TreeId[];
 
 export const GARDEN = {
-  /** Erster Topf kostet so viel DNA, jeder weitere das `potGrowth`-fache. */
-  potBaseCost: 30,
+  /** Man beginnt mit einem Topf. Der zweite kostet so viel Harz, jeder weitere das `potGrowth`-fache. */
+  potBaseCost: 20,
   potGrowth: 3,
   maxPots: 6,
   /** Stunden für Level n → n+1 = hoursPerLevel × n. */
@@ -80,4 +80,47 @@ export function treeBonus(id: TreeId, level: number): number {
 
 export function resinPerHour(id: TreeId, level: number): number {
   return GARDEN.resinPerLevel * level * RARITIES[TREE_DEFS[id].rarity].power;
+}
+
+// --- Pflege: Verbesserungen für Harz -----------------------------------------
+
+export type GardenUpgradeId =
+  | 'duenger'
+  | 'kompost'
+  | 'harzkanal'
+  | 'vogelfutter'
+  | 'veredelung'
+  | 'nistmaterial'
+  | 'wildwechsel'
+  | 'laubdecke';
+
+export interface GardenUpgradeDef {
+  id: GardenUpgradeId;
+  name: string;
+  /** "garten" oder "passiv" (nur für die Gruppierung in der Oberfläche). */
+  group: 'garten' | 'passiv';
+  description: string;
+  perLevel: number;
+  maxLevel: number;
+  baseCost: number;
+  costGrowth: number;
+}
+
+export const GARDEN_UPGRADES: readonly GardenUpgradeDef[] = [
+  { id: 'duenger', name: 'Dünger', group: 'garten', description: 'Bäume wachsen +15 % schneller je Stufe.', perLevel: 0.15, maxLevel: 20, baseCost: 15, costGrowth: 1.6 },
+  { id: 'kompost', name: 'Kompost', group: 'garten', description: 'Baum-Boni +10 % stärker je Stufe.', perLevel: 0.1, maxLevel: 30, baseCost: 20, costGrowth: 1.5 },
+  { id: 'harzkanal', name: 'Harzkanäle', group: 'garten', description: '+15 % Harz je Stufe.', perLevel: 0.15, maxLevel: 20, baseCost: 15, costGrowth: 1.55 },
+  { id: 'vogelfutter', name: 'Vogelfutter', group: 'garten', description: 'Vögel bringen Samen: +15 % Samenchance je Stufe.', perLevel: 0.15, maxLevel: 15, baseCost: 25, costGrowth: 1.7 },
+  { id: 'veredelung', name: 'Veredelung', group: 'garten', description: 'Seltene, sehr seltene und legendäre Samen +15 % wahrscheinlicher je Stufe.', perLevel: 0.15, maxLevel: 15, baseCost: 40, costGrowth: 1.8 },
+  { id: 'nistmaterial', name: 'Nistmaterial', group: 'passiv', description: 'Evolutionskammern +10 % schneller je Stufe.', perLevel: 0.1, maxLevel: 20, baseCost: 30, costGrowth: 1.6 },
+  { id: 'wildwechsel', name: 'Wildwechsel', group: 'passiv', description: '+10 % DNA aus Revieren je Stufe.', perLevel: 0.1, maxLevel: 20, baseCost: 30, costGrowth: 1.6 },
+  { id: 'laubdecke', name: 'Laubdecke', group: 'passiv', description: '+1 Stunde Offline-Obergrenze je Stufe.', perLevel: 1, maxLevel: 8, baseCost: 50, costGrowth: 2 },
+];
+
+export const GARDEN_UPGRADE_DEFS: Readonly<Record<GardenUpgradeId, GardenUpgradeDef>> = Object.fromEntries(
+  GARDEN_UPGRADES.map((u) => [u.id, u]),
+) as Record<GardenUpgradeId, GardenUpgradeDef>;
+
+export function gardenUpgradeCost(def: GardenUpgradeDef, level: number): number {
+  return Math.round(def.baseCost * def.costGrowth ** level);
 }

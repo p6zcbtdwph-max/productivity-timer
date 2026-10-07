@@ -72,6 +72,7 @@ export class DevPanel {
         this.button('Alle Artefakte', () => {
           for (const a of ARTIFACT_ORDER) if (g.meta.upgrades[a.id] === 0) g.meta.upgrades[a.id] = 1;
         }),
+        this.button('+500 Harz', () => (g.meta.garden.resin += 500)),
         this.button('+5 Samen', () => {
           const rng = new Rng(Date.now() >>> 0);
           for (let i = 0; i < 5; i++) {
