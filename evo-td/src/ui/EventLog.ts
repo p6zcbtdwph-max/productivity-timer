@@ -1,5 +1,7 @@
 /** Kurzes Protokoll der wichtigsten Ereignisse (Evolutionen, Wellen, Verluste). */
+import { describeItem, QUALITY_DEFS } from '../data/items';
 import { getTowerDef } from '../data/towers';
+import { UPGRADE_DEFS } from '../data/upgrades';
 import type { Game } from '../game/Game';
 import { $, el } from './dom';
 
@@ -17,6 +19,16 @@ export class EventLog {
     });
     game.bus.on('waveCleared', ({ wave, bonus }) => {
       this.push(`Welle ${wave} geschafft, +${bonus} Gold`);
+    });
+    game.bus.on('towerFused', ({ tower }) => {
+      this.push(`⭐ Fusion: ${getTowerDef(tower.defId).name} ist jetzt Prestige ${tower.prestige}`, 'evo');
+    });
+    game.bus.on('towerRelocated', ({ tower }) => this.push(`🚚 ${getTowerDef(tower.defId).name} verlegt`));
+    game.bus.on('upgradeBought', ({ kind, level }) => this.push(`Upgrade ${UPGRADE_DEFS[kind].name} auf Stufe ${level}`));
+    game.bus.on('itemObtained', ({ item, boughtQuality }) => {
+      const lucky = item.quality !== boughtQuality ? ' (Glück: aufgewertet!)' : '';
+      this.push(`🎁 ${describeItem(item)}${lucky}`, item.quality === 'legendaer' ? 'evo' : '');
+      void QUALITY_DEFS;
     });
     game.bus.on('enemyRevived', () => this.push('Titan-Kern: ein Roboter steht wieder auf.', 'bad'));
     game.bus.on('enemyLeaked', () => this.push('Ein Roboter ist durchgebrochen!', 'bad'));

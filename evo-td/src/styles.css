@@ -251,3 +251,92 @@ body {
 .bonus-list li.geschwister {
   opacity: 0.75;
 }
+
+#tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  flex: 1;
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.tab.active {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+#sidebar > section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#mode-hint {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn.small {
+  padding: 3px 8px;
+  font-size: 0.85rem;
+}
+
+.shop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shop-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.shop-list .desc {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.quality {
+  font-weight: 600;
+}
+
+.bonus-list li.nachbar {
+  opacity: 0.75;
+  font-style: italic;
+}

@@ -9,7 +9,7 @@ import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { allocId } from '../GameState';
 import { getTowerDef } from '../../data/towers';
-import { computeStats } from './StatsSystem';
+import { statsFor } from './StatsSystem';
 
 function enemiesInRange(tower: Tower, range: number, enemies: readonly Enemy[]): Enemy[] {
   const rangeSq = range * range;
@@ -33,7 +33,7 @@ export function updateCombat(ctx: GameContext, dt: number): void {
     tower.cooldown -= dt;
     if (tower.cooldown > 0) continue;
 
-    const stats = computeStats(tower);
+    const stats = statsFor(ctx, tower);
     const candidates = sortByTargeting(tower, stats.targeting, enemiesInRange(tower, stats.range, state.enemies));
     if (candidates.length === 0) {
       tower.cooldown = 0;

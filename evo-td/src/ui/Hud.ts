@@ -10,6 +10,7 @@ export class Hud {
   private readonly wave = $('#hud-wave');
   private readonly countdown = $('#hud-countdown');
   private readonly cost = $('#hud-cost');
+  private readonly relocates = $('#hud-relocates');
   private readonly autoBuild = $<HTMLInputElement>('#hud-autobuild');
   private readonly speedButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-speed]'));
   private readonly pauseButton = $<HTMLButtonElement>('#hud-pause');
@@ -41,6 +42,7 @@ export class Hud {
     this.wave.textContent = state.wave.current === 0 ? '–' : `${state.wave.current} (Tier ${tierForWave(state.wave.current)})`;
     this.countdown.textContent = `${Math.max(0, state.wave.countdown).toFixed(0)}s`;
     this.cost.textContent = formatNumber(this.game.towerCost());
+    this.relocates.textContent = String(this.game.relocateCharges());
     this.autoBuild.checked = state.autoBuild;
     for (const button of this.speedButtons) {
       button.classList.toggle('active', !this.loop.paused && Number(button.dataset['speed']) === this.loop.speed);

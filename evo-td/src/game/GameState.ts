@@ -3,7 +3,9 @@
  * Systeme lesen und verändern ihn; der SaveManager serialisiert ihn 1:1.
  */
 import { BALANCE } from '../config/balance';
+import type { Item } from '../data/items';
 import type { TowerId } from '../data/towers';
+import type { ModifierKind } from '../data/upgrades';
 import type { Enemy } from './entities/Enemy';
 import type { SpawnOrder } from './systems/WaveSystem';
 import type { Projectile } from './entities/Projectile';
@@ -39,10 +41,21 @@ export interface GameState {
   discovered: TowerId[];
   /** Idle-Komfort: automatisch Einzeller bauen, sobald Gold reicht. */
   autoBuild: boolean;
+  /** Stufen der globalen Upgrades. */
+  upgrades: Record<ModifierKind, number>;
+  /** Alle besessenen Items. */
+  items: Item[];
+  /** Ausgerüstete Items (IDs aus `items`), begrenzt durch shop.itemSlots. */
+  equippedItemIds: number[];
+  /** Anzahl bisher gekaufter Items (Preissteigerung). */
+  itemPurchases: number;
+  /** Verbrauchte Verlegungen (verfügbar = floor(welle / wavesPerCharge) - verbraucht). */
+  relocatesUsed: number;
   gameOver: boolean;
   stats: {
     kills: number;
     evolutions: number;
+    fusions: number;
     goldEarned: number;
   };
 }
@@ -68,8 +81,13 @@ export function createInitialState(seed: number): GameState {
     },
     discovered: ['einzeller'],
     autoBuild: false,
+    upgrades: { damage: 0, fireRate: 0, range: 0, evolution: 0, secondary: 0, passive: 0 },
+    items: [],
+    equippedItemIds: [],
+    itemPurchases: 0,
+    relocatesUsed: 0,
     gameOver: false,
-    stats: { kills: 0, evolutions: 0, goldEarned: 0 },
+    stats: { kills: 0, evolutions: 0, fusions: 0, goldEarned: 0 },
   };
 }
 

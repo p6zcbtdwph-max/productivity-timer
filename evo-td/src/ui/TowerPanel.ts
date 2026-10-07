@@ -1,25 +1,39 @@
-/** Seitenleiste: Details zum ausgewählten Turm, Boni, Evolutions-Sperre. */
+/** Seitenleiste: Details zum ausgewählten Turm, Boni, Aktionen. */
 import { xpForLevel } from '../config/balance';
 import { describeBonus } from '../data/bonuses';
 import { childrenOf, getTowerDef, lineageOf } from '../data/towers';
 import type { Game } from '../game/Game';
-import { canEvolve, countSameType, evolutionChance } from '../game/systems/EvolutionSystem';
-import { computeStats, resolveBonuses, type BonusSource, type EffectiveStats } from '../game/systems/StatsSystem';
+import { canEvolve, countSameType, evolutionChanceFor } from '../game/systems/EvolutionSystem';
+import { environmentFor, computeStats, resolveBonuses, type BonusSource, type EffectiveStats } from '../game/systems/StatsSystem';
 import { $, el, formatNumber } from './dom';
 
 const SOURCE_LABEL: Record<BonusSource, string> = {
   eigen: 'eigen',
   vorfahre: 'Vorfahre',
   geschwister: 'Geschwister',
+  nachbar: 'Nachbar',
 };
+
+export type TowerAction = 'fuse' | 'relocate';
+
+export interface TowerPanelCallbacks {
+  onAction: (action: TowerAction) => void;
+}
 
 export class TowerPanel {
   private readonly root = $('#tower-panel');
   private lastRenderedKey = '';
 
-  constructor(private readonly game: Game) {}
+  constructor(
+    private readonly game: Game,
+    private readonly callbacks: TowerPanelCallbacks,
+  ) {}
 
-  render(selectedTowerId: number | undefined): void {
+  invalidate(): void {
+    this.lastRenderedKey = '';
+  }
+
+  render(selectedTowerId: number | undefined, activeAction: TowerAction | undefined): void {
     const tower = this.game.state.towers.find((t) => t.id === selectedTowerId);
     if (!tower) {
       if (this.lastRenderedKey !== 'none') {
@@ -33,22 +47,45 @@ export class TowerPanel {
       return;
     }
 
+    const ctx = this.game.ctx;
     const def = getTowerDef(tower.defId);
+    const env = environmentFor(ctx, tower);
     const sameType = countSameType(this.game.state.towers, tower.defId);
-    const chance = evolutionChance(tower.level, sameType);
-    const key = `${tower.id}|${tower.defId}|${tower.level}|${Math.floor(tower.xp)}|${tower.evolutionLocked}|${sameType}|${tower.kills}`;
+    const chance = evolutionChanceFor(ctx, tower);
+    const candidates = this.game.fusionCandidatesFor(tower.id);
+    const charges = this.game.relocateCharges();
+    const key = [
+      tower.id, tower.defId, tower.level, tower.prestige, Math.floor(tower.xp), tower.evolutionLocked, sameType,
+      tower.kills, env.neighbours.join(','), chance.toFixed(4), candidates.length, charges, activeAction ?? '',
+      Math.floor(this.game.state.gold) >= this.game.relocateCost(),
+    ].join('|');
     if (key === this.lastRenderedKey) return;
     this.lastRenderedKey = key;
 
-    const stats = computeStats(tower);
+    const stats = computeStats(tower, env);
 
     const lockButton = el('button', { className: tower.evolutionLocked ? 'btn warn' : 'btn' }, [
       tower.evolutionLocked ? '🔒 Evolution gestoppt – freigeben' : '🧬 Evolution stoppen',
     ]);
     lockButton.addEventListener('click', () => {
       this.game.toggleEvolutionLock(tower.id);
-      this.lastRenderedKey = '';
+      this.invalidate();
     });
+
+    const fuseButton = el(
+      'button',
+      { className: activeAction === 'fuse' ? 'btn active' : 'btn', disabled: candidates.length === 0 },
+      [`⭐ Fusionieren (${candidates.length} gleiche)`],
+    );
+    fuseButton.addEventListener('click', () => this.callbacks.onAction('fuse'));
+
+    const relocateCost = this.game.relocateCost();
+    const relocateButton = el(
+      'button',
+      { className: activeAction === 'relocate' ? 'btn active' : 'btn', disabled: charges === 0 || this.game.state.gold < relocateCost },
+      [`🚚 Verlegen (${formatNumber(relocateCost)} 💰, ${charges} übrig)`],
+    );
+    relocateButton.addEventListener('click', () => this.callbacks.onAction('relocate'));
 
     const children = childrenOf(tower.defId);
     const evolutionInfo = canEvolve(tower)
@@ -61,7 +98,7 @@ export class TowerPanel {
         ]);
 
     const bonusList = el('ul', { className: 'bonus-list' });
-    for (const resolved of resolveBonuses(tower.defId)) {
+    for (const resolved of resolveBonuses(tower.defId, env)) {
       const from = getTowerDef(resolved.from);
       bonusList.append(
         el('li', { className: resolved.source }, [
@@ -73,7 +110,10 @@ export class TowerPanel {
     }
 
     this.root.replaceChildren(
-      el('h2', {}, [el('span', { className: 'swatch', style: `background:${def.color}` }), ` ${def.name}`]),
+      el('h2', {}, [
+        el('span', { className: 'swatch', style: `background:${def.color}` }),
+        ` ${def.name}${tower.prestige > 0 ? ` ★${tower.prestige}` : ''}`,
+      ]),
       el('p', { className: 'muted' }, [`${def.lineage} · Tier ${def.tier} · ${def.archetype}`]),
       el('p', {}, [def.description]),
       el('p', { className: 'muted small' }, [
@@ -85,6 +125,8 @@ export class TowerPanel {
       el('dl', { className: 'stats' }, [
         el('dt', {}, ['Level']),
         el('dd', {}, [`${tower.level}  (${Math.floor(tower.xp)} / ${xpForLevel(tower.level)} XP)`]),
+        el('dt', {}, ['Prestige']),
+        el('dd', {}, [tower.prestige > 0 ? `★${tower.prestige}` : '–']),
         el('dt', {}, ['Schaden']),
         el('dd', {}, [formatNumber(stats.damage)]),
         el('dt', {}, ['Feuerrate']),
@@ -97,11 +139,13 @@ export class TowerPanel {
         el('dd', {}, [`${tower.kills} · ${formatNumber(tower.damageDealt)} Schaden`]),
         el('dt', {}, ['Gleiche Art']),
         el('dd', {}, [`${sameType} auf dem Feld`]),
+        el('dt', {}, ['Nachbarn']),
+        el('dd', {}, [env.neighbours.length ? env.neighbours.map((id) => getTowerDef(id).name).join(', ') : '–']),
       ]),
       el('h3', {}, ['Eigenschaften']),
       bonusList,
       evolutionInfo,
-      lockButton,
+      el('div', { className: 'actions' }, [lockButton, fuseButton, relocateButton]),
     );
   }
 }

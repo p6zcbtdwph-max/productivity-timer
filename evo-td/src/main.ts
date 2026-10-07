@@ -11,7 +11,10 @@ import { $ } from './ui/dom';
 import { ElementLegend } from './ui/ElementLegend';
 import { EventLog } from './ui/EventLog';
 import { Hud } from './ui/Hud';
-import { TowerPanel } from './ui/TowerPanel';
+import { ItemsPanel } from './ui/ItemsPanel';
+import { ShopPanel } from './ui/ShopPanel';
+import { Tabs } from './ui/Tabs';
+import { TowerPanel, type TowerAction } from './ui/TowerPanel';
 import { TreeView } from './ui/TreeView';
 
 const saves = new SaveManager();
@@ -19,18 +22,57 @@ const game = new Game(START_MAP, saves.load());
 
 const canvas = $<HTMLCanvasElement>('#game-canvas');
 const renderer = new CanvasRenderer(canvas, START_MAP);
+const modeHint = $('#mode-hint');
+
+// --- UI-Zustand (nicht Teil des Spielzustands) ----------------------------
 
 let hoveredSlot: number | undefined;
 let selectedTowerId: number | undefined;
+/** Laufende Mehrschritt-Aktion: Fusion oder Verlegen des ausgewählten Turms. */
+let activeAction: TowerAction | undefined;
+
+function setAction(action: TowerAction | undefined): void {
+  activeAction = action;
+  towerPanel.invalidate();
+  if (!action) {
+    modeHint.classList.add('hidden');
+    return;
+  }
+  modeHint.textContent =
+    action === 'fuse'
+      ? 'Fusion: Klicke auf einen gleichen Turm (gelb markiert). Esc bricht ab.'
+      : 'Verlegen: Klicke auf einen freien Bauplatz. Esc bricht ab.';
+  modeHint.classList.remove('hidden');
+}
 
 const loop = new GameLoop(
   BALANCE.stepSeconds,
   (dt) => game.update(dt),
   () => {
-    renderer.render(game, { hoveredSlot, selectedTowerId });
+    const highlightTowerIds = activeAction === 'fuse' && selectedTowerId !== undefined
+      ? game.fusionCandidatesFor(selectedTowerId).map((t) => t.id)
+      : [];
+    renderer.render(game, {
+      hoveredSlot,
+      selectedTowerId,
+      highlightTowerIds,
+      highlightFreeSlots: activeAction === 'relocate',
+    });
     hud.render();
-    towerPanel.render(selectedTowerId);
-    treeView.render();
+    switch (tabs.active) {
+      case 'tower':
+        towerPanel.render(selectedTowerId, activeAction);
+        break;
+      case 'shop':
+        shopPanel.render();
+        break;
+      case 'items':
+        itemsPanel.render();
+        break;
+      case 'tree':
+        treeView.render();
+        break;
+    }
   },
 );
 
@@ -38,13 +80,19 @@ const resetGame = (): void => {
   saves.clear();
   game.reset();
   selectedTowerId = undefined;
+  setAction(undefined);
   eventLog.clear();
   $('#game-over').classList.add('hidden');
   loop.paused = false;
 };
 
+const tabs = new Tabs();
 const hud = new Hud(game, loop, resetGame);
-const towerPanel = new TowerPanel(game);
+const towerPanel = new TowerPanel(game, {
+  onAction: (action) => setAction(activeAction === action ? undefined : action),
+});
+const shopPanel = new ShopPanel(game);
+const itemsPanel = new ItemsPanel(game);
 const treeView = new TreeView(game);
 const eventLog = new EventLog(game);
 new ElementLegend();
@@ -61,11 +109,23 @@ canvas.addEventListener('click', (e) => {
   const slot = renderer.slotAt(e.clientX, e.clientY);
   if (slot === undefined) {
     selectedTowerId = undefined;
+    setAction(undefined);
     return;
   }
   const existing = game.state.towers.find((t) => t.slot === slot);
+
+  if (activeAction === 'fuse' && selectedTowerId !== undefined) {
+    if (existing && game.fuse(selectedTowerId, existing.id)) setAction(undefined);
+    return;
+  }
+  if (activeAction === 'relocate' && selectedTowerId !== undefined) {
+    if (!existing && game.relocate(selectedTowerId, slot)) setAction(undefined);
+    return;
+  }
+
   if (existing) {
     selectedTowerId = existing.id;
+    tabs.show('tower');
     return;
   }
   const built = game.build(slot);
@@ -77,16 +137,23 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     loop.paused = !loop.paused;
   }
-  if (e.key === 'l' && selectedTowerId !== undefined) game.toggleEvolutionLock(selectedTowerId);
+  if (e.key === 'Escape') setAction(undefined);
+  if (selectedTowerId === undefined) return;
+  if (e.key === 'l') game.toggleEvolutionLock(selectedTowerId);
+  if (e.key === 'f') setAction(activeAction === 'fuse' ? undefined : 'fuse');
+  if (e.key === 'v') setAction(activeAction === 'relocate' ? undefined : 'relocate');
 });
 
 // --- Game Over --------------------------------------------------------------
 
 game.bus.on('gameOver', ({ wave }) => {
-  $('#game-over-text').textContent = `Du hast ${wave} Wellen überstanden, ${game.state.stats.evolutions} Evolutionen erlebt und ${game.state.stats.kills} Roboter zerlegt.`;
+  $('#game-over-text').textContent = `Du hast ${wave} Wellen überstanden, ${game.state.stats.evolutions} Evolutionen und ${game.state.stats.fusions} Fusionen erlebt und ${game.state.stats.kills} Roboter zerlegt.`;
   $('#game-over').classList.remove('hidden');
 });
 $('#game-over-restart').addEventListener('click', resetGame);
+game.bus.on('towerFused', ({ consumedId }) => {
+  if (selectedTowerId === consumedId) selectedTowerId = undefined;
+});
 
 // --- Speichern --------------------------------------------------------------
 

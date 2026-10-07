@@ -8,12 +8,16 @@ import { getEnemyDef } from '../data/enemies';
 import type { MapDef } from '../data/map';
 import { cellKey } from '../data/map';
 import { getTowerDef } from '../data/towers';
-import { computeStats } from '../game/systems/StatsSystem';
+import { statsFor } from '../game/systems/StatsSystem';
 import type { Game } from '../game/Game';
 
 export interface RenderOptions {
   hoveredSlot: number | undefined;
   selectedTowerId: number | undefined;
+  /** Türme, die als Ziel einer Aktion (Fusion) hervorgehoben werden. */
+  highlightTowerIds?: readonly number[];
+  /** Freie Plätze hervorheben (Verlegen). */
+  highlightFreeSlots?: boolean;
 }
 
 const COLORS = {
@@ -70,7 +74,7 @@ export class CanvasRenderer {
     const selected = state.towers.find((t) => t.id === options.selectedTowerId);
     if (selected) {
       ctx.beginPath();
-      ctx.arc(selected.x * cell, selected.y * cell, computeStats(selected).range * cell, 0, Math.PI * 2);
+      ctx.arc(selected.x * cell, selected.y * cell, statsFor(game.ctx, selected).range * cell, 0, Math.PI * 2);
       ctx.fillStyle = COLORS.range;
       ctx.fill();
     }
@@ -98,6 +102,19 @@ export class CanvasRenderer {
       if (tower.evolutionLocked) {
         ctx.fillStyle = COLORS.lock;
         ctx.fillRect(x + size - 8, y + 2, 6, 6);
+      }
+      if (tower.prestige > 0) {
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.round(cell * 0.22)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`★${tower.prestige}`, tower.x * cell, y - 3);
+      }
+      if (tower.id === options.highlightTowerIds?.find((id) => id === tower.id)) {
+        ctx.strokeStyle = '#ffd54f';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
+        ctx.strokeRect(x - 3, y - 3, size + 6, size + 6);
+        ctx.setLineDash([]);
       }
     }
 
@@ -200,7 +217,10 @@ export class CanvasRenderer {
       const occupied = game.state.towers.some((t) => t.slot === index);
       if (occupied) return;
       if (index === options.hoveredSlot) {
-        ctx.fillStyle = game.canBuildAt(index) ? COLORS.slotHoverOk : COLORS.slotHoverBad;
+        const ok = options.highlightFreeSlots ? game.canRelocateTo(index) : game.canBuildAt(index);
+        ctx.fillStyle = ok ? COLORS.slotHoverOk : COLORS.slotHoverBad;
+      } else if (options.highlightFreeSlots) {
+        ctx.fillStyle = 'rgba(255,213,79,0.18)';
       } else {
         ctx.fillStyle = COLORS.slot;
       }

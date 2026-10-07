@@ -8,7 +8,7 @@ import { getElementDef } from '../../data/elements';
 import type { Enemy } from '../entities/Enemy';
 import type { GameContext } from '../GameContext';
 import { grantXp } from './LevelSystem';
-import { computeStats } from './StatsSystem';
+import { statsFor } from './StatsSystem';
 import { onEnemyRemoved } from './WaveSystem';
 
 export interface DamageOptions {
@@ -38,7 +38,7 @@ export function applyDamage(
   enemy.hp -= dealt;
 
   const tower = sourceTowerId ? ctx.state.towers.find((t) => t.id === sourceTowerId) : undefined;
-  const stats = tower ? computeStats(tower) : undefined;
+  const stats = tower ? statsFor(ctx, tower) : undefined;
   if (tower && stats) {
     tower.damageDealt += dealt;
     grantXp(ctx, tower, dealt * BALANCE.xp.perDamage * stats.xpMultiplier);

@@ -57,6 +57,33 @@ export const BALANCE = {
   bonuses: {
     ancestorStrength: 0.5,
     siblingStrength: 0.25,
+    /** Eigener Bonus direkt angrenzender Türme (8er-Nachbarschaft). */
+    neighbourStrength: 0.25,
+    neighbourDiagonal: true,
+  },
+
+  /** Prestige durch Fusion zweier gleicher Türme. */
+  prestige: {
+    damagePerLevel: 0.75,
+    fireRatePerLevel: 0.15,
+    rangePerLevel: 0.1,
+    /** Absolute Evolutionschance pro Prestige-Stufe. */
+    evolutionPerLevel: 0.01,
+  },
+
+  /** Verlegen von Türmen. */
+  relocate: {
+    /** Alle N Wellen gibt es eine Verlegung. */
+    wavesPerCharge: 5,
+    /** Kosten als Anteil der aktuellen Turmkosten. */
+    costFactor: 0.5,
+  },
+
+  shop: {
+    /** Item-Preise wachsen pro Kauf um diesen Faktor (zusätzlich zur Tier-Skalierung). */
+    itemPriceGrowth: 1.1,
+    /** Maximal gleichzeitig ausgerüstete Items. */
+    itemSlots: 4,
   },
 
   /** Gegner-Elemente (Spezial-Eigenschaften). */
@@ -85,7 +112,7 @@ export const BALANCE = {
 
   persistence: {
     autosaveSeconds: 10,
-    storageKey: 'evo-td-save-v2',
+    storageKey: 'evo-td-save-v3',
   },
 } as const;
 

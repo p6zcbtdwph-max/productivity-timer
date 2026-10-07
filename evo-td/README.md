@@ -20,8 +20,20 @@ mit Tauri, ohne die Spiellogik anzufassen. Der Renderer ist austauschbar (z.B. P
   direkten Kindern im Stammbaum gewählt.
 - **Jede Art hat genau einen Bonus.** Bei einer Evolution bleiben die Boni erhalten:
   eigener Bonus 100 %, Boni aller Vorfahren 50 %, Boni der Geschwister-Arten 25 %.
-  Eine Endform trägt also 6 bis 7 Eigenschaften.
+  Dazu kommt 25 % des eigenen Bonus jedes **direkt angrenzenden Turms** (8er-Nachbarschaft).
 - Pro Turm lässt sich die Evolution **anhalten** (Button im Panel oder Taste `L`).
+- **Prestige durch Fusion** (`F`): zwei Türme derselben Art und Prestige-Stufe verschmelzen zu
+  einem Turm mit Prestige +1 (mehr Schaden, Feuerrate, Reichweite, Evolutionschance). Der
+  andere Bauplatz wird frei. Kostet kein Gold.
+- **Verlegen** (`V`): alle 5 Wellen gibt es eine Verlegung; jede kostet Gold (halbe Turmkosten).
+- **Gold fließt nie in einzelne Türme.** Es gibt nur: neue Einzeller (jeder teurer als der
+  vorige), Verlegungen, **globale Upgrades** für alle Türme (Schaden, Angriffsgeschwindigkeit,
+  Reichweite, Evolutionschance, sekundäre Effekte, Passiv = Gold & XP) und **Items**.
+- **Items** haben dieselben Kategorien und eine Qualität: Bronze, Silber, Gold, Platin,
+  Legendär (Wirkung ×1, ×2, ×4, ×8, ×16). Man kauft eine Stufe; mit 25 % / 15 % / 8 % / 3 %
+  springt der Kauf jeweils eine Stufe höher (verkettet). Legendär ist nicht kaufbar und fällt
+  aus Bronze mit 0,009 %. Preise skalieren mit Gegner-Tier und Kaufanzahl. 4 Items gleichzeitig
+  ausrüstbar.
 - Wellen starten automatisch. Alle 5 Wellen verdoppeln sich HP und Belohnung der Gegner.
   Jede 10. Welle bringt einen Boss.
 - **Roboter-Elemente** ab Welle 4: Titan-Kern (zweites Leben), Gold-Legierung
@@ -69,14 +81,15 @@ npm run build      # Typecheck + Production-Build nach dist/
 src/
   config/balance.ts        alle Zahlen, die das Spielgefühl steuern
   core/                    Loop (fixed timestep), RNG (deterministisch), EventBus, Vec2
-  data/                    Inhalte: towers (Stammbaum), bonuses, elements, enemies, map
+  data/                    Inhalte: towers (Stammbaum), bonuses, elements, enemies, upgrades, items, map
   game/
     GameState.ts           reiner Datenzustand (1:1 speicherbar)
     Game.ts                Fassade: Update-Reihenfolge + Aktionen für die UI
     entities/              Tower, Enemy, Projectile (nur Typen)
-    systems/               Wave, Movement, Status, Element, Combat, Projectile, Damage, Level, Stats, Evolution, Build
+    systems/               Wave, Movement, Status, Element, Combat, Projectile, Damage, Level, Stats,
+                           Modifier, Evolution, Build, Fusion, Relocate, Shop
   render/CanvasRenderer.ts Darstellung (liest nur)
-  ui/                      HUD, Turm-Panel, Stammbaum, Protokoll (DOM, kein Framework)
+  ui/                      HUD, Tabs, Turm-Panel, Shop, Items, Stammbaum, Protokoll (DOM, kein Framework)
   persistence/             SaveManager (localStorage, versioniert)
 tests/                     Vitest
 ```
@@ -91,6 +104,6 @@ Grundregeln:
 ## Nächste Schritte (Ideen)
 
 - Weitere Elemente (Teilung, Tarnung, Flug) in `data/elements.ts`.
-- Grund, die Evolution zu stoppen: Boni für gleichartige Türme / Synergien pro Linie.
-- Prestige-Schleife für den Idle-Kern (Reset mit permanenten Boni).
+- Grund, die Evolution zu stoppen: Synergien pro Linie, Fusion erfordert gleiche Art.
+- Run-Reset mit permanenten Boni für den Idle-Kern.
 - Weitere Karten, echte Sprites statt Blöcken.

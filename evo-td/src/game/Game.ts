@@ -18,6 +18,11 @@ import { updateMovement } from './systems/MovementSystem';
 import { updateProjectiles } from './systems/ProjectileSystem';
 import { updateStatuses } from './systems/StatusSystem';
 import { updateWaves } from './systems/WaveSystem';
+import { fuseTowers, fusionCandidates } from './systems/FusionSystem';
+import { canRelocate, relocateCharges, relocateCost, relocateTower } from './systems/RelocateSystem';
+import { buyItem, buyUpgrade, toggleEquip } from './systems/ShopSystem';
+import type { ItemQuality } from '../data/items';
+import type { ModifierKind } from '../data/upgrades';
 
 export class Game {
   readonly bus = new EventBus<GameEvents>();
@@ -73,6 +78,52 @@ export class Game {
 
   setAutoBuild(enabled: boolean): void {
     this.state.autoBuild = enabled;
+  }
+
+  // Fusion ----------------------------------------------------------------
+
+  fusionCandidatesFor(towerId: number): Tower[] {
+    const tower = this.state.towers.find((t) => t.id === towerId);
+    return tower ? fusionCandidates(this.ctx, tower) : [];
+  }
+
+  fuse(targetId: number, consumedId: number): boolean {
+    const target = this.state.towers.find((t) => t.id === targetId);
+    const consumed = this.state.towers.find((t) => t.id === consumedId);
+    return !!target && !!consumed && fuseTowers(this.ctx, target, consumed);
+  }
+
+  // Verlegen --------------------------------------------------------------
+
+  relocateCharges(): number {
+    return relocateCharges(this.ctx);
+  }
+
+  relocateCost(): number {
+    return relocateCost(this.ctx);
+  }
+
+  canRelocateTo(slot: number): boolean {
+    return canRelocate(this.ctx, slot);
+  }
+
+  relocate(towerId: number, toSlot: number): boolean {
+    const tower = this.state.towers.find((t) => t.id === towerId);
+    return !!tower && relocateTower(this.ctx, tower, toSlot);
+  }
+
+  // Shop ------------------------------------------------------------------
+
+  buyUpgrade(kind: ModifierKind): boolean {
+    return buyUpgrade(this.ctx, kind);
+  }
+
+  buyItem(quality: ItemQuality): boolean {
+    return buyItem(this.ctx, quality) !== undefined;
+  }
+
+  toggleEquip(itemId: number): boolean {
+    return toggleEquip(this.ctx, itemId);
   }
 
   /** Debug/Test-Helfer: erzwingt eine Evolution. */

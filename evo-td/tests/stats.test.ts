@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE } from '../src/config/balance';
 import { describeBonus, scaleBonus } from '../src/data/bonuses';
-import { computeStats, resolveBonuses } from '../src/game/systems/StatsSystem';
+import { START_MAP } from '../src/data/map';
+import { Game } from '../src/game/Game';
+import { createInitialState } from '../src/game/GameState';
+import { NO_MODIFIERS } from '../src/game/systems/ModifierSystem';
+import { computeStats, neighbourDefIds, resolveBonuses } from '../src/game/systems/StatsSystem';
 
 describe('Boni und effektive Stats', () => {
   it('Einzeller hat nur seinen eigenen Bonus', () => {
@@ -31,7 +35,7 @@ describe('Boni und effektive Stats', () => {
   });
 
   it('Affe erbt Fläche vom Frosch/Elefanten und Reichweite vom Fisch', () => {
-    const stats = computeStats({ defId: 'affe', level: 1 });
+    const stats = computeStats({ defId: 'affe', level: 1, prestige: 0 });
     // Fläche: Maximum aus Frosch (Vorfahre, 0.8 × 0.5) und Elefant (Geschwister, 1.4 × 0.25).
     expect(stats.splashRadius).toBeCloseTo(Math.max(0.8 * BALANCE.bonuses.ancestorStrength, 1.4 * BALANCE.bonuses.siblingStrength));
     expect(stats.range).toBeGreaterThan(2.5);
@@ -40,16 +44,57 @@ describe('Boni und effektive Stats', () => {
   });
 
   it('Level erhöht Schaden und Feuerrate', () => {
-    const l1 = computeStats({ defId: 'wurm', level: 1 });
-    const l5 = computeStats({ defId: 'wurm', level: 5 });
+    const l1 = computeStats({ defId: 'wurm', level: 1, prestige: 0 });
+    const l5 = computeStats({ defId: 'wurm', level: 5, prestige: 0 });
     expect(l5.damage).toBeGreaterThan(l1.damage);
     expect(l5.cooldown).toBeLessThan(l1.cooldown);
     expect(l5.onHit.poison?.dps).toBeGreaterThan(l1.onHit.poison?.dps ?? 0);
   });
 
   it('Endformen sind deutlich stärker als der Einzeller', () => {
-    const root = computeStats({ defId: 'einzeller', level: 1 });
-    const final = computeStats({ defId: 'weisser_hai', level: 1 });
+    const root = computeStats({ defId: 'einzeller', level: 1, prestige: 0 });
+    const final = computeStats({ defId: 'weisser_hai', level: 1, prestige: 0 });
     expect(final.damage / final.cooldown).toBeGreaterThan((root.damage / root.cooldown) * 12);
+  });
+});
+
+describe('Nachbarn, Prestige und globale Modifikatoren', () => {
+  it('direkt angrenzende Türme geben ein Viertel ihres eigenen Bonus', () => {
+    const env = { neighbours: ['hai' as const], modifiers: NO_MODIFIERS };
+    const alone = computeStats({ defId: 'einzeller', level: 1, prestige: 0 });
+    const withNeighbour = computeStats({ defId: 'einzeller', level: 1, prestige: 0 }, env);
+    // Hai: +30 % Schaden → als Nachbar +7.5 %
+    expect(withNeighbour.damage / alone.damage).toBeCloseTo(1 + 0.3 * BALANCE.bonuses.neighbourStrength);
+    const sources = resolveBonuses('einzeller', env).map((b) => b.source);
+    expect(sources).toContain('nachbar');
+  });
+
+  it('Nachbarschaft wird aus den Bauplätzen berechnet', () => {
+    const game = new Game(START_MAP, createInitialState(5));
+    game.state.gold = 1_000_000;
+    // Plätze 0 und 1 liegen nebeneinander (Zeile 1, Spalten 0 und 1), Platz 20 weit weg.
+    const a = game.build(0);
+    const b = game.build(1);
+    const far = game.build(20);
+    if (!a || !b || !far) throw new Error('Bau fehlgeschlagen');
+    expect(neighbourDefIds(game.ctx, a)).toEqual(['einzeller']);
+    expect(neighbourDefIds(game.ctx, far)).toEqual([]);
+  });
+
+  it('Prestige verstärkt Schaden, Feuerrate und Reichweite', () => {
+    const p0 = computeStats({ defId: 'wurm', level: 1, prestige: 0 });
+    const p2 = computeStats({ defId: 'wurm', level: 1, prestige: 2 });
+    expect(p2.damage / p0.damage).toBeCloseTo(1 + 2 * BALANCE.prestige.damagePerLevel);
+    expect(p2.cooldown).toBeLessThan(p0.cooldown);
+    expect(p2.range).toBeGreaterThan(p0.range);
+  });
+
+  it('"Sekundäre Effekte" verstärkt geerbte Boni, nicht den eigenen', () => {
+    const env = { neighbours: [], modifiers: { ...NO_MODIFIERS, secondary: 1 } };
+    const bonuses = resolveBonuses('fisch', env);
+    const own = bonuses.find((b) => b.source === 'eigen');
+    const inherited = bonuses.find((b) => b.source === 'vorfahre');
+    expect(own?.strength).toBe(1);
+    expect(inherited?.strength).toBeCloseTo(BALANCE.bonuses.ancestorStrength * 2);
   });
 });

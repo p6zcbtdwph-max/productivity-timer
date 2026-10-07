@@ -10,11 +10,27 @@ import { BALANCE } from '../../config/balance';
 import { childrenOf, type TowerId } from '../../data/towers';
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
+import { globalModifiers } from './ModifierSystem';
 
-export function evolutionChance(level: number, sameTypeCount: number): number {
+export function evolutionChance(level: number, sameTypeCount: number, prestige = 0, globalBonus = 0): number {
   const e = BALANCE.evolution;
-  const chance = e.baseChance + e.perLevel * (level - 1) + e.perSameType * Math.max(0, sameTypeCount - 1);
+  const chance =
+    e.baseChance +
+    e.perLevel * (level - 1) +
+    e.perSameType * Math.max(0, sameTypeCount - 1) +
+    BALANCE.prestige.evolutionPerLevel * prestige +
+    globalBonus;
   return Math.min(e.maxChance, chance);
+}
+
+/** Chance eines konkreten Turms im aktuellen Spielzustand. */
+export function evolutionChanceFor(ctx: GameContext, tower: Tower): number {
+  return evolutionChance(
+    tower.level,
+    countSameType(ctx.state.towers, tower.defId),
+    tower.prestige,
+    globalModifiers(ctx.state).evolution,
+  );
 }
 
 export function countSameType(towers: readonly Tower[], defId: TowerId): number {
@@ -43,8 +59,7 @@ export function updateEvolution(ctx: GameContext, dt: number): void {
     if (tower.evolutionTimer > 0) continue;
     tower.evolutionTimer += BALANCE.evolution.checkInterval;
 
-    const chance = evolutionChance(tower.level, countSameType(state.towers, tower.defId));
-    if (!rng.chance(chance)) continue;
+    if (!rng.chance(evolutionChanceFor(ctx, tower))) continue;
 
     const options = childrenOf(tower.defId);
     evolveTower(ctx, tower, rng.pick(options));

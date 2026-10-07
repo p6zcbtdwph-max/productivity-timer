@@ -30,6 +30,7 @@ export function buildTower(ctx: GameContext, slot: number): Tower | undefined {
     x: cell.x + 0.5,
     y: cell.y + 0.5,
     level: 1,
+    prestige: 0,
     xp: 0,
     cooldown: 0,
     evolutionTimer: BALANCE.evolution.checkInterval,

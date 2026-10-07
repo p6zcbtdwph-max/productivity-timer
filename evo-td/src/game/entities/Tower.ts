@@ -8,6 +8,8 @@ export interface Tower {
   x: number;
   y: number;
   level: number;
+  /** Prestige-Stufe durch Fusion (0 = nie fusioniert). */
+  prestige: number;
   xp: number;
   /** Sekunden bis zum nächsten Schuss. */
   cooldown: number;
