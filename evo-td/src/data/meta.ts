@@ -1,51 +1,71 @@
 /**
- * Globaler Shop: permanente Upgrades und Freischaltungen, bezahlt mit DNA.
+ * Artefakte: der Globale Shop. Permanente Verbesserungen, bezahlt mit DNA.
+ *
+ * Die Reihenfolge ist fest. Ein Artefakt lässt sich erst freischalten, wenn
+ * das vorige freigeschaltet ist UND die nötige Bestwelle erreicht wurde.
+ * Freischalten gibt Stufe 1; weitere Stufen kosten DNA mit steigendem Preis.
  * DNA gibt es nur am Ende eines Runs, und fast nur für neue Bestwellen.
  */
 export type MetaUpgradeId =
   | 'startGold'
-  | 'startLives'
-  | 'towerCost'
   | 'evolutionBase'
   | 'damage'
+  | 'startLives'
+  | 'autoUpgrades'
   | 'fireRate'
   | 'inheritance'
+  | 'towerCost'
+  | 'autoFusion'
   | 'itemLuck'
-  | 'itemSlots'
-  | 'relocate'
   | 'dnaGain'
-  | 'autoFusion';
+  | 'autoArtifacts'
+  | 'relocate'
+  | 'itemSlots';
 
 export interface MetaUpgradeDef {
   id: MetaUpgradeId;
   name: string;
+  /** Kurzer Artefakt-Gegenstand für die Optik. */
+  icon: string;
   description: string;
-  /** Wirkung pro Stufe; Bedeutung je nach Upgrade (siehe MetaSystem). */
+  /** Wirkung pro Stufe; Bedeutung je nach Artefakt (siehe MetaSystem). */
   perLevel: number;
   maxLevel: number;
-  baseCost: number;
-  costGrowth: number;
+  /** Bedingungen zum Freischalten (zusätzlich: Vorgänger freigeschaltet). */
+  unlockWave: number;
+  unlockCost: number;
+  /** Preis der Stufe n+1 = levelCost × levelGrowth^(n-1). */
+  levelCost: number;
+  levelGrowth: number;
 }
 
-export const META_UPGRADE_DEFS: Readonly<Record<MetaUpgradeId, MetaUpgradeDef>> = {
-  startGold: { id: 'startGold', name: 'Startkapital', description: '+30 Startgold je Stufe.', perLevel: 30, maxLevel: 50, baseCost: 10, costGrowth: 1.35 },
-  startLives: { id: 'startLives', name: 'Zähigkeit', description: '+1 Startleben je Stufe.', perLevel: 1, maxLevel: 15, baseCost: 20, costGrowth: 1.6 },
-  towerCost: { id: 'towerCost', name: 'Zellteilung', description: 'Turmkosten wachsen je Stufe 1 % langsamer.', perLevel: 0.01, maxLevel: 12, baseCost: 30, costGrowth: 1.7 },
-  evolutionBase: { id: 'evolutionBase', name: 'Mutationsdruck', description: '+0,4 % Grund-Evolutionschance je Stufe.', perLevel: 0.004, maxLevel: 25, baseCost: 15, costGrowth: 1.45 },
-  damage: { id: 'damage', name: 'Raubtierinstinkt', description: 'Schaden ×(1 + 0,08 je Stufe), eigener Topf.', perLevel: 0.08, maxLevel: 100, baseCost: 25, costGrowth: 1.3 },
-  fireRate: { id: 'fireRate', name: 'Stoffwechsel', description: 'Feuerrate ×(1 + 0,05 je Stufe), eigener Topf.', perLevel: 0.05, maxLevel: 100, baseCost: 25, costGrowth: 1.3 },
-  inheritance: { id: 'inheritance', name: 'Erbgut', description: '+5 % Stärke aller geerbten und Nachbar-Boni je Stufe.', perLevel: 0.05, maxLevel: 40, baseCost: 40, costGrowth: 1.4 },
-  itemLuck: { id: 'itemLuck', name: 'Glücksgen', description: 'Item-Aufwertungschancen ×(1 + 0,1 je Stufe).', perLevel: 0.1, maxLevel: 20, baseCost: 60, costGrowth: 1.6 },
-  itemSlots: { id: 'itemSlots', name: 'Tragkraft', description: '+1 Item-Slot je Stufe.', perLevel: 1, maxLevel: 4, baseCost: 200, costGrowth: 3 },
-  relocate: { id: 'relocate', name: 'Wanderlust', description: 'Verlegung eine Welle früher je Stufe (mindestens alle 2).', perLevel: 1, maxLevel: 3, baseCost: 80, costGrowth: 2.5 },
-  dnaGain: { id: 'dnaGain', name: 'Genbank', description: '+10 % DNA am Run-Ende je Stufe.', perLevel: 0.1, maxLevel: 30, baseCost: 50, costGrowth: 1.5 },
-  autoFusion: { id: 'autoFusion', name: 'Symbiose', description: 'Schaltet Auto-Fusion frei (Idle-Komfort).', perLevel: 1, maxLevel: 1, baseCost: 150, costGrowth: 1 },
-};
+/** Artefakte in fester Reihenfolge. */
+export const ARTIFACT_ORDER: readonly MetaUpgradeDef[] = [
+  { id: 'startGold', name: 'Goldener Kiesel', icon: '🪙', description: '+30 Startgold je Stufe.', perLevel: 30, maxLevel: 50, unlockWave: 0, unlockCost: 10, levelCost: 10, levelGrowth: 1.35 },
+  { id: 'evolutionBase', name: 'Ursuppe', icon: '🧪', description: '+0,4 % Grund-Evolutionschance je Stufe.', perLevel: 0.004, maxLevel: 25, unlockWave: 10, unlockCost: 20, levelCost: 15, levelGrowth: 1.45 },
+  { id: 'damage', name: 'Raubtierzahn', icon: '🦷', description: 'Schaden ×(1 + 0,08 je Stufe), eigener Topf.', perLevel: 0.08, maxLevel: 100, unlockWave: 15, unlockCost: 40, levelCost: 25, levelGrowth: 1.3 },
+  { id: 'startLives', name: 'Schildkrötenpanzer', icon: '🐢', description: '+1 Startleben je Stufe.', perLevel: 1, maxLevel: 15, unlockWave: 20, unlockCost: 60, levelCost: 30, levelGrowth: 1.6 },
+  { id: 'autoUpgrades', name: 'Instinkt', icon: '🧠', description: 'Schaltet Auto-Kauf für Run-Upgrades frei (im Shop pro Upgrade wählbar).', perLevel: 1, maxLevel: 1, unlockWave: 25, unlockCost: 100, levelCost: 0, levelGrowth: 1 },
+  { id: 'fireRate', name: 'Kolibriherz', icon: '❤️', description: 'Feuerrate ×(1 + 0,05 je Stufe), eigener Topf.', perLevel: 0.05, maxLevel: 100, unlockWave: 30, unlockCost: 120, levelCost: 25, levelGrowth: 1.3 },
+  { id: 'inheritance', name: 'Fossil', icon: '🦴', description: '+5 % Stärke aller geerbten und Nachbar-Boni je Stufe.', perLevel: 0.05, maxLevel: 40, unlockWave: 40, unlockCost: 200, levelCost: 40, levelGrowth: 1.4 },
+  { id: 'towerCost', name: 'Zellkern', icon: '🔬', description: 'Turmkosten wachsen je Stufe 1 % langsamer.', perLevel: 0.01, maxLevel: 12, unlockWave: 50, unlockCost: 300, levelCost: 60, levelGrowth: 1.7 },
+  { id: 'autoFusion', name: 'Symbiose-Koralle', icon: '🪸', description: 'Schaltet Auto-Fusion frei.', perLevel: 1, maxLevel: 1, unlockWave: 60, unlockCost: 400, levelCost: 0, levelGrowth: 1 },
+  { id: 'itemLuck', name: 'Vierblättriger Klee', icon: '🍀', description: 'Item-Aufwertungschancen ×(1 + 0,1 je Stufe).', perLevel: 0.1, maxLevel: 20, unlockWave: 75, unlockCost: 600, levelCost: 80, levelGrowth: 1.6 },
+  { id: 'dnaGain', name: 'Doppelhelix', icon: '🧬', description: '+10 % DNA am Run-Ende je Stufe.', perLevel: 0.1, maxLevel: 30, unlockWave: 90, unlockCost: 900, levelCost: 100, levelGrowth: 1.5 },
+  { id: 'autoArtifacts', name: 'Gedächtnis', icon: '📜', description: 'Schaltet Auto-Kauf für Artefakt-Stufen am Run-Ende frei (pro Artefakt wählbar).', perLevel: 1, maxLevel: 1, unlockWave: 100, unlockCost: 1200, levelCost: 0, levelGrowth: 1 },
+  { id: 'relocate', name: 'Zugvogelfeder', icon: '🪶', description: 'Verlegung eine Welle früher je Stufe (mindestens alle 2).', perLevel: 1, maxLevel: 3, unlockWave: 125, unlockCost: 1600, levelCost: 800, levelGrowth: 2.5 },
+  { id: 'itemSlots', name: 'Beutel', icon: '👝', description: '+1 Item-Slot je Stufe.', perLevel: 1, maxLevel: 4, unlockWave: 150, unlockCost: 2500, levelCost: 2000, levelGrowth: 3 },
+];
 
-export const META_UPGRADE_IDS = Object.keys(META_UPGRADE_DEFS) as MetaUpgradeId[];
+export const META_UPGRADE_IDS: readonly MetaUpgradeId[] = ARTIFACT_ORDER.map((a) => a.id);
 
+export const META_UPGRADE_DEFS: Readonly<Record<MetaUpgradeId, MetaUpgradeDef>> = Object.fromEntries(
+  ARTIFACT_ORDER.map((a) => [a.id, a]),
+) as Record<MetaUpgradeId, MetaUpgradeDef>;
+
+/** Preis, um von `level` auf `level + 1` zu kommen (level >= 1). */
 export function metaUpgradeCost(def: MetaUpgradeDef, level: number): number {
-  return Math.round(def.baseCost * def.costGrowth ** level);
+  return Math.round(def.levelCost * def.levelGrowth ** Math.max(0, level - 1));
 }
 
 /** DNA-Wert einer einzelnen Welle (überlinear, späte Wellen zählen stark). */

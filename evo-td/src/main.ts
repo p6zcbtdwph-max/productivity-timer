@@ -7,9 +7,12 @@ import { START_MAP } from './data/map';
 import { Game } from './game/Game';
 import type { GameState } from './game/GameState';
 import { createInitialMeta, type MetaState } from './game/MetaState';
+import { getTowerDef } from './data/towers';
+import { formatNumber } from './ui/dom';
 import { SaveManager } from './persistence/SaveManager';
 import { CanvasRenderer } from './render/CanvasRenderer';
 import { $ } from './ui/dom';
+import { DevPanel } from './ui/DevPanel';
 import { ElementLegend } from './ui/ElementLegend';
 import { EventLog } from './ui/EventLog';
 import { GlobalPanel } from './ui/GlobalPanel';
@@ -107,6 +110,13 @@ const endRun = (): void => {
   afterNewRun();
 };
 
+/** Alles löschen (Entwickler): Run und globaler Fortschritt. */
+const wipeAll = (): void => {
+  runSaves.clear();
+  metaSaves.clear();
+  location.reload();
+};
+
 const tabs = new Tabs();
 const hud = new Hud(game, loop, resetGame);
 const towerPanel = new TowerPanel(game, {
@@ -118,6 +128,26 @@ const treeView = new TreeView(game);
 const globalPanel = new GlobalPanel(game, endRun);
 const eventLog = new EventLog(game);
 new ElementLegend();
+new DevPanel(game, loop, () => {
+  towerPanel.invalidate();
+  treeView.invalidate();
+  globalPanel.invalidate();
+}, wipeAll);
+
+// --- Schwebende Texte (rein optisch) -----------------------------------------
+
+game.bus.on('enemyKilled', ({ enemy, reward }) => {
+  if (enemy.defId === 'boss' || reward >= game.towerCost() * 0.25) {
+    renderer.float(enemy.x, enemy.y, `+${formatNumber(reward)}`, '#ffd54f');
+  }
+});
+game.bus.on('towerEvolved', ({ tower, to }) => renderer.float(tower.x, tower.y - 0.4, getTowerDef(to).name, '#9be7a0', 2));
+game.bus.on('towerFused', ({ tower }) => renderer.float(tower.x, tower.y - 0.4, `★${tower.prestige}`, '#ffffff', 2));
+game.bus.on('towerLevelUp', ({ tower }) => {
+  if (tower.level % 10 === 0) renderer.float(tower.x, tower.y - 0.4, `Lvl ${tower.level}`, '#80deea', 1.5);
+});
+game.bus.on('enemyRevived', ({ enemy }) => renderer.float(enemy.x, enemy.y, 'Titan!', '#ffffff'));
+game.bus.on('enemyLeaked', ({ enemy }) => renderer.float(enemy.x - 0.5, enemy.y, enemy.defId === 'boss' ? '-3 ❤' : '-1 ❤', '#ff5252', 1.5));
 
 // --- Eingabe ----------------------------------------------------------------
 
@@ -175,6 +205,9 @@ game.bus.on('gameOver', ({ wave }) => {
     report.fromNewWaves > 0
       ? `+${report.total} DNA (davon ${report.fromNewWaves} für neue Bestwellen über ${report.bestWaveBefore}).`
       : `+${report.total} DNA. Keine neue Bestwelle (${report.bestWaveBefore}), daher nur der kleine Wiederholungs-Anteil.`;
+  if (report.newMilestones > 0) {
+    $('#game-over-dna').textContent += ` 🏆 ${report.newMilestones} neuer Karten-Erfolg: +${report.newMilestones * 10} % Schaden für immer.`;
+  }
   $('#game-over').classList.remove('hidden');
 });
 $('#game-over-restart').addEventListener('click', endRun);
@@ -196,3 +229,6 @@ setInterval(saveAll, BALANCE.persistence.autosaveSeconds * 1000);
 window.addEventListener('beforeunload', saveAll);
 
 loop.start();
+
+// Für Tests und Debugging in der Browser-Konsole: window.evoTd.game
+(window as unknown as { evoTd: unknown }).evoTd = { game, loop };

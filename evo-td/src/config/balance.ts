@@ -66,6 +66,12 @@ export const BALANCE = {
     neighbourDiagonal: true,
   },
 
+  /** Synergie: jeder direkt angrenzende Turm derselben Art (Grund, Evolution zu stoppen). */
+  synergy: {
+    damagePerTwin: 0.1,
+    fireRatePerTwin: 0.05,
+  },
+
   /** Prestige durch Fusion zweier gleicher Türme. */
   prestige: {
     damagePerLevel: 0.75,

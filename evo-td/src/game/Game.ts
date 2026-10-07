@@ -11,7 +11,8 @@ import type { GameEvents } from './events';
 import type { GameContext } from './GameContext';
 import { createInitialState, type GameState } from './GameState';
 import { createInitialMeta, type MetaState } from './MetaState';
-import { buyMetaUpgrade, computeDna, metaValues, settleRun, unlockTower, type DnaReport } from './systems/MetaSystem';
+import { bestWaveOn, buyMetaUpgrade, computeDna, metaValues, settleRun, unlockArtifact, unlockTower, type DnaReport } from './systems/MetaSystem';
+import { updateAutoUpgrades } from './systems/AutoSystem';
 import type { MetaUpgradeId } from '../data/meta';
 import { fuseTowers, fusionCandidates, updateAutoFusion } from './systems/FusionSystem';
 import { buildTower, canBuild, currentTowerCost, updateAutoBuild } from './systems/BuildSystem';
@@ -44,7 +45,7 @@ export class Game {
   private freshState(): GameState {
     const values = metaValues(this.meta);
     const state = createInitialState(Date.now() >>> 0, { gold: values.startGold, lives: values.startLives });
-    state.bestWaveAtStart = this.meta.bestWave;
+    state.bestWaveAtStart = bestWaveOn(this.meta, this.map.id);
     return state;
   }
 
@@ -65,7 +66,8 @@ export class Game {
     updateProjectiles(ctx, dt); // 6. Projektile fliegen/treffen
     updateEvolution(ctx, dt); //   7. Evolution würfelt
     updateAutoBuild(ctx); //       8. Idle-Automatik baut nach
-    updateAutoFusion(ctx); //      9. Idle-Automatik fusioniert (Meta-Freischaltung)
+    updateAutoFusion(ctx); //      9. Idle-Automatik fusioniert (Artefakt)
+    updateAutoUpgrades(ctx, dt); // 10. Idle-Automatik kauft Upgrades (Artefakt)
     this.state.rngState = this.rng.getState();
   }
 
@@ -154,12 +156,12 @@ export class Game {
 
   /** DNA-Vorschau für den laufenden Run. */
   dnaPreview(): DnaReport {
-    return computeDna(this.meta, this.state.wave.current);
+    return computeDna(this.meta, this.map.id, this.state.wave.current);
   }
 
   /** Beendet den Run: DNA gutschreiben, Bestwelle aktualisieren, neuen Run starten. */
   endRun(): DnaReport {
-    const report = settleRun(this.meta, this.state.wave.current);
+    const report = settleRun(this.meta, this.map.id, this.state.wave.current);
     this.bus.emit('runEnded', { report });
     this.reset();
     return report;
@@ -171,6 +173,22 @@ export class Game {
 
   buyMetaUpgrade(id: MetaUpgradeId): boolean {
     return buyMetaUpgrade(this.meta, id);
+  }
+
+  unlockArtifact(id: MetaUpgradeId): boolean {
+    return unlockArtifact(this.meta, id);
+  }
+
+  // Entwickler-Werkzeuge (nur für Tests) ------------------------------------
+
+  /** Springt `waves` Wellen vor: laufende Gegner verschwinden, nächste Welle startet sofort. */
+  devSkipWaves(waves: number): void {
+    this.state.enemies = [];
+    this.state.projectiles = [];
+    this.state.wave.spawnQueue = [];
+    this.state.wave.aliveFromCurrent = 0;
+    this.state.wave.current += Math.max(0, waves - 1);
+    this.state.wave.countdown = 0;
   }
 
   setAutoFusion(enabled: boolean): void {

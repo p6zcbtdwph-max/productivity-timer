@@ -59,6 +59,8 @@ export class TowerPanel {
       tower.id, tower.defId, tower.level, tower.prestige, Math.floor(tower.xp), tower.evolutionLocked, sameType,
       tower.kills, env.neighbours.join(','), chance.toFixed(4), candidates.length, charges, activeAction ?? '',
       Math.floor(this.game.state.gold) >= this.game.relocateCost(), unlockedKids.length,
+      // globale Einflüsse: Run-Upgrades, Items, Artefakte, Erfolge
+      JSON.stringify([this.game.state.upgrades, this.game.state.equippedItemIds, this.game.meta.upgrades, this.game.meta.bestWaveByMap]),
     ].join('|');
     if (key === this.lastRenderedKey) return;
     this.lastRenderedKey = key;
@@ -176,15 +178,18 @@ function describeAttack(stats: EffectiveStats): string {
 
 /** "64 × 1.45 (Art) × 1.20 (Ausrüstung) × 1.25 (Mutation) × 1.75 (Prestige) × 1.14 (Level) × 1.08 (Meta)" */
 function describeBreakdown(b: Breakdown): string {
-  const parts = [formatNumber(b.base)];
+  const num = (n: number): string => (Math.abs(n) < 100 ? n.toFixed(2) : formatNumber(n));
+  const parts = [num(b.base)];
   const factor = (value: number, label: string): void => {
     if (Math.abs(value - 1) > 0.0005) parts.push(`× ${value.toFixed(2)} (${label})`);
   };
   factor(b.art, 'Art');
   factor(b.ausruestung, 'Ausrüstung');
   factor(b.mutation, 'Mutation');
+  factor(b.synergie, 'Synergie');
   factor(b.prestige, 'Prestige');
   factor(b.level, 'Level');
-  factor(b.meta, 'Meta');
-  return `${parts.join(' ')} = ${formatNumber(b.result)}`;
+  factor(b.meta, 'Artefakte');
+  factor(b.erfolge, 'Erfolge');
+  return `${parts.join(' ')} = ${num(b.result)}`;
 }

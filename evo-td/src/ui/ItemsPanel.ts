@@ -1,5 +1,5 @@
 /** Inventar: Items ausrüsten/ablegen. */
-import { BALANCE } from '../config/balance';
+import { metaValues } from '../game/systems/MetaSystem';
 import { describeItem, QUALITY_DEFS, QUALITY_ORDER } from '../data/items';
 import type { Game } from '../game/Game';
 import { $, el } from './dom';
@@ -22,7 +22,7 @@ export class ItemsPanel {
     );
     for (const item of sorted) {
       const equipped = state.equippedItemIds.includes(item.id);
-      const full = !equipped && state.equippedItemIds.length >= BALANCE.shop.itemSlots;
+      const full = !equipped && state.equippedItemIds.length >= metaValues(this.game.meta).itemSlots;
       const button = el('button', { className: equipped ? 'btn small active' : 'btn small', disabled: full }, [
         equipped ? 'Ablegen' : 'Ausrüsten',
       ]);
@@ -42,7 +42,7 @@ export class ItemsPanel {
     }
 
     this.root.replaceChildren(
-      el('h2', {}, [`Items (${state.equippedItemIds.length}/${BALANCE.shop.itemSlots} ausgerüstet)`]),
+      el('h2', {}, [`Items (${state.equippedItemIds.length}/${metaValues(this.game.meta).itemSlots} ausgerüstet)`]),
       state.items.length === 0
         ? el('p', { className: 'muted' }, ['Noch keine Items. Im Shop kaufen.'])
         : list,

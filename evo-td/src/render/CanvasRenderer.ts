@@ -35,9 +35,27 @@ const COLORS = {
   lock: '#ffd54f',
 } as const;
 
+interface FloatingText {
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  born: number;
+  ttl: number;
+}
+
+const MAX_FLOATERS = 40;
+
 export class CanvasRenderer {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly cell = BALANCE.map.cellSize;
+  private floaters: FloatingText[] = [];
+
+  /** Schwebender Text in Zellenkoordinaten (rein optisch, kein Spielzustand). */
+  float(x: number, y: number, text: string, color: string, ttl = 1.2): void {
+    this.floaters.push({ x, y, text, color, born: performance.now(), ttl: ttl * 1000 });
+    if (this.floaters.length > MAX_FLOATERS) this.floaters.shift();
+  }
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -139,6 +157,12 @@ export class CanvasRenderer {
         ctx.lineTo(x + size - 4, y);
         ctx.closePath();
         ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = `bold ${Math.round(size * 0.6)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(element.name.charAt(0), enemy.x * cell, enemy.y * cell + 1);
+        ctx.textBaseline = 'alphabetic';
       }
       // Statuseffekte als kleine Punkte links unten
       let dot = 0;
@@ -166,12 +190,31 @@ export class CanvasRenderer {
       }
     }
 
+    this.drawFloaters();
+
     for (const projectile of state.projectiles) {
       ctx.fillStyle = projectile.color;
       ctx.beginPath();
       ctx.arc(projectile.x * cell, projectile.y * cell, 3, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  private drawFloaters(): void {
+    const { ctx, cell } = this;
+    const now = performance.now();
+    this.floaters = this.floaters.filter((f) => now - f.born < f.ttl);
+    ctx.textAlign = 'center';
+    ctx.font = `bold ${Math.round(cell * 0.32)}px system-ui, sans-serif`;
+    for (const f of this.floaters) {
+      const t = (now - f.born) / f.ttl;
+      ctx.globalAlpha = 1 - t;
+      ctx.fillStyle = '#000';
+      ctx.fillText(f.text, f.x * cell + 1, (f.y - t * 0.8) * cell + 1);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x * cell, (f.y - t * 0.8) * cell);
+    }
+    ctx.globalAlpha = 1;
   }
 
   private drawGrid(): void {

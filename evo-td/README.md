@@ -34,13 +34,19 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
 
 - Ein Run endet bei 0 Leben oder freiwillig ("Run beenden"). Dann gibt es DNA:
   jede Welle ist `ceil(welle^1.5 / 10)` DNA wert, aber **nur Wellen jenseits der bisherigen
-  Bestwelle zählen voll**, bereits erreichte Wellen bringen 10 %. Pushen lohnt, Farmen nicht.
-- **Freischaltungen** im Stammbaum: Tier 2 kostet 25 DNA, jedes weitere Tier das Vierfache.
-  Der Elternknoten muss frei sein.
-- **Permanente Upgrades**: Startkapital, Zähigkeit (Leben), Zellteilung (Turmkosten),
-  Mutationsdruck (Evolutionschance), Raubtierinstinkt (Schaden ×), Stoffwechsel (Feuerrate ×),
-  Erbgut (sekundäre Boni), Glücksgen (Item-Aufwertung), Tragkraft (Item-Slots), Wanderlust
-  (Verlegen), Genbank (+DNA), Symbiose (Auto-Fusion).
+  Bestwelle dieser Karte zählen voll**, bereits erreichte Wellen bringen 10 %.
+- **Arten freischalten** im Stammbaum: Tier 2 kostet 25 DNA, jedes weitere Tier das Vierfache.
+- **Artefakte** in fester Reihenfolge. Das nächste Artefakt braucht das vorige, eine Bestwelle
+  und DNA; danach lässt es sich mit DNA weiter aufstufen. Reihenfolge (Bestwelle):
+  Goldener Kiesel (0), Ursuppe (10), Raubtierzahn (15), Schildkrötenpanzer (20),
+  **Instinkt** (25, Auto-Kauf im Run), Kolibriherz (30), Fossil (40), Zellkern (50),
+  **Symbiose-Koralle** (60, Auto-Fusion), Vierblättriger Klee (75), Doppelhelix (90),
+  **Gedächtnis** (100, Auto-Kauf von Artefakt-Stufen am Run-Ende), Zugvogelfeder (125), Beutel (150).
+- **Auto-Modi**: Instinkt kauft jede Sekunde das billigste der im Shop angehakten Run-Upgrades
+  und hält bei Auto-Bau Gold für den nächsten Turm zurück. Gedächtnis kauft am Run-Ende die
+  angehakten Artefakt-Stufen, billigste zuerst.
+- **Karten-Erfolge**: alle 50 Bestwellen auf einer Karte gibt es dauerhaft den Bonus der Karte.
+  Urmeer: +10 % Schaden je Erfolg, als eigener Topf.
 
 ## Stammbaum: 33 Basisarten + Mutationen
 
@@ -59,14 +65,38 @@ Schaden = Basis(Tier, Archetyp)
         × (1 + Σ Art-Boni)          Topf "Art": eigener, Vorfahren-, Geschwister-, Nachbar-Boni (additiv)
         × (1 + Σ Ausrüstung)        Topf "Ausrüstung": Run-Upgrades + Items (additiv)
         × Π Mutations-Faktoren      reine Multiplikatoren (Titan ×1.25 ...), stapeln multiplikativ
+        × (1 + 0.10 · gleiche Nachbarn)  Synergie: angrenzende Türme derselben Art
         × (1 + 0.75 · Prestige)
         × (1 + 0.07 · (Level − 1))
-        × Meta-Faktor               Globaler Shop (Raubtierinstinkt)
+        × Artefakt-Faktor           Raubtierzahn
+        × Erfolgs-Faktor            Karten-Erfolge
 ```
 
 Feuerrate und Reichweite folgen demselben Muster. Krit-Chance additiv (gedeckelt), Krit-Schaden
 additiv auf den Multiplikator, Gold/XP = (1 + Art) × (1 + Ausrüstung). Das Turm-Panel zeigt die
 Aufschlüsselung für jeden Turm.
+
+## Auf dem Mac starten
+
+1. Node.js LTS von nodejs.org installieren.
+2. Im Terminal:
+
+```bash
+git clone https://github.com/p6zcbtdwph-max/productivity-timer.git
+cd productivity-timer
+git checkout claude/td-game-animal-evolution-sskxvf
+cd evo-td
+npm install
+npm run dev
+```
+
+3. `http://localhost:5173` im Browser öffnen.
+
+**Entwickler-Panel**: Taste `D`. Gold und DNA geben, Wellen überspringen, Bestwelle erhöhen,
+Arten und Artefakte freischalten, 8×/16× Tempo, alles löschen. In der Browser-Konsole ist das
+Spiel als `window.evoTd.game` erreichbar.
+
+**Tasten**: Leertaste Pause, `L` Evolution stoppen, `F` Fusion, `V` Verlegen, `Esc` Abbrechen, `D` Entwickler.
 
 ## Entwicklung
 
@@ -107,7 +137,6 @@ Grundregeln:
 ## Nächste Schritte (Ideen)
 
 - Balance-Pass auf den Meta-Loop mit der Headless-Simulation (Run-Länge, DNA-Tempo).
-- Offline-Fortschritt und 8×-Tempo für lange Pushes.
-- Synergien pro Linie als Grund, die Evolution zu stoppen.
+- Passive Einnahmen / Offline-Fortschritt.
 - Weitere Elemente (Teilung, Tarnung, Flug) in `data/elements.ts`, Boss-Elemente kombiniert.
 - Zweite Karte, echte Sprites statt Blöcken, später Tauri-Bundle für den Mac.

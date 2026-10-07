@@ -30,7 +30,11 @@ export class EventLog {
       this.push(`🎁 ${describeItem(item)}${lucky}`, item.quality === 'legendaer' ? 'evo' : '');
       void QUALITY_DEFS;
     });
-    game.bus.on('runEnded', ({ report }) => this.push(`🧬 Run beendet in Welle ${report.wave}: +${report.total} DNA`, 'evo'));
+    game.bus.on('runEnded', ({ report }) => {
+      this.push(`🧬 Run beendet in Welle ${report.wave}: +${report.total} DNA`, 'evo');
+      if (report.newMilestones > 0) this.push(`🏆 Neuer Karten-Erfolg: +${report.newMilestones * 10} % Schaden`, 'evo');
+      if (report.autoBought.length > 0) this.push(`📜 Auto-Kauf: ${report.autoBought.length} Artefakt-Stufen`);
+    });
     game.bus.on('enemyRevived', () => this.push('Titan-Kern: ein Roboter steht wieder auf.', 'bad'));
     game.bus.on('enemyLeaked', () => this.push('Ein Roboter ist durchgebrochen!', 'bad'));
     game.bus.on('gameOver', ({ wave }) => this.push(`Game Over in Welle ${wave}.`, 'bad'));

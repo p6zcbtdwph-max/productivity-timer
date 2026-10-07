@@ -112,8 +112,21 @@ describe('Verrechnungstöpfe', () => {
     expect(b.mutation).toBeCloseTo(1.25);
     expect(b.prestige).toBeCloseTo(1 + BALANCE.prestige.damagePerLevel);
     expect(b.level).toBeCloseTo(1 + 2 * BALANCE.xp.statPerLevel);
-    expect(b.result).toBeCloseTo(b.base * b.art * b.ausruestung * b.mutation * b.prestige * b.level * b.meta);
+    expect(b.result).toBeCloseTo(b.base * b.art * b.ausruestung * b.mutation * b.synergie * b.prestige * b.level * b.meta * b.erfolge);
     expect(stats.damage).toBeCloseTo(b.result);
+  });
+
+  it('Synergie: gleiche Nachbarn multiplizieren, fremde nicht', () => {
+    const twins = computeStats({ defId: 'wolf', level: 1, prestige: 0 }, { ...EMPTY_ENVIRONMENT, neighbours: ['wolf', 'wolf', 'hai'] });
+    expect(twins.breakdown.damage.synergie).toBeCloseTo(1 + 2 * BALANCE.synergy.damagePerTwin);
+    expect(twins.breakdown.fireRate.synergie).toBeCloseTo(1 + 2 * BALANCE.synergy.fireRatePerTwin);
+  });
+
+  it('Karten-Erfolge sind ein eigener Topf', () => {
+    const meta = createInitialMeta();
+    meta.bestWaveByMap.urmeer = 100;
+    const stats = computeStats({ defId: 'wurm', level: 1, prestige: 0 }, { ...EMPTY_ENVIRONMENT, meta: metaValues(meta) });
+    expect(stats.breakdown.damage.erfolge).toBeCloseTo(1.2);
   });
 
   it('Meta-Schaden ist ein eigener Topf', () => {

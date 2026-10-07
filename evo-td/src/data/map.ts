@@ -5,7 +5,17 @@
  */
 import type { Vec2 } from '../core/Vec2';
 
+/** Erfolgsbonus einer Karte: alle `every` Bestwellen +`perMilestone` (immer derselbe Typ pro Karte). */
+export interface MapAchievementDef {
+  kind: 'damage';
+  every: number;
+  perMilestone: number;
+}
+
 export interface MapDef {
+  id: string;
+  name: string;
+  achievement: MapAchievementDef;
   cols: number;
   rows: number;
   /** Eckpunkte des Pfades (Zellenmitte = +0.5). */
@@ -55,9 +65,15 @@ function computeBuildSlots(cols: number, rows: number, pathCells: ReadonlySet<st
   return slots;
 }
 
-export function createMap(cols: number, rows: number, corners: readonly Vec2[]): MapDef {
+export function createMap(
+  meta: { id: string; name: string; achievement: MapAchievementDef },
+  cols: number,
+  rows: number,
+  corners: readonly Vec2[],
+): MapDef {
   const pathCells = tracePath(corners);
   return {
+    ...meta,
     cols,
     rows,
     waypoints: corners.map((c) => ({ x: c.x + 0.5, y: c.y + 0.5 })),
@@ -67,11 +83,19 @@ export function createMap(cols: number, rows: number, corners: readonly Vec2[]):
 }
 
 /** Startkarte: 20 x 12 Zellen, S-Kurve von links nach rechts. */
-export const START_MAP: MapDef = createMap(20, 12, [
+export const START_MAP: MapDef = createMap(
+  { id: 'urmeer', name: 'Urmeer', achievement: { kind: 'damage', every: 50, perMilestone: 0.1 } },
+  20,
+  12,
+  [
   { x: 0, y: 2 },
   { x: 16, y: 2 },
   { x: 16, y: 6 },
   { x: 3, y: 6 },
   { x: 3, y: 9 },
   { x: 19, y: 9 },
-]);
+  ],
+);
+
+/** Alle Karten (Erfolge werden über alle Karten summiert). */
+export const MAPS: readonly MapDef[] = [START_MAP];

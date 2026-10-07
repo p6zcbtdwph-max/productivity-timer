@@ -33,8 +33,10 @@ export interface GameState {
   lives: number;
   towersBuilt: number;
   nextEntityId: number;
-  /** Bestwelle zu Run-Beginn (für die DNA-Vorschau). */
+  /** Bestwelle dieser Karte zu Run-Beginn. */
   bestWaveAtStart: number;
+  /** Sekunden bis zum nächsten Auto-Upgrade-Kauf. */
+  autoUpgradeTimer: number;
   towers: Tower[];
   enemies: Enemy[];
   projectiles: Projectile[];
@@ -75,6 +77,7 @@ export function createInitialState(
     towersBuilt: 0,
     nextEntityId: 1,
     bestWaveAtStart: 0,
+    autoUpgradeTimer: 1,
     towers: [],
     enemies: [],
     projectiles: [],

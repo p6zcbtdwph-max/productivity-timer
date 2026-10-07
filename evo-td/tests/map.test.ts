@@ -23,6 +23,8 @@ describe('Karte', () => {
   });
 
   it('lehnt diagonale Pfadsegmente ab', () => {
-    expect(() => createMap(5, 5, [{ x: 0, y: 0 }, { x: 2, y: 2 }])).toThrow();
+    expect(() =>
+      createMap({ id: 't', name: 'T', achievement: { kind: 'damage', every: 50, perMilestone: 0.1 } }, 5, 5, [{ x: 0, y: 0 }, { x: 2, y: 2 }]),
+    ).toThrow();
   });
 });

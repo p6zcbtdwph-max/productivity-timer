@@ -9,9 +9,11 @@
  *           × (1 + Σ Art-Boni %)          Topf "Art":        eigener, Vorfahren-, Geschwister-, Nachbar-Boni (additiv)
  *           × (1 + Σ Ausrüstung %)        Topf "Ausrüstung": Upgrades im Run + Items (additiv)
  *           × Π Mutations-Faktoren         reine Multiplikatoren (z.B. Titan ×1.25, stapeln multiplikativ)
+ *           × (1 + 0.10 · gleiche Nachbarn) Synergie: angrenzende Türme derselben Art
  *           × (1 + 0.75 · Prestige)        Prestige
  *           × (1 + 0.07 · (Level − 1))     Level
- *           × Meta-Faktor                  Globaler Shop
+ *           × Meta-Faktor                  Artefakte (Globaler Shop)
+ *           × Erfolgs-Faktor               Karten-Erfolge (alle 50 Bestwellen)
  *
  *   Feuerrate und Reichweite folgen demselben Muster (ohne Mutations-Faktoren).
  *   Krit-Chance: additiv, gedeckelt. Krit-Multiplikator: additiv.
@@ -53,9 +55,11 @@ export interface Breakdown {
   art: number;
   ausruestung: number;
   mutation: number;
+  synergie: number;
   prestige: number;
   level: number;
   meta: number;
+  erfolge: number;
   result: number;
 }
 
@@ -147,8 +151,14 @@ export function statsFor(ctx: GameContext, tower: Tower): EffectiveStats {
   return computeStats(tower, environmentFor(ctx, tower));
 }
 
-function breakdown(base: number, art: number, ausruestung: number, mutation: number, prestige: number, level: number, meta: number): Breakdown {
-  return { base, art, ausruestung, mutation, prestige, level, meta, result: base * art * ausruestung * mutation * prestige * level * meta };
+function breakdown(parts: Omit<Breakdown, 'result'>): Breakdown {
+  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge } = parts;
+  return { ...parts, result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge };
+}
+
+/** Anzahl direkt angrenzender Türme derselben Art. */
+export function twinCount(defId: TowerId, env: StatsEnvironment): number {
+  return env.neighbours.reduce((n, id) => n + (id === defId ? 1 : 0), 0);
 }
 
 export function computeStats(
@@ -234,9 +244,41 @@ export function computeStats(
     }
   }
 
-  const damageB = breakdown(base.damage, 1 + artDamage, 1 + m.damage, mutationDamage, 1 + p.damagePerLevel * tower.prestige, level, env.meta.damageMult);
-  const fireRateB = breakdown(1 / base.cooldown, 1 + artFireRate, 1 + m.fireRate, 1, 1 + p.fireRatePerLevel * tower.prestige, level, env.meta.fireRateMult);
-  const rangeB = breakdown(base.range, 1 + artRange, 1 + m.range, 1, 1 + p.rangePerLevel * tower.prestige, 1, 1);
+  const twins = twinCount(tower.defId, env);
+  const syn = BALANCE.synergy;
+  const damageB = breakdown({
+    base: base.damage,
+    art: 1 + artDamage,
+    ausruestung: 1 + m.damage,
+    mutation: mutationDamage,
+    synergie: 1 + syn.damagePerTwin * twins,
+    prestige: 1 + p.damagePerLevel * tower.prestige,
+    level,
+    meta: env.meta.damageMult,
+    erfolge: env.meta.achievementDamageMult,
+  });
+  const fireRateB = breakdown({
+    base: 1 / base.cooldown,
+    art: 1 + artFireRate,
+    ausruestung: 1 + m.fireRate,
+    mutation: 1,
+    synergie: 1 + syn.fireRatePerTwin * twins,
+    prestige: 1 + p.fireRatePerLevel * tower.prestige,
+    level,
+    meta: env.meta.fireRateMult,
+    erfolge: 1,
+  });
+  const rangeB = breakdown({
+    base: base.range,
+    art: 1 + artRange,
+    ausruestung: 1 + m.range,
+    mutation: 1,
+    synergie: 1,
+    prestige: 1 + p.rangePerLevel * tower.prestige,
+    level: 1,
+    meta: 1,
+    erfolge: 1,
+  });
 
   const damage = damageB.result;
   const onHit: StatusOnHit = {};
