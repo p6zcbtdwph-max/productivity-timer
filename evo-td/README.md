@@ -97,7 +97,8 @@ Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerech
 Reiter "Garten": Bäume aus der Pflanzen-Evolution wachsen in Töpfen.
 
 - **Töpfe**: Man beginnt mit einem Topf. Weitere nur für **Harz** (20, dann ×3, maximal 6).
-- **Samen** findet man zufällig nach geschafften Wellen (ab Welle 5: 4 %, Bosswellen 40 %).
+- **Samen** findet man zufällig nach geschafften Wellen (ab Welle 5: 4 %, Bosswellen 40 %),
+  **nur beim aktiven Spielen**, nie in der Winterruhe.
   Seltenheit: häufig 70 %, selten 22 %, sehr selten 7 %, legendär 1 %. Samen bleiben über Runs erhalten.
 - **Wachstum** in Echtzeit (auch offline, wie Kammern): Level n → n+1 dauert n Stunden
   (Level 10 nach ~2 Tagen, Level 30 nach ~3 Wochen), maximal Level 100.

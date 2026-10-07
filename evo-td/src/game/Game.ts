@@ -84,7 +84,7 @@ export class Game {
   }
 
   get ctx(): GameContext {
-    return { state: this.state, meta: this.meta, map: this.map, rng: this.rng, bus: this.bus, statsCache: this.statsCache, power: this.power };
+    return { state: this.state, meta: this.meta, map: this.map, rng: this.rng, bus: this.bus, statsCache: this.statsCache, power: this.power, offline: this.simulating };
   }
 
   /** Ein Simulationsschritt. Reihenfolge ist bewusst gewählt (siehe Kommentare). */

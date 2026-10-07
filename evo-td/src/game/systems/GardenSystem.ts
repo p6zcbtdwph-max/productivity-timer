@@ -193,8 +193,9 @@ export function seedChance(wave: number, boss: boolean): number {
   return boss ? GARDEN.bossSeedChance : GARDEN.seedChance;
 }
 
-/** Nach einer geschafften Welle: vielleicht einen Samen finden. */
+/** Nach einer geschafften Welle: vielleicht einen Samen finden. Nur beim aktiven Spielen, nie in der Winterruhe. */
 export function maybeDropSeed(ctx: GameContext, wave: number, boss: boolean): TreeId | undefined {
+  if (ctx.offline) return undefined;
   const upgrades = gardenUpgradeValues(ctx.meta);
   if (!ctx.rng.chance(Math.min(1, seedChance(wave, boss) * upgrades.seedChanceMult))) return undefined;
   const tree = rollTree(ctx.rng, upgrades.rarityLuck);

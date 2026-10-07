@@ -18,4 +18,6 @@ export interface GameContext {
   statsCache?: Map<number, EffectiveStats>;
   /** Kraftfaktor auf den Schaden (1 = normal; Winterruhe offline < 1). */
   power?: number;
+  /** Wahr während der Winterruhe (Offline-Nachrechnung): manches gibt es nur aktiv. */
+  offline?: boolean;
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/core/Rng';
+import { BALANCE } from '../src/config/balance';
 import { GARDEN, RARITIES, resinPerHour, TREE_DEFS, TREE_IDS, treeBonus } from '../src/data/garden';
 import { START_MAP } from '../src/data/map';
 import { Game } from '../src/game/Game';
@@ -211,5 +212,28 @@ describe('Pflege (Harz)', () => {
     expect(after.chamberSpeedMult).toBeCloseTo(before.chamberSpeedMult * 2);
     expect(after.passiveDnaMult).toBeCloseTo(before.passiveDnaMult * 2);
     expect(after.offlineCapSeconds).toBe(before.offlineCapSeconds + 3 * HOUR);
+  });
+});
+
+describe('Samen nur aktiv', () => {
+  it('in der Winterruhe gibt es keine Samen', async () => {
+    const { simulateOfflineRun } = await import('../src/game/OfflineRun');
+    const meta = createInitialMeta();
+    meta.garden.upgrades.vogelfutter = 15; // Chance hoch, damit ein Fund sicher wäre
+    const game = new Game(START_MAP, meta, createInitialState(4));
+    game.state.gold = 1e9;
+    for (let slot = 0; slot < 40; slot++) game.build(slot);
+    for (const t of game.state.towers) t.level = 200;
+    const report = await simulateOfflineRun(game, 2 * HOUR, { sync: true });
+    expect(report.waveAfter).toBeGreaterThan(20);
+    expect(meta.garden.seedsFound).toBe(0);
+
+    // aktiv dagegen schon
+    const active = new Game(START_MAP, meta, createInitialState(4));
+    active.state.gold = 1e9;
+    for (let slot = 0; slot < 40; slot++) active.build(slot);
+    for (const t of active.state.towers) t.level = 200;
+    for (let i = 0; i < 60 * 60 * 10; i++) active.update(BALANCE.stepSeconds);
+    expect(meta.garden.seedsFound).toBeGreaterThan(0);
   });
 });

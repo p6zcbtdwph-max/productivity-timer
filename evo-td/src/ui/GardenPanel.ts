@@ -64,7 +64,7 @@ export class GardenPanel {
     const owned = TREE_IDS.filter((id) => (garden.seeds[id] ?? 0) > 0);
     const seeds = el('p', {}, [
       owned.length === 0
-        ? el('span', { className: 'muted' }, [`Keine Samen. Nach jeder geschafften Welle ab Welle ${GARDEN.seedFromWave} gibt es eine Chance von ${Math.round(GARDEN.seedChance * 100)} %, bei Bosswellen ${Math.round(GARDEN.bossSeedChance * 100)} %.`])
+        ? el('span', { className: 'muted' }, [`Keine Samen. Nach jeder aktiv geschafften Welle ab Welle ${GARDEN.seedFromWave} gibt es eine Chance von ${Math.round(GARDEN.seedChance * 100)} %, bei Bosswellen ${Math.round(GARDEN.bossSeedChance * 100)} %. In der Winterruhe gibt es keine Samen.`])
         : el('span', {}, owned.map((id) => el('span', { className: 'seed-chip', style: `border-color:${RARITIES[TREE_DEFS[id].rarity].color}` }, [`🌰 ${TREE_DEFS[id].name} ×${garden.seeds[id]}`]))),
     ]);
 
