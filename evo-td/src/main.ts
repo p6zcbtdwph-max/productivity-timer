@@ -239,6 +239,10 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') setAction(undefined);
   if (selectedTowerId === undefined) return;
   if (e.key === 'l') game.toggleEvolutionLock(selectedTowerId);
+  if (e.key === 't') {
+    game.cycleTargeting(selectedTowerId);
+    towerPanel.invalidate();
+  }
   if (e.key === 'f') setAction(activeAction === 'fuse' ? undefined : 'fuse');
   if (e.key === 'v') setAction(activeAction === 'relocate' ? undefined : 'relocate');
 });

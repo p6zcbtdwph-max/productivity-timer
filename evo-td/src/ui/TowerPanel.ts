@@ -1,7 +1,7 @@
 /** Seitenleiste: Details zum ausgewählten Turm, Boni, Aktionen. */
 import { xpForLevel } from '../config/balance';
 import { describeBonus } from '../data/bonuses';
-import { childrenOf, getTowerDef, lineageOf } from '../data/towers';
+import { childrenOf, getTowerDef, lineageOf, TARGETING_NAMES } from '../data/towers';
 import type { Game } from '../game/Game';
 import { canEvolve, countSameType, evolutionChanceFor, unlockedChildren } from '../game/systems/EvolutionSystem';
 import { environmentFor, computeStats, resolveBonuses, type BonusSource, type Breakdown, type EffectiveStats } from '../game/systems/StatsSystem';
@@ -57,7 +57,7 @@ export class TowerPanel {
     const candidates = this.game.fusionCandidatesFor(tower.id);
     const charges = this.game.relocateCharges();
     const key = [
-      tower.id, tower.slot, tower.defId, tower.level, tower.prestige, Math.floor(tower.xp), tower.evolutionLocked, sameType,
+      tower.id, tower.slot, tower.targeting ?? '', tower.defId, tower.level, tower.prestige, Math.floor(tower.xp), tower.evolutionLocked, sameType,
       tower.kills, env.neighbours.join(','), chance.toFixed(4), candidates.length, charges, activeAction ?? '',
       Math.floor(this.game.state.gold) >= this.game.relocateCost(), unlockedKids.length,
       // globale Einflüsse: Run-Upgrades, Items, Artefakte, Erfolge
@@ -73,6 +73,15 @@ export class TowerPanel {
     ]);
     lockButton.addEventListener('click', () => {
       this.game.toggleEvolutionLock(tower.id);
+      this.invalidate();
+    });
+
+    const targeting = tower.targeting ?? def.targeting;
+    const targetButton = el('button', { className: tower.targeting ? 'btn active' : 'btn', title: 'Zielpriorität wechseln (Taste T)' }, [
+      `🎯 Ziel: ${TARGETING_NAMES[targeting]}${tower.targeting ? '' : ' (Standard)'}`,
+    ]);
+    targetButton.addEventListener('click', () => {
+      this.game.cycleTargeting(tower.id);
       this.invalidate();
     });
 
@@ -160,7 +169,7 @@ export class TowerPanel {
       el('h3', {}, ['Eigenschaften']),
       bonusList,
       evolutionInfo,
-      el('div', { className: 'actions' }, [lockButton, fuseButton, relocateButton]),
+      el('div', { className: 'actions' }, [targetButton, lockButton, fuseButton, relocateButton]),
     );
   }
 }
@@ -175,7 +184,6 @@ function describeAttack(stats: EffectiveStats): string {
   if (stats.onHit.antiHeal) parts.push(`Anti-Heilung ${Math.round(stats.onHit.antiHeal.percent * 100)} %`);
   if (stats.shieldBreaker > 0) parts.push(`+${Math.round(stats.shieldBreaker * 100)} % vs Schild`);
   if (stats.goldMultiplier > 1) parts.push(`Gold ×${stats.goldMultiplier.toFixed(2)}`);
-  parts.push(`Ziel: ${stats.targeting}`);
   return parts.join(' · ');
 }
 

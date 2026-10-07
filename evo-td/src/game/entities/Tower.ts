@@ -1,4 +1,4 @@
-import type { TowerId } from '../../data/towers';
+import type { Targeting, TowerId } from '../../data/towers';
 
 export interface Tower {
   id: number;
@@ -17,6 +17,8 @@ export interface Tower {
   evolutionTimer: number;
   /** Spieler hat die Evolution dieses Turms angehalten. */
   evolutionLocked: boolean;
+  /** Vom Spieler gewählte Zielpriorität; fehlt = Standard der Art. */
+  targeting?: Targeting;
   kills: number;
   damageDealt: number;
 }

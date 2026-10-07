@@ -19,7 +19,8 @@ import type { MetaUpgradeId } from '../data/meta';
 import { fuseTowers, fusionCandidates, updateAutoFusion } from './systems/FusionSystem';
 import { buildTower, canBuild, clearObstacle, currentTowerCost, obstacleAt, obstacleClearCost, updateAutoBuild } from './systems/BuildSystem';
 import { MAPS, type ObstacleDef } from '../data/map';
-import { updateCombat } from './systems/CombatSystem';
+import { cycleTargeting, updateCombat } from './systems/CombatSystem';
+import { getTowerDef, type Targeting } from '../data/towers';
 import { updateElements } from './systems/ElementSystem';
 import { evolveTower, updateEvolution } from './systems/EvolutionSystem';
 import { updateMovement } from './systems/MovementSystem';
@@ -121,6 +122,13 @@ export class Game {
   toggleEvolutionLock(towerId: number): void {
     const tower = this.state.towers.find((t) => t.id === towerId);
     if (tower) tower.evolutionLocked = !tower.evolutionLocked;
+  }
+
+  /** Zielpriorität eines Turms weiterschalten; gibt die neue Priorität zurück. */
+  cycleTargeting(towerId: number): Targeting | undefined {
+    const tower = this.state.towers.find((t) => t.id === towerId);
+    if (!tower) return undefined;
+    return cycleTargeting(tower, getTowerDef(tower.defId).targeting);
   }
 
   setAutoBuild(enabled: boolean): void {

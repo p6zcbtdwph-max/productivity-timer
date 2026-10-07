@@ -164,7 +164,7 @@ npm run dev
 Arten und Artefakte freischalten, 8×/16× Tempo, alles löschen. In der Browser-Konsole ist das
 Spiel als `window.evoTd.game` erreichbar.
 
-**Tasten**: Leertaste Pause, `L` Evolution stoppen, `F` Fusion, `V` Verlegen, `Esc` Abbrechen, `D` Entwickler.
+**Tasten**: Leertaste Pause, `L` Evolution stoppen, `T` Zielpriorität, `F` Fusion, `V` Verlegen, `Esc` Abbrechen, `D` Entwickler.
 
 ## Entwicklung
 

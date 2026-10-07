@@ -78,7 +78,18 @@ export type BaseTowerId =
  */
 export type TowerId = string;
 
-export type Targeting = 'first' | 'strongest' | 'closest';
+export type Targeting = 'first' | 'last' | 'strongest' | 'weakest' | 'closest';
+
+/** Reihenfolge beim Durchschalten im Turm-Panel. */
+export const TARGETING_ORDER: readonly Targeting[] = ['first', 'last', 'strongest', 'weakest', 'closest'];
+
+export const TARGETING_NAMES: Readonly<Record<Targeting, string>> = {
+  first: 'Erster',
+  last: 'Letzter',
+  strongest: 'Stärkster',
+  weakest: 'Schwächster',
+  closest: 'Nächster',
+};
 
 /**
  * Archetyp = Grundcharakter der Kampfwerte. Alle Archetypen haben etwa
