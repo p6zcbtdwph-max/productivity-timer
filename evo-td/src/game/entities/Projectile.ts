@@ -1,4 +1,4 @@
-import type { AttackDef, StatusEffectDef } from '../../data/towers';
+import type { StatusOnHit } from '../systems/StatsSystem';
 
 export interface Projectile {
   id: number;
@@ -9,7 +9,9 @@ export interface Projectile {
   speed: number;
   damage: number;
   sourceTowerId: number;
-  attack: AttackDef;
-  onHit: readonly StatusEffectDef[];
+  /** 0 = Einzelziel. */
+  splashRadius: number;
+  shieldBreaker: number;
+  onHit: StatusOnHit;
   color: string;
 }

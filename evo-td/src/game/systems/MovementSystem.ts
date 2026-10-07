@@ -7,11 +7,11 @@ import type { GameContext } from '../GameContext';
 import { onEnemyRemoved } from './WaveSystem';
 
 export function effectiveSpeed(enemy: Enemy): number {
-  let factor = 1;
+  let slow = 0;
   for (const status of enemy.statuses) {
-    if (status.kind === 'slow') factor = Math.min(factor, status.factor);
+    if (status.kind === 'slow') slow = Math.max(slow, status.amount);
   }
-  return enemy.speed * factor;
+  return enemy.speed * (1 - slow);
 }
 
 export function updateMovement(ctx: GameContext, dt: number): void {

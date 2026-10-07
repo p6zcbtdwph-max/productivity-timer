@@ -4,20 +4,16 @@ import type { Enemy } from '../entities/Enemy';
 import type { Projectile } from '../entities/Projectile';
 import type { GameContext } from '../GameContext';
 import { applyDamage } from './DamageSystem';
-import { applyStatus } from './StatusSystem';
+import { applyOnHit } from './StatusSystem';
 
 const HIT_DISTANCE = 0.15;
 
 function hit(ctx: GameContext, projectile: Projectile, target: Enemy): void {
-  const attack = projectile.attack;
-  const victims: Enemy[] =
-    attack.kind === 'splash'
-      ? ctx.state.enemies.filter((e) => distSq(e, target) <= attack.radius * attack.radius)
-      : [target];
-
+  const r = projectile.splashRadius;
+  const victims: Enemy[] = r > 0 ? ctx.state.enemies.filter((e) => distSq(e, target) <= r * r) : [target];
   for (const victim of victims) {
-    for (const effect of projectile.onHit) applyStatus(victim, effect);
-    applyDamage(ctx, victim, projectile.damage, projectile.sourceTowerId);
+    applyOnHit(victim, projectile.onHit);
+    applyDamage(ctx, victim, projectile.damage, projectile.sourceTowerId, { shieldBreaker: projectile.shieldBreaker });
   }
 }
 
@@ -27,8 +23,7 @@ export function updateProjectiles(ctx: GameContext, dt: number): void {
     const projectile = state.projectiles[i] as Projectile;
     const target = state.enemies.find((e) => e.id === projectile.targetId);
     if (!target) {
-      // Ziel ist bereits tot oder durch: Projektil verfällt.
-      state.projectiles.splice(i, 1);
+      state.projectiles.splice(i, 1); // Ziel tot oder durch: Projektil verfällt.
       continue;
     }
     const dx = target.x - projectile.x;

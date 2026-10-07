@@ -3,20 +3,13 @@
  * ProjectileSystem, damit Schaden immer über den DamageSystem-Pfad läuft.
  */
 import { distSq } from '../../core/Vec2';
-import { getTowerDef, type Targeting, type TowerDef } from '../../data/towers';
+import type { Targeting } from '../../data/towers';
 import type { Enemy } from '../entities/Enemy';
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { allocId } from '../GameState';
-import { levelMultiplier } from './LevelSystem';
-
-export function effectiveDamage(tower: Tower, def: TowerDef = getTowerDef(tower.defId)): number {
-  return def.stats.damage * levelMultiplier(tower.level);
-}
-
-export function effectiveCooldown(tower: Tower, def: TowerDef = getTowerDef(tower.defId)): number {
-  return def.stats.cooldown / levelMultiplier(tower.level);
-}
+import { getTowerDef } from '../../data/towers';
+import { computeStats } from './StatsSystem';
 
 function enemiesInRange(tower: Tower, range: number, enemies: readonly Enemy[]): Enemy[] {
   const rangeSq = range * range;
@@ -28,7 +21,7 @@ function sortByTargeting(tower: Tower, targeting: Targeting, candidates: Enemy[]
     case 'first':
       return candidates.sort((a, b) => b.distanceTravelled - a.distanceTravelled);
     case 'strongest':
-      return candidates.sort((a, b) => b.hp - a.hp);
+      return candidates.sort((a, b) => b.hp + b.shield - (a.hp + a.shield));
     case 'closest':
       return candidates.sort((a, b) => distSq(tower, a) - distSq(tower, b));
   }
@@ -40,33 +33,33 @@ export function updateCombat(ctx: GameContext, dt: number): void {
     tower.cooldown -= dt;
     if (tower.cooldown > 0) continue;
 
-    const def = getTowerDef(tower.defId);
-    const candidates = sortByTargeting(tower, def.targeting, enemiesInRange(tower, def.stats.range, state.enemies));
+    const stats = computeStats(tower);
+    const candidates = sortByTargeting(tower, stats.targeting, enemiesInRange(tower, stats.range, state.enemies));
     if (candidates.length === 0) {
       tower.cooldown = 0;
       continue;
     }
 
-    const shots = def.attack.kind === 'multi' ? Math.min(def.attack.targets, candidates.length) : 1;
+    const shots = Math.min(stats.targets, candidates.length);
+    const color = getTowerDef(tower.defId).color;
     for (let i = 0; i < shots; i++) {
       const target = candidates[i] as Enemy;
-      let damage = effectiveDamage(tower, def);
-      if (def.stats.critChance > 0 && ctx.rng.chance(def.stats.critChance)) {
-        damage *= def.stats.critMultiplier;
-      }
+      let damage = stats.damage;
+      if (stats.critChance > 0 && ctx.rng.chance(stats.critChance)) damage *= stats.critMultiplier;
       state.projectiles.push({
         id: allocId(state),
         x: tower.x,
         y: tower.y,
         targetId: target.id,
-        speed: def.stats.projectileSpeed,
+        speed: stats.projectileSpeed,
         damage,
         sourceTowerId: tower.id,
-        attack: def.attack,
-        onHit: def.onHit,
-        color: def.color,
+        splashRadius: stats.splashRadius,
+        shieldBreaker: stats.shieldBreaker,
+        onHit: stats.onHit,
+        color,
       });
     }
-    tower.cooldown += effectiveCooldown(tower, def);
+    tower.cooldown += stats.cooldown;
   }
 }

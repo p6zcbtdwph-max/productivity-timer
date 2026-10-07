@@ -12,6 +12,7 @@ import type { GameContext } from './GameContext';
 import { createInitialState, type GameState } from './GameState';
 import { buildTower, canBuild, currentTowerCost, updateAutoBuild } from './systems/BuildSystem';
 import { updateCombat } from './systems/CombatSystem';
+import { updateElements } from './systems/ElementSystem';
 import { evolveTower, updateEvolution } from './systems/EvolutionSystem';
 import { updateMovement } from './systems/MovementSystem';
 import { updateProjectiles } from './systems/ProjectileSystem';
@@ -42,11 +43,12 @@ export class Game {
     this.state.time += dt;
     updateWaves(ctx, dt); //       1. neue Gegner erscheinen
     updateStatuses(ctx, dt); //    2. Gift tickt, Slow läuft ab
-    updateMovement(ctx, dt); //    3. Gegner laufen (mit aktuellem Slow)
-    updateCombat(ctx, dt); //      4. Türme wählen Ziele und schießen
-    updateProjectiles(ctx, dt); // 5. Projektile fliegen/treffen
-    updateEvolution(ctx, dt); //   6. Evolution würfelt
-    updateAutoBuild(ctx); //       7. Idle-Automatik baut nach
+    updateElements(ctx, dt); //    3. Element-Wirkungen (Heilung)
+    updateMovement(ctx, dt); //    4. Gegner laufen (mit aktuellem Slow)
+    updateCombat(ctx, dt); //      5. Türme wählen Ziele und schießen
+    updateProjectiles(ctx, dt); // 6. Projektile fliegen/treffen
+    updateEvolution(ctx, dt); //   7. Evolution würfelt
+    updateAutoBuild(ctx); //       8. Idle-Automatik baut nach
     this.state.rngState = this.rng.getState();
   }
 

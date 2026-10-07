@@ -3,10 +3,12 @@
  * Gegner sind farbige Blöcke. Der Renderer liest nur, er verändert nichts.
  */
 import { BALANCE } from '../config/balance';
+import { getElementDef } from '../data/elements';
 import { getEnemyDef } from '../data/enemies';
 import type { MapDef } from '../data/map';
 import { cellKey } from '../data/map';
 import { getTowerDef } from '../data/towers';
+import { computeStats } from '../game/systems/StatsSystem';
 import type { Game } from '../game/Game';
 
 export interface RenderOptions {
@@ -24,6 +26,7 @@ const COLORS = {
   slotHoverBad: 'rgba(255,100,100,0.35)',
   hpBack: '#333',
   hpFront: '#66ff66',
+  shield: '#40c4ff',
   range: 'rgba(255,255,255,0.12)',
   lock: '#ffd54f',
 } as const;
@@ -66,9 +69,8 @@ export class CanvasRenderer {
 
     const selected = state.towers.find((t) => t.id === options.selectedTowerId);
     if (selected) {
-      const def = getTowerDef(selected.defId);
       ctx.beginPath();
-      ctx.arc(selected.x * cell, selected.y * cell, def.stats.range * cell, 0, Math.PI * 2);
+      ctx.arc(selected.x * cell, selected.y * cell, computeStats(selected).range * cell, 0, Math.PI * 2);
       ctx.fillStyle = COLORS.range;
       ctx.fill();
     }
@@ -106,18 +108,45 @@ export class CanvasRenderer {
       const y = enemy.y * cell - size / 2;
       ctx.fillStyle = def.color;
       ctx.fillRect(x, y, size, size);
-      const slowed = enemy.statuses.some((s) => s.kind === 'slow');
-      const poisoned = enemy.statuses.some((s) => s.kind === 'poison');
-      if (slowed || poisoned) {
-        ctx.strokeStyle = slowed ? '#c58cff' : '#8bc34a';
+      // Element: farbiger Rahmen + Raute oben rechts
+      if (enemy.element) {
+        const element = getElementDef(enemy.element);
+        ctx.strokeStyle = element.color;
         ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, size, size);
+        ctx.strokeRect(x - 1, y - 1, size + 2, size + 2);
+        ctx.fillStyle = element.color;
+        ctx.beginPath();
+        ctx.moveTo(x + size, y - 4);
+        ctx.lineTo(x + size + 4, y);
+        ctx.lineTo(x + size, y + 4);
+        ctx.lineTo(x + size - 4, y);
+        ctx.closePath();
+        ctx.fill();
       }
-      const hpW = size;
+      // Statuseffekte als kleine Punkte links unten
+      let dot = 0;
+      for (const status of enemy.statuses) {
+        ctx.fillStyle = status.kind === 'slow' ? '#c58cff' : status.kind === 'poison' ? '#8bc34a' : '#80deea';
+        ctx.fillRect(x + 2 + dot * 5, y + size - 5, 3, 3);
+        dot++;
+      }
+      // Lebensbalken, darüber ggf. Schildbalken
       ctx.fillStyle = COLORS.hpBack;
-      ctx.fillRect(x, y - 6, hpW, 3);
+      ctx.fillRect(x, y - 6, size, 3);
       ctx.fillStyle = COLORS.hpFront;
-      ctx.fillRect(x, y - 6, hpW * Math.max(0, enemy.hp / enemy.maxHp), 3);
+      ctx.fillRect(x, y - 6, size * Math.max(0, enemy.hp / enemy.maxHp), 3);
+      if (enemy.shieldMax > 0) {
+        ctx.fillStyle = COLORS.hpBack;
+        ctx.fillRect(x, y - 10, size, 3);
+        ctx.fillStyle = COLORS.shield;
+        ctx.fillRect(x, y - 10, size * Math.max(0, enemy.shield / enemy.shieldMax), 3);
+      }
+      if (enemy.extraLives > 0) {
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.round(cell * 0.25)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('×2', enemy.x * cell, y + size + 10);
+      }
     }
 
     for (const projectile of state.projectiles) {

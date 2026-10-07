@@ -5,7 +5,7 @@
 import { BALANCE } from '../config/balance';
 import type { GameState } from '../game/GameState';
 
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 interface SaveFile {
   version: number;

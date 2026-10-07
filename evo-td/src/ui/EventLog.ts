@@ -18,6 +18,7 @@ export class EventLog {
     game.bus.on('waveCleared', ({ wave, bonus }) => {
       this.push(`Welle ${wave} geschafft, +${bonus} Gold`);
     });
+    game.bus.on('enemyRevived', () => this.push('Titan-Kern: ein Roboter steht wieder auf.', 'bad'));
     game.bus.on('enemyLeaked', () => this.push('Ein Roboter ist durchgebrochen!', 'bad'));
     game.bus.on('gameOver', ({ wave }) => this.push(`Game Over in Welle ${wave}.`, 'bad'));
   }

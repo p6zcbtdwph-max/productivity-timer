@@ -7,7 +7,8 @@ export interface GameEvents extends Record<string, unknown> {
   towerBuilt: { tower: Tower };
   towerEvolved: { tower: Tower; from: TowerId; to: TowerId };
   towerLevelUp: { tower: Tower };
-  enemyKilled: { enemy: Enemy; byTowerId: number };
+  enemyKilled: { enemy: Enemy; byTowerId: number; reward: number };
+  enemyRevived: { enemy: Enemy };
   enemyLeaked: { enemy: Enemy };
   waveStarted: { wave: number; tier: number };
   waveCleared: { wave: number; bonus: number };

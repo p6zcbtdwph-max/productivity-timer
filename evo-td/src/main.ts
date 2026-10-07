@@ -8,6 +8,7 @@ import { Game } from './game/Game';
 import { SaveManager } from './persistence/SaveManager';
 import { CanvasRenderer } from './render/CanvasRenderer';
 import { $ } from './ui/dom';
+import { ElementLegend } from './ui/ElementLegend';
 import { EventLog } from './ui/EventLog';
 import { Hud } from './ui/Hud';
 import { TowerPanel } from './ui/TowerPanel';
@@ -46,6 +47,7 @@ const hud = new Hud(game, loop, resetGame);
 const towerPanel = new TowerPanel(game);
 const treeView = new TreeView(game);
 const eventLog = new EventLog(game);
+new ElementLegend();
 
 // --- Eingabe ----------------------------------------------------------------
 

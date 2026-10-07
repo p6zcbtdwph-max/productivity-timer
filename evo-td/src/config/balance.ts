@@ -53,6 +53,26 @@ export const BALANCE = {
     statPerLevel: 0.07,
   },
 
+  /** Stärke geerbter Boni relativ zum eigenen Bonus. */
+  bonuses: {
+    ancestorStrength: 0.5,
+    siblingStrength: 0.25,
+  },
+
+  /** Gegner-Elemente (Spezial-Eigenschaften). */
+  elements: {
+    /** Ab dieser Welle können Gegner Elemente tragen. */
+    fromWave: 4,
+    /** Wahrscheinlichkeit pro Gegner: base + perWave * Welle, gedeckelt. */
+    baseChance: 0.05,
+    chancePerWave: 0.015,
+    maxChance: 0.5,
+    /** Plasma-Schild als Anteil der Max-HP. */
+    shieldFraction: 0.6,
+    /** Nanobots: Heilung pro Sekunde als Anteil der Max-HP. */
+    healFractionPerSecond: 0.03,
+  },
+
   evolution: {
     /** Sekunden zwischen zwei Evolutionswürfen pro Turm. */
     checkInterval: 2,
@@ -65,7 +85,7 @@ export const BALANCE = {
 
   persistence: {
     autosaveSeconds: 10,
-    storageKey: 'evo-td-save-v1',
+    storageKey: 'evo-td-save-v2',
   },
 } as const;
 

@@ -7,7 +7,7 @@
  * zufällig aus den direkten Kindern im Stammbaum gewählt.
  */
 import { BALANCE } from '../../config/balance';
-import { getTowerDef, type TowerId } from '../../data/towers';
+import { childrenOf, type TowerId } from '../../data/towers';
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 
@@ -22,7 +22,7 @@ export function countSameType(towers: readonly Tower[], defId: TowerId): number 
 }
 
 export function canEvolve(tower: Tower): boolean {
-  return !tower.evolutionLocked && getTowerDef(tower.defId).evolvesTo.length > 0;
+  return !tower.evolutionLocked && childrenOf(tower.defId).length > 0;
 }
 
 export function evolveTower(ctx: GameContext, tower: Tower, to: TowerId): void {
@@ -46,7 +46,7 @@ export function updateEvolution(ctx: GameContext, dt: number): void {
     const chance = evolutionChance(tower.level, countSameType(state.towers, tower.defId));
     if (!rng.chance(chance)) continue;
 
-    const options = getTowerDef(tower.defId).evolvesTo;
+    const options = childrenOf(tower.defId);
     evolveTower(ctx, tower, rng.pick(options));
   }
 }

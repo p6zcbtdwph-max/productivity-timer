@@ -1,25 +1,31 @@
+import type { ElementId } from '../../data/elements';
 import type { EnemyId } from '../../data/enemies';
-import type { TraitId } from '../../data/traits';
 
 export type StatusEffect =
-  | { kind: 'slow'; factor: number; remaining: number }
-  | { kind: 'poison'; dps: number; remaining: number };
+  | { kind: 'slow'; amount: number; remaining: number }
+  | { kind: 'poison'; dps: number; remaining: number }
+  | { kind: 'antiHeal'; percent: number; remaining: number };
 
 export interface Enemy {
   id: number;
   defId: EnemyId;
+  element: ElementId | null;
   hp: number;
   maxHp: number;
+  /** Energieschild (Element Plasma); wird vor den HP abgebaut. */
+  shield: number;
+  shieldMax: number;
+  /** Zusätzliche Leben (Element Titan). */
+  extraLives: number;
   /** Grundgeschwindigkeit in Zellen/s (vor Statuseffekten). */
   speed: number;
-  /** Gold bei Kill. */
+  /** Gold bei Kill (inkl. Element-Multiplikator). */
   reward: number;
   /** Index des nächsten Wegpunkts. */
   waypointIndex: number;
   x: number;
   y: number;
   statuses: StatusEffect[];
-  traits: TraitId[];
   /** Für Targeting "first": wie weit auf dem Pfad (in Zellen). */
   distanceTravelled: number;
 }

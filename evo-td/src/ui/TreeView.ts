@@ -1,5 +1,5 @@
 /** Stammbaum-Übersicht: welche der 16 Arten wurden schon entdeckt? */
-import { getTowerDef, ROOT_TOWER, TOWER_IDS, type TowerId } from '../data/towers';
+import { childrenOf, getTowerDef, ROOT_TOWER, TOWER_IDS, type TowerId } from '../data/towers';
 import type { Game } from '../game/Game';
 import { $, el } from './dom';
 
@@ -28,7 +28,7 @@ export class TreeView {
         count > 0 ? el('span', { className: 'count' }, [` ×${count}`]) : '',
       ]);
       list.append(item);
-      for (const child of def.evolvesTo) append(child, depth + 1);
+      for (const child of childrenOf(id)) append(child, depth + 1);
     };
     append(ROOT_TOWER, 0);
 

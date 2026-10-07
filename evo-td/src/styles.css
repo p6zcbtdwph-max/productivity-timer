@@ -224,3 +224,30 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.card h3 {
+  margin: 10px 0 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.bonus-list,
+.legend {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 0.88rem;
+}
+
+.bonus-list li,
+.legend li {
+  padding: 2px 0;
+}
+
+.bonus-list li.eigen {
+  font-weight: 600;
+}
+
+.bonus-list li.geschwister {
+  opacity: 0.75;
+}

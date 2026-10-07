@@ -1,60 +1,92 @@
 /**
- * Die 16 Türme des Prototyps, angeordnet als Stammbaum nach der echten
- * Tier-Evolution (stark vereinfacht):
+ * Stammbaum der Türme, angelehnt an die echte Tier-Evolution (stark vereinfacht).
  *
- *  Einzeller (Choanoflagellat)
- *  ├─ Schwamm      (Porifera)
- *  ├─ Qualle       (Cnidaria)
- *  └─ Wurm         (Bilateria)
- *     ├─ Oktopus   (Mollusca)
- *     ├─ Skorpion  (Arthropoda)
- *     └─ Fisch     (Chordata)
- *        ├─ Hai    (Chondrichthyes)
- *        └─ Frosch (Amphibia)
- *           ├─ Echse      (Sauropsida)
- *           │  ├─ Krokodil (Crocodylia)
- *           │  └─ Vogel    (Aves / Dinosaurier-Linie)
- *           └─ Spitzmaus  (Synapsida / Ursäuger)
- *              ├─ Wolf     (Carnivora)
- *              ├─ Elefant  (Proboscidea)
- *              └─ Affe     (Primates)
+ * Regeln:
+ *  - Jede Art außer den Endformen teilt sich in 2 oder 3 Nachfahren.
+ *  - Alle Endformen liegen auf demselben Tier (MAX_TIER), damit jede Linie
+ *    gleich viele Evolutionen durchläuft.
+ *  - Jede Art hat genau einen Bonus. Vorfahren- und Geschwister-Boni bleiben
+ *    als sekundäre Eigenschaften erhalten (siehe StatsSystem).
+ *  - Kampfwerte werden NICHT pro Art gepflegt, sondern aus Tier + Archetyp
+ *    abgeleitet (`baseStatsFor`). So bleibt ein großer Baum balancierbar.
  *
- * Tier = evolutionäre Stufe. Schaden verdoppelt sich grob pro Tier, damit die
- * Türme mit der 2er-Potenz-Skalierung der Gegner Schritt halten.
+ *  Einzeller
+ *  ├─ Wurm (Protostomia)
+ *  │  ├─ Schnecke (Mollusca)
+ *  │  │  ├─ Tintenfisch (Cephalopoda) ─ Oktopus, Kalmar
+ *  │  │  └─ Muschel (Bivalvia) ─ Auster, Riesenmuschel
+ *  │  └─ Trilobit (Arthropoda)
+ *  │     ├─ Seeskorpion (Eurypterida) ─ Skorpion, Spinne
+ *  │     └─ Insekt (Insecta) ─ Käfer, Libelle
+ *  └─ Fisch (Chordata)
+ *     ├─ Knorpelfisch (Chondrichthyes)
+ *     │  ├─ Hai ─ Weißer Hai, Hammerhai
+ *     │  └─ Rochen ─ Manta, Zitterrochen
+ *     └─ Frosch (Tetrapoda)
+ *        ├─ Echse (Sauropsida) ─ Krokodil, Vogel, Schlange
+ *        └─ Spitzmaus (Synapsida) ─ Wolf, Elefant, Affe
  */
+import type { BonusDef } from './bonuses';
 
 export type TowerId =
   | 'einzeller'
-  | 'schwamm'
-  | 'qualle'
   | 'wurm'
-  | 'oktopus'
-  | 'skorpion'
   | 'fisch'
-  | 'hai'
+  | 'schnecke'
+  | 'trilobit'
+  | 'knorpelfisch'
   | 'frosch'
+  | 'tintenfisch'
+  | 'muschel'
+  | 'seeskorpion'
+  | 'insekt'
+  | 'hai'
+  | 'rochen'
   | 'echse'
   | 'spitzmaus'
+  | 'oktopus'
+  | 'kalmar'
+  | 'auster'
+  | 'riesenmuschel'
+  | 'skorpion'
+  | 'spinne'
+  | 'kaefer'
+  | 'libelle'
+  | 'weisser_hai'
+  | 'hammerhai'
+  | 'manta'
+  | 'zitterrochen'
   | 'krokodil'
   | 'vogel'
+  | 'schlange'
   | 'wolf'
   | 'elefant'
   | 'affe';
 
 export type Targeting = 'first' | 'strongest' | 'closest';
 
-/** Wie ein Treffer wirkt. Neue Angriffsarten werden hier ergänzt. */
-export type AttackDef =
-  | { kind: 'single' }
-  | { kind: 'splash'; radius: number }
-  | { kind: 'multi'; targets: number };
+/**
+ * Archetyp = Grundcharakter der Kampfwerte. Alle Archetypen haben etwa
+ * dieselbe Gesamtleistung, verteilen sie aber unterschiedlich.
+ */
+export type Archetype = 'ausgewogen' | 'schnell' | 'schwer' | 'weit';
 
-/** Statuseffekte, die ein Treffer auf dem Gegner hinterlässt. */
-export type StatusEffectDef =
-  | { kind: 'slow'; factor: number; duration: number }
-  | { kind: 'poison'; dps: number; duration: number };
+export interface TowerDef {
+  id: TowerId;
+  name: string;
+  /** Taxon / Linie aus der Realität. */
+  lineage: string;
+  tier: number;
+  parent: TowerId | null;
+  archetype: Archetype;
+  targeting: Targeting;
+  /** Die eigene Eigenschaft dieser Art. */
+  bonus: BonusDef;
+  color: string;
+  description: string;
+}
 
-export interface TowerStats {
+export interface BaseStats {
   damage: number;
   /** Reichweite in Zellen. */
   range: number;
@@ -62,276 +94,441 @@ export interface TowerStats {
   cooldown: number;
   /** Zellen pro Sekunde. */
   projectileSpeed: number;
-  critChance: number;
-  critMultiplier: number;
 }
 
-export interface TowerDef {
-  id: TowerId;
-  name: string;
-  /** Taxon / Linie, aus der Realität. */
-  lineage: string;
-  tier: number;
-  color: string;
-  description: string;
-  evolvesTo: readonly TowerId[];
-  stats: TowerStats;
-  targeting: Targeting;
-  attack: AttackDef;
-  onHit: readonly StatusEffectDef[];
-}
-
-const base = (overrides: Partial<TowerStats>): TowerStats => ({
-  damage: 1,
-  range: 2.5,
-  cooldown: 1,
-  projectileSpeed: 9,
-  critChance: 0,
-  critMultiplier: 2,
-  ...overrides,
-});
-
-export const TOWER_DEFS: Readonly<Record<TowerId, TowerDef>> = {
-  einzeller: {
-    id: 'einzeller',
-    name: 'Einzeller',
-    lineage: 'Choanoflagellata',
-    tier: 0,
-    color: '#9be7a0',
-    description: 'Der Ursprung allen tierischen Lebens. Schwach, aber aus ihm kann alles entstehen.',
-    evolvesTo: ['schwamm', 'qualle', 'wurm'],
-    stats: base({ damage: 4, range: 2.5, cooldown: 1.0 }),
-    targeting: 'first',
-    attack: { kind: 'single' },
-    onHit: [],
-  },
-
-  schwamm: {
-    id: 'schwamm',
-    name: 'Schwamm',
-    lineage: 'Porifera',
-    tier: 1,
-    color: '#f2c14e',
-    description: 'Filtriert alles in großem Umkreis. Langsam, aber mit Flächenwirkung.',
-    evolvesTo: [],
-    stats: base({ damage: 5, range: 3.2, cooldown: 1.5, projectileSpeed: 6 }),
-    targeting: 'first',
-    attack: { kind: 'splash', radius: 0.9 },
-    onHit: [],
-  },
-
-  qualle: {
-    id: 'qualle',
-    name: 'Qualle',
-    lineage: 'Cnidaria',
-    tier: 1,
-    color: '#c58cff',
-    description: 'Nesselzellen lähmen die Zielsysteme der Roboter.',
-    evolvesTo: [],
-    stats: base({ damage: 3, range: 2.6, cooldown: 0.9 }),
-    targeting: 'first',
-    attack: { kind: 'single' },
-    onHit: [{ kind: 'slow', factor: 0.6, duration: 1.5 }],
-  },
-
-  wurm: {
-    id: 'wurm',
-    name: 'Wurm',
-    lineage: 'Bilateria',
-    tier: 1,
-    color: '#d98c6a',
-    description: 'Erstes Tier mit Vorne und Hinten. Sondert korrodierendes Sekret ab.',
-    evolvesTo: ['oktopus', 'skorpion', 'fisch'],
-    stats: base({ damage: 3, range: 2.4, cooldown: 1.0 }),
-    targeting: 'first',
-    attack: { kind: 'single' },
-    onHit: [{ kind: 'poison', dps: 1.5, duration: 3 }],
-  },
-
-  oktopus: {
-    id: 'oktopus',
-    name: 'Oktopus',
-    lineage: 'Mollusca',
-    tier: 2,
-    color: '#ff7eb6',
-    description: 'Acht Arme, drei Herzen: trifft mehrere Ziele gleichzeitig.',
-    evolvesTo: [],
-    stats: base({ damage: 5, range: 2.6, cooldown: 1.1 }),
-    targeting: 'closest',
-    attack: { kind: 'multi', targets: 3 },
-    onHit: [],
-  },
-
-  skorpion: {
-    id: 'skorpion',
-    name: 'Skorpion',
-    lineage: 'Arthropoda',
-    tier: 2,
-    color: '#e0b84c',
-    description: 'Gepanzert und schnell. Giftstachel frisst sich durch Schaltkreise.',
-    evolvesTo: [],
-    stats: base({ damage: 5, range: 2.2, cooldown: 0.55, projectileSpeed: 11 }),
-    targeting: 'first',
-    attack: { kind: 'single' },
-    onHit: [{ kind: 'poison', dps: 3, duration: 3 }],
-  },
-
-  fisch: {
-    id: 'fisch',
-    name: 'Fisch',
-    lineage: 'Chordata',
-    tier: 2,
-    color: '#5ec8f2',
-    description: 'Wirbelsäule, Kiefer, Augen: ein echtes Jagdtier mit präzisen Schüssen.',
-    evolvesTo: ['hai', 'frosch'],
-    stats: base({ damage: 7, range: 2.8, cooldown: 0.8, projectileSpeed: 12 }),
-    targeting: 'first',
-    attack: { kind: 'single' },
-    onHit: [],
-  },
-
-  hai: {
-    id: 'hai',
-    name: 'Hai',
-    lineage: 'Chondrichthyes',
-    tier: 3,
-    color: '#7f93a8',
-    description: 'Seit 400 Millionen Jahren perfektioniert. Jagt immer das stärkste Ziel.',
-    evolvesTo: [],
-    stats: base({ damage: 22, range: 3.0, cooldown: 1.3, projectileSpeed: 14, critChance: 0.15 }),
-    targeting: 'strongest',
-    attack: { kind: 'single' },
-    onHit: [],
-  },
-
-  frosch: {
-    id: 'frosch',
-    name: 'Frosch',
-    lineage: 'Amphibia',
-    tier: 3,
-    color: '#6fd36f',
-    description: 'Der Sprung ans Land. Klebrige Zungenschläge treffen ganze Gruppen.',
-    evolvesTo: ['echse', 'spitzmaus'],
-    stats: base({ damage: 12, range: 2.6, cooldown: 1.0, projectileSpeed: 8 }),
-    targeting: 'first',
-    attack: { kind: 'splash', radius: 1.0 },
-    onHit: [],
-  },
-
-  echse: {
-    id: 'echse',
-    name: 'Echse',
-    lineage: 'Sauropsida',
-    tier: 4,
-    color: '#8bc34a',
-    description: 'Unabhängig vom Wasser. Zäh, ausdauernd, vielseitig.',
-    evolvesTo: ['krokodil', 'vogel'],
-    stats: base({ damage: 24, range: 2.9, cooldown: 0.8, projectileSpeed: 12 }),
-    targeting: 'first',
-    attack: { kind: 'single' },
-    onHit: [],
-  },
-
-  spitzmaus: {
-    id: 'spitzmaus',
-    name: 'Spitzmaus',
-    lineage: 'Synapsida (Ursäuger)',
-    tier: 4,
-    color: '#b08968',
-    description: 'Warmblütig und rastlos. Hoher Stoffwechsel, hohe Feuerrate.',
-    evolvesTo: ['wolf', 'elefant', 'affe'],
-    stats: base({ damage: 14, range: 2.6, cooldown: 0.4, projectileSpeed: 13 }),
-    targeting: 'first',
-    attack: { kind: 'single' },
-    onHit: [],
-  },
-
-  krokodil: {
-    id: 'krokodil',
-    name: 'Krokodil',
-    lineage: 'Crocodylia',
-    tier: 5,
-    color: '#4e7d3a',
-    description: 'Der stärkste Biss des Tierreichs. Hält jedes Ziel fest.',
-    evolvesTo: [],
-    stats: base({ damage: 70, range: 2.4, cooldown: 1.6, projectileSpeed: 10 }),
-    targeting: 'strongest',
-    attack: { kind: 'single' },
-    onHit: [{ kind: 'slow', factor: 0.4, duration: 1.2 }],
-  },
-
-  vogel: {
-    id: 'vogel',
-    name: 'Vogel',
-    lineage: 'Aves (Dinosauria)',
-    tier: 5,
-    color: '#4fc3f7',
-    description: 'Letzter lebender Dinosaurier. Sieht alles aus großer Höhe.',
-    evolvesTo: [],
-    stats: base({ damage: 40, range: 4.2, cooldown: 0.7, projectileSpeed: 18 }),
-    targeting: 'first',
-    attack: { kind: 'single' },
-    onHit: [],
-  },
-
-  wolf: {
-    id: 'wolf',
-    name: 'Wolf',
-    lineage: 'Carnivora',
-    tier: 5,
-    color: '#9e9e9e',
-    description: 'Jagt im Rudel: jeder weitere Wolf macht das Rudel gefährlicher.',
-    evolvesTo: [],
-    stats: base({ damage: 30, range: 2.8, cooldown: 0.6, projectileSpeed: 14, critChance: 0.2 }),
-    targeting: 'first',
-    attack: { kind: 'multi', targets: 2 },
-    onHit: [],
-  },
-
-  elefant: {
-    id: 'elefant',
-    name: 'Elefant',
-    lineage: 'Proboscidea',
-    tier: 5,
-    color: '#8d99ae',
-    description: 'Jeder Tritt lässt den Boden beben. Massive Flächenwirkung.',
-    evolvesTo: [],
-    stats: base({ damage: 80, range: 2.6, cooldown: 1.8, projectileSpeed: 7 }),
-    targeting: 'first',
-    attack: { kind: 'splash', radius: 1.4 },
-    onHit: [{ kind: 'slow', factor: 0.7, duration: 1.0 }],
-  },
-
-  affe: {
-    id: 'affe',
-    name: 'Affe',
-    lineage: 'Primates',
-    tier: 5,
-    color: '#f4a261',
-    description: 'Werkzeuggebrauch und Köpfchen: findet jede Schwachstelle.',
-    evolvesTo: [],
-    stats: base({ damage: 32, range: 3.0, cooldown: 0.7, projectileSpeed: 13, critChance: 0.4, critMultiplier: 3 }),
-    targeting: 'strongest',
-    attack: { kind: 'single' },
-    onHit: [],
-  },
-};
-
-export const TOWER_IDS = Object.keys(TOWER_DEFS) as TowerId[];
+/** Tier der Endformen. */
+export const MAX_TIER = 4;
 
 /** Der einzige Turm, den der Spieler direkt bauen kann. */
 export const ROOT_TOWER: TowerId = 'einzeller';
+
+const ARCHETYPES: Readonly<Record<Archetype, { damage: number; cooldown: number; range: number }>> = {
+  ausgewogen: { damage: 1.0, cooldown: 1.0, range: 1.0 },
+  schnell: { damage: 0.5, cooldown: 0.45, range: 0.9 },
+  schwer: { damage: 2.2, cooldown: 2.0, range: 1.0 },
+  weit: { damage: 0.9, cooldown: 1.0, range: 1.4 },
+};
+
+/** Grundwerte aus Tier und Archetyp. Schaden verdoppelt sich pro Tier. */
+export function baseStatsFor(tier: number, archetype: Archetype): BaseStats {
+  const a = ARCHETYPES[archetype];
+  return {
+    damage: 4 * 2 ** tier * a.damage,
+    cooldown: 1.0 * a.cooldown,
+    range: 2.5 * a.range,
+    projectileSpeed: 9 + tier * 1.5,
+  };
+}
+
+type Def = Omit<TowerDef, 'id'>;
+
+const DEFS: Readonly<Record<TowerId, Def>> = {
+  // --- Tier 0 ---------------------------------------------------------------
+  einzeller: {
+    name: 'Einzeller',
+    lineage: 'Choanoflagellata',
+    tier: 0,
+    parent: null,
+    archetype: 'ausgewogen',
+    targeting: 'first',
+    bonus: { kind: 'xp', percent: 0.2 },
+    color: '#9be7a0',
+    description: 'Der Ursprung allen tierischen Lebens. Teilt sich fleißig und lernt schnell.',
+  },
+
+  // --- Tier 1 ---------------------------------------------------------------
+  wurm: {
+    name: 'Wurm',
+    lineage: 'Protostomia',
+    tier: 1,
+    parent: 'einzeller',
+    archetype: 'ausgewogen',
+    targeting: 'first',
+    bonus: { kind: 'poison', percentOfDamage: 0.3, duration: 3 },
+    color: '#d98c6a',
+    description: 'Erstes Tier mit Vorne und Hinten. Sondert korrodierendes Sekret ab.',
+  },
+  fisch: {
+    name: 'Fisch',
+    lineage: 'Chordata',
+    tier: 1,
+    parent: 'einzeller',
+    archetype: 'weit',
+    targeting: 'first',
+    bonus: { kind: 'range', percent: 0.2 },
+    color: '#5ec8f2',
+    description: 'Wirbelsäule, Kiefer, Augen: sieht und trifft weiter als alles zuvor.',
+  },
+
+  // --- Tier 2 ---------------------------------------------------------------
+  schnecke: {
+    name: 'Schnecke',
+    lineage: 'Mollusca',
+    tier: 2,
+    parent: 'wurm',
+    archetype: 'schwer',
+    targeting: 'first',
+    bonus: { kind: 'slow', amount: 0.3, duration: 2 },
+    color: '#c9a66b',
+    description: 'Langsam, aber ihre Schleimspur bremst alles, was hindurch muss.',
+  },
+  trilobit: {
+    name: 'Trilobit',
+    lineage: 'Arthropoda',
+    tier: 2,
+    parent: 'wurm',
+    archetype: 'ausgewogen',
+    targeting: 'first',
+    bonus: { kind: 'shieldBreaker', percent: 0.5 },
+    color: '#8d8d6e',
+    description: 'Gepanzert und gegliedert. Knackt Panzer, weil es selbst einen hat.',
+  },
+  knorpelfisch: {
+    name: 'Knorpelfisch',
+    lineage: 'Chondrichthyes',
+    tier: 2,
+    parent: 'fisch',
+    archetype: 'ausgewogen',
+    targeting: 'strongest',
+    bonus: { kind: 'crit', chance: 0.1, multiplier: 2 },
+    color: '#7f93a8',
+    description: 'Urahn der Haie. Spürt Schwachstellen über große Entfernungen.',
+  },
+  frosch: {
+    name: 'Frosch',
+    lineage: 'Tetrapoda',
+    tier: 2,
+    parent: 'fisch',
+    archetype: 'ausgewogen',
+    targeting: 'first',
+    bonus: { kind: 'splash', radius: 0.8 },
+    color: '#6fd36f',
+    description: 'Der Sprung ans Land. Klebrige Zungenschläge treffen ganze Gruppen.',
+  },
+
+  // --- Tier 3 ---------------------------------------------------------------
+  tintenfisch: {
+    name: 'Tintenfisch',
+    lineage: 'Cephalopoda',
+    tier: 3,
+    parent: 'schnecke',
+    archetype: 'ausgewogen',
+    targeting: 'closest',
+    bonus: { kind: 'multi', extraTargets: 2 },
+    color: '#ff7eb6',
+    description: 'Viele Arme, drei Herzen: greift mehrere Ziele gleichzeitig an.',
+  },
+  muschel: {
+    name: 'Muschel',
+    lineage: 'Bivalvia',
+    tier: 3,
+    parent: 'schnecke',
+    archetype: 'schwer',
+    targeting: 'first',
+    bonus: { kind: 'gold', percent: 0.25 },
+    color: '#e8d5b7',
+    description: 'Filtert Wertvolles aus allem, was vorbeikommt. Perlen inklusive.',
+  },
+  seeskorpion: {
+    name: 'Seeskorpion',
+    lineage: 'Eurypterida',
+    tier: 3,
+    parent: 'trilobit',
+    archetype: 'schwer',
+    targeting: 'strongest',
+    bonus: { kind: 'damage', percent: 0.25 },
+    color: '#b5651d',
+    description: 'Zwei Meter Raubtier der Urmeere. Schlägt hart zu.',
+  },
+  insekt: {
+    name: 'Insekt',
+    lineage: 'Insecta',
+    tier: 3,
+    parent: 'trilobit',
+    archetype: 'schnell',
+    targeting: 'first',
+    bonus: { kind: 'fireRate', percent: 0.3 },
+    color: '#e0b84c',
+    description: 'Klein, zahlreich, rastlos. Sticht öfter zu als jedes andere Tier.',
+  },
+  hai: {
+    name: 'Hai',
+    lineage: 'Selachii',
+    tier: 3,
+    parent: 'knorpelfisch',
+    archetype: 'schwer',
+    targeting: 'strongest',
+    bonus: { kind: 'damage', percent: 0.3 },
+    color: '#5c6f82',
+    description: 'Seit 400 Millionen Jahren perfektioniert. Jagt immer das stärkste Ziel.',
+  },
+  rochen: {
+    name: 'Rochen',
+    lineage: 'Batoidea',
+    tier: 3,
+    parent: 'knorpelfisch',
+    archetype: 'weit',
+    targeting: 'first',
+    bonus: { kind: 'antiHeal', percent: 0.5, duration: 3 },
+    color: '#9fb3c8',
+    description: 'Flach, elektrisch, störend: bringt Reparatursysteme durcheinander.',
+  },
+  echse: {
+    name: 'Echse',
+    lineage: 'Sauropsida',
+    tier: 3,
+    parent: 'frosch',
+    archetype: 'weit',
+    targeting: 'first',
+    bonus: { kind: 'range', percent: 0.25 },
+    color: '#8bc34a',
+    description: 'Unabhängig vom Wasser. Zäh, ausdauernd, mit scharfem Blick.',
+  },
+  spitzmaus: {
+    name: 'Spitzmaus',
+    lineage: 'Synapsida',
+    tier: 3,
+    parent: 'frosch',
+    archetype: 'schnell',
+    targeting: 'first',
+    bonus: { kind: 'fireRate', percent: 0.35 },
+    color: '#b08968',
+    description: 'Warmblütig und rastlos. Hoher Stoffwechsel, hohe Feuerrate.',
+  },
+
+  // --- Tier 4 (Endformen) ---------------------------------------------------
+  oktopus: {
+    name: 'Oktopus',
+    lineage: 'Octopoda',
+    tier: 4,
+    parent: 'tintenfisch',
+    archetype: 'ausgewogen',
+    targeting: 'closest',
+    bonus: { kind: 'multi', extraTargets: 3 },
+    color: '#ff5ca8',
+    description: 'Acht Arme, neun Gehirne. Hält acht Roboter gleichzeitig beschäftigt.',
+  },
+  kalmar: {
+    name: 'Kalmar',
+    lineage: 'Teuthida',
+    tier: 4,
+    parent: 'tintenfisch',
+    archetype: 'schnell',
+    targeting: 'closest',
+    bonus: { kind: 'fireRate', percent: 0.4 },
+    color: '#ff9ecf',
+    description: 'Düsenantrieb und Blitzreflexe. Feuert, bevor das Ziel reagiert.',
+  },
+  auster: {
+    name: 'Auster',
+    lineage: 'Ostreidae',
+    tier: 4,
+    parent: 'muschel',
+    archetype: 'schwer',
+    targeting: 'first',
+    bonus: { kind: 'gold', percent: 0.5 },
+    color: '#f0e6d2',
+    description: 'Macht aus jedem Störenfried eine Perle. Verdoppelt fast die Beute.',
+  },
+  riesenmuschel: {
+    name: 'Riesenmuschel',
+    lineage: 'Tridacna',
+    tier: 4,
+    parent: 'muschel',
+    archetype: 'schwer',
+    targeting: 'first',
+    bonus: { kind: 'splash', radius: 1.2 },
+    color: '#c6b7e2',
+    description: 'Zweihundert Kilo Schale. Wenn sie zuschnappt, bebt der Boden.',
+  },
+  skorpion: {
+    name: 'Skorpion',
+    lineage: 'Scorpiones',
+    tier: 4,
+    parent: 'seeskorpion',
+    archetype: 'ausgewogen',
+    targeting: 'first',
+    bonus: { kind: 'poison', percentOfDamage: 0.5, duration: 4 },
+    color: '#d4a017',
+    description: 'Der Giftstachel frisst sich noch lange nach dem Treffer durch Schaltkreise.',
+  },
+  spinne: {
+    name: 'Spinne',
+    lineage: 'Araneae',
+    tier: 4,
+    parent: 'seeskorpion',
+    archetype: 'weit',
+    targeting: 'first',
+    bonus: { kind: 'slow', amount: 0.5, duration: 2.5 },
+    color: '#6b5b73',
+    description: 'Netze aus Stahlseide. Wer hineinläuft, kommt kaum noch voran.',
+  },
+  kaefer: {
+    name: 'Käfer',
+    lineage: 'Coleoptera',
+    tier: 4,
+    parent: 'insekt',
+    archetype: 'schwer',
+    targeting: 'strongest',
+    bonus: { kind: 'shieldBreaker', percent: 1.0 },
+    color: '#4a6b3a',
+    description: 'Härteste Panzerung im Tierreich. Durchschlägt jeden Energieschild.',
+  },
+  libelle: {
+    name: 'Libelle',
+    lineage: 'Odonata',
+    tier: 4,
+    parent: 'insekt',
+    archetype: 'schnell',
+    targeting: 'first',
+    bonus: { kind: 'crit', chance: 0.25, multiplier: 2.5 },
+    color: '#4dd0e1',
+    description: 'Erfolgreichster Jäger der Welt: 95 % Trefferquote, jede Schwachstelle sitzt.',
+  },
+  weisser_hai: {
+    name: 'Weißer Hai',
+    lineage: 'Lamnidae',
+    tier: 4,
+    parent: 'hai',
+    archetype: 'schwer',
+    targeting: 'strongest',
+    bonus: { kind: 'damage', percent: 0.5 },
+    color: '#cfd8dc',
+    description: 'Drei Tonnen Biss. Ein Treffer, und vom Boss bleibt wenig übrig.',
+  },
+  hammerhai: {
+    name: 'Hammerhai',
+    lineage: 'Sphyrnidae',
+    tier: 4,
+    parent: 'hai',
+    archetype: 'ausgewogen',
+    targeting: 'strongest',
+    bonus: { kind: 'crit', chance: 0.3, multiplier: 2.5 },
+    color: '#90a4ae',
+    description: 'Der breite Kopf ist ein Sensorfeld. Findet die Schwachstelle in jeder Hülle.',
+  },
+  manta: {
+    name: 'Manta',
+    lineage: 'Mobulidae',
+    tier: 4,
+    parent: 'rochen',
+    archetype: 'weit',
+    targeting: 'first',
+    bonus: { kind: 'range', percent: 0.5 },
+    color: '#b0bec5',
+    description: 'Sieben Meter Spannweite. Deckt das halbe Schlachtfeld ab.',
+  },
+  zitterrochen: {
+    name: 'Zitterrochen',
+    lineage: 'Torpediniformes',
+    tier: 4,
+    parent: 'rochen',
+    archetype: 'ausgewogen',
+    targeting: 'first',
+    bonus: { kind: 'antiHeal', percent: 1.0, duration: 4 },
+    color: '#80deea',
+    description: '200 Volt pro Treffer. Schaltet Nanobot-Reparatur komplett ab.',
+  },
+  krokodil: {
+    name: 'Krokodil',
+    lineage: 'Crocodylia',
+    tier: 4,
+    parent: 'echse',
+    archetype: 'schwer',
+    targeting: 'strongest',
+    bonus: { kind: 'slow', amount: 0.6, duration: 1.5 },
+    color: '#4e7d3a',
+    description: 'Der stärkste Biss des Tierreichs. Was gepackt ist, kommt nicht weiter.',
+  },
+  vogel: {
+    name: 'Vogel',
+    lineage: 'Aves (Dinosauria)',
+    tier: 4,
+    parent: 'echse',
+    archetype: 'weit',
+    targeting: 'first',
+    bonus: { kind: 'range', percent: 0.6 },
+    color: '#4fc3f7',
+    description: 'Letzter lebender Dinosaurier. Sieht alles aus großer Höhe.',
+  },
+  schlange: {
+    name: 'Schlange',
+    lineage: 'Serpentes',
+    tier: 4,
+    parent: 'echse',
+    archetype: 'ausgewogen',
+    targeting: 'first',
+    bonus: { kind: 'poison', percentOfDamage: 0.6, duration: 5 },
+    color: '#7cb342',
+    description: 'Ein Biss genügt. Das Gift arbeitet weiter, während sie das nächste Ziel sucht.',
+  },
+  wolf: {
+    name: 'Wolf',
+    lineage: 'Carnivora',
+    tier: 4,
+    parent: 'spitzmaus',
+    archetype: 'schnell',
+    targeting: 'first',
+    bonus: { kind: 'multi', extraTargets: 1 },
+    color: '#9e9e9e',
+    description: 'Jagt im Rudel. Jeder Angriff trifft ein zweites Ziel.',
+  },
+  elefant: {
+    name: 'Elefant',
+    lineage: 'Proboscidea',
+    tier: 4,
+    parent: 'spitzmaus',
+    archetype: 'schwer',
+    targeting: 'first',
+    bonus: { kind: 'splash', radius: 1.4 },
+    color: '#8d99ae',
+    description: 'Jeder Tritt lässt den Boden beben. Massive Flächenwirkung.',
+  },
+  affe: {
+    name: 'Affe',
+    lineage: 'Primates',
+    tier: 4,
+    parent: 'spitzmaus',
+    archetype: 'ausgewogen',
+    targeting: 'strongest',
+    bonus: { kind: 'crit', chance: 0.35, multiplier: 3 },
+    color: '#f4a261',
+    description: 'Werkzeuggebrauch und Köpfchen: findet jede Schwachstelle.',
+  },
+};
+
+export const TOWER_IDS = Object.keys(DEFS) as TowerId[];
+
+export const TOWER_DEFS: Readonly<Record<TowerId, TowerDef>> = Object.fromEntries(
+  TOWER_IDS.map((id) => [id, { id, ...DEFS[id] }]),
+) as Record<TowerId, TowerDef>;
+
+const CHILDREN: ReadonlyMap<TowerId, readonly TowerId[]> = new Map(
+  TOWER_IDS.map((id) => [id, TOWER_IDS.filter((c) => TOWER_DEFS[c].parent === id)]),
+);
 
 export function getTowerDef(id: TowerId): TowerDef {
   return TOWER_DEFS[id];
 }
 
-/** Elternknoten im Stammbaum (undefined für den Einzeller). */
-export function parentOf(id: TowerId): TowerId | undefined {
-  return TOWER_IDS.find((candidate) => TOWER_DEFS[candidate].evolvesTo.includes(id));
+/** Direkte Nachfahren im Stammbaum. */
+export function childrenOf(id: TowerId): readonly TowerId[] {
+  return CHILDREN.get(id) ?? [];
 }
 
-/** Vollständige Abstammungslinie vom Einzeller bis zum Turm. */
+/** Elternknoten (null für den Einzeller). */
+export function parentOf(id: TowerId): TowerId | null {
+  return TOWER_DEFS[id].parent;
+}
+
+/** Geschwister: andere Arten mit demselben Elternknoten. */
+export function siblingsOf(id: TowerId): readonly TowerId[] {
+  const parent = parentOf(id);
+  if (!parent) return [];
+  return childrenOf(parent).filter((c) => c !== id);
+}
+
+/** Vollständige Abstammungslinie vom Einzeller bis zur Art (inklusive). */
 export function lineageOf(id: TowerId): TowerId[] {
   const chain: TowerId[] = [id];
   let current = parentOf(id);
@@ -340,4 +537,8 @@ export function lineageOf(id: TowerId): TowerId[] {
     current = parentOf(current);
   }
   return chain;
+}
+
+export function isFinalForm(id: TowerId): boolean {
+  return childrenOf(id).length === 0;
 }

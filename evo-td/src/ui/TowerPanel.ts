@@ -1,10 +1,17 @@
-/** Seitenleiste: Details zum ausgewählten Turm, Evolutions-Sperre. */
+/** Seitenleiste: Details zum ausgewählten Turm, Boni, Evolutions-Sperre. */
 import { xpForLevel } from '../config/balance';
-import { getTowerDef, lineageOf } from '../data/towers';
+import { describeBonus } from '../data/bonuses';
+import { childrenOf, getTowerDef, lineageOf } from '../data/towers';
 import type { Game } from '../game/Game';
-import { effectiveCooldown, effectiveDamage } from '../game/systems/CombatSystem';
 import { canEvolve, countSameType, evolutionChance } from '../game/systems/EvolutionSystem';
+import { computeStats, resolveBonuses, type BonusSource, type EffectiveStats } from '../game/systems/StatsSystem';
 import { $, el, formatNumber } from './dom';
+
+const SOURCE_LABEL: Record<BonusSource, string> = {
+  eigen: 'eigen',
+  vorfahre: 'Vorfahre',
+  geschwister: 'Geschwister',
+};
 
 export class TowerPanel {
   private readonly root = $('#tower-panel');
@@ -33,28 +40,41 @@ export class TowerPanel {
     if (key === this.lastRenderedKey) return;
     this.lastRenderedKey = key;
 
-    const lockButton = el(
-      'button',
-      { className: tower.evolutionLocked ? 'btn warn' : 'btn' },
-      [tower.evolutionLocked ? '🔒 Evolution gestoppt – freigeben' : '🧬 Evolution stoppen'],
-    );
+    const stats = computeStats(tower);
+
+    const lockButton = el('button', { className: tower.evolutionLocked ? 'btn warn' : 'btn' }, [
+      tower.evolutionLocked ? '🔒 Evolution gestoppt – freigeben' : '🧬 Evolution stoppen',
+    ]);
     lockButton.addEventListener('click', () => {
       this.game.toggleEvolutionLock(tower.id);
       this.lastRenderedKey = '';
     });
 
+    const children = childrenOf(tower.defId);
     const evolutionInfo = canEvolve(tower)
       ? el('p', {}, [
-          `Evolutionschance: ${(chance * 100).toFixed(1)} % alle paar Sekunden. `,
-          `Mögliche Nachfahren: ${def.evolvesTo.map((id) => getTowerDef(id).name).join(', ')}.`,
+          `Evolutionschance ${(chance * 100).toFixed(1)} % alle paar Sekunden. `,
+          `Mögliche Nachfahren: ${children.map((id) => getTowerDef(id).name).join(', ')}.`,
         ])
       : el('p', { className: 'muted' }, [
-          tower.evolutionLocked ? 'Evolution ist angehalten.' : 'Ende dieser Entwicklungslinie erreicht.',
+          tower.evolutionLocked ? 'Evolution ist angehalten.' : 'Endform dieser Linie erreicht.',
         ]);
+
+    const bonusList = el('ul', { className: 'bonus-list' });
+    for (const resolved of resolveBonuses(tower.defId)) {
+      const from = getTowerDef(resolved.from);
+      bonusList.append(
+        el('li', { className: resolved.source }, [
+          el('span', { className: 'swatch', style: `background:${from.color}` }),
+          ` ${describeBonus(resolved.bonus)} `,
+          el('span', { className: 'muted small' }, [`(${from.name}, ${SOURCE_LABEL[resolved.source]})`]),
+        ]),
+      );
+    }
 
     this.root.replaceChildren(
       el('h2', {}, [el('span', { className: 'swatch', style: `background:${def.color}` }), ` ${def.name}`]),
-      el('p', { className: 'muted' }, [`${def.lineage} · Tier ${def.tier}`]),
+      el('p', { className: 'muted' }, [`${def.lineage} · Tier ${def.tier} · ${def.archetype}`]),
       el('p', {}, [def.description]),
       el('p', { className: 'muted small' }, [
         'Abstammung: ',
@@ -66,42 +86,36 @@ export class TowerPanel {
         el('dt', {}, ['Level']),
         el('dd', {}, [`${tower.level}  (${Math.floor(tower.xp)} / ${xpForLevel(tower.level)} XP)`]),
         el('dt', {}, ['Schaden']),
-        el('dd', {}, [formatNumber(effectiveDamage(tower, def))]),
+        el('dd', {}, [formatNumber(stats.damage)]),
         el('dt', {}, ['Feuerrate']),
-        el('dd', {}, [`${(1 / effectiveCooldown(tower, def)).toFixed(2)}/s`]),
+        el('dd', {}, [`${(1 / stats.cooldown).toFixed(2)}/s`]),
         el('dt', {}, ['Reichweite']),
-        el('dd', {}, [`${def.stats.range.toFixed(1)} Zellen`]),
+        el('dd', {}, [`${stats.range.toFixed(1)} Zellen`]),
         el('dt', {}, ['Angriff']),
-        el('dd', {}, [describeAttack(def)]),
+        el('dd', {}, [describeAttack(stats)]),
         el('dt', {}, ['Kills']),
         el('dd', {}, [`${tower.kills} · ${formatNumber(tower.damageDealt)} Schaden`]),
         el('dt', {}, ['Gleiche Art']),
         el('dd', {}, [`${sameType} auf dem Feld`]),
       ]),
+      el('h3', {}, ['Eigenschaften']),
+      bonusList,
       evolutionInfo,
       lockButton,
     );
   }
 }
 
-function describeAttack(def: ReturnType<typeof getTowerDef>): string {
+function describeAttack(stats: EffectiveStats): string {
   const parts: string[] = [];
-  switch (def.attack.kind) {
-    case 'single':
-      parts.push('Einzelziel');
-      break;
-    case 'splash':
-      parts.push(`Fläche (r=${def.attack.radius})`);
-      break;
-    case 'multi':
-      parts.push(`${def.attack.targets} Ziele`);
-      break;
-  }
-  for (const effect of def.onHit) {
-    if (effect.kind === 'slow') parts.push(`Slow ${Math.round((1 - effect.factor) * 100)} %`);
-    if (effect.kind === 'poison') parts.push(`Gift ${effect.dps}/s`);
-  }
-  if (def.stats.critChance > 0) parts.push(`Krit ${Math.round(def.stats.critChance * 100)} %`);
-  parts.push(`Ziel: ${def.targeting}`);
+  parts.push(stats.targets > 1 ? `${stats.targets} Ziele` : 'Einzelziel');
+  if (stats.splashRadius > 0) parts.push(`Fläche r=${stats.splashRadius.toFixed(1)}`);
+  if (stats.critChance > 0) parts.push(`Krit ${Math.round(stats.critChance * 100)} % ×${stats.critMultiplier}`);
+  if (stats.onHit.slow) parts.push(`Slow ${Math.round(stats.onHit.slow.amount * 100)} %`);
+  if (stats.onHit.poison) parts.push(`Gift ${formatNumber(stats.onHit.poison.dps)}/s`);
+  if (stats.onHit.antiHeal) parts.push(`Anti-Heilung ${Math.round(stats.onHit.antiHeal.percent * 100)} %`);
+  if (stats.shieldBreaker > 0) parts.push(`+${Math.round(stats.shieldBreaker * 100)} % vs Schild`);
+  if (stats.goldMultiplier > 1) parts.push(`Gold ×${stats.goldMultiplier.toFixed(2)}`);
+  parts.push(`Ziel: ${stats.targeting}`);
   return parts.join(' · ');
 }

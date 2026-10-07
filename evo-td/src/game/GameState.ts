@@ -5,6 +5,7 @@
 import { BALANCE } from '../config/balance';
 import type { TowerId } from '../data/towers';
 import type { Enemy } from './entities/Enemy';
+import type { SpawnOrder } from './systems/WaveSystem';
 import type { Projectile } from './entities/Projectile';
 import type { Tower } from './entities/Tower';
 
@@ -14,7 +15,7 @@ export interface WaveState {
   /** Sekunden bis zum nächsten Wellenstart. */
   countdown: number;
   /** Noch zu spawnende Gegner der laufenden Welle. */
-  spawnQueue: Enemy['defId'][];
+  spawnQueue: SpawnOrder[];
   /** Sekunden bis zum nächsten Spawn. */
   spawnTimer: number;
   /** Lebende Gegner, die noch zur aktuellen Welle gehören (für den Bonus). */
