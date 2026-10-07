@@ -11,6 +11,7 @@ import type { Enemy } from '../entities/Enemy';
 import type { GameContext } from '../GameContext';
 import { allocId } from '../GameState';
 import type { Rng } from '../../core/Rng';
+import { metaValues } from './MetaSystem';
 
 export interface SpawnOrder {
   defId: EnemyId;
@@ -48,6 +49,7 @@ export function spawnEnemy(ctx: GameContext, order: SpawnOrder, wave: number): E
   if (!start) throw new Error('Karte hat keine Wegpunkte');
   const element = order.element ? getElementDef(order.element) : undefined;
   const hp = BALANCE.enemies.baseHp * def.hpMult * mult;
+  const comp = metaValues(ctx.meta).compendium;
   const enemy: Enemy = {
     id: allocId(ctx.state),
     defId: order.defId,
@@ -57,7 +59,8 @@ export function spawnEnemy(ctx: GameContext, order: SpawnOrder, wave: number): E
     shield: 0,
     shieldMax: 0,
     extraLives: 0,
-    speed: BALANCE.enemies.baseSpeed * def.speedMult,
+    speed: BALANCE.enemies.baseSpeed * def.speedMult * (1 - comp.enemySlow),
+    healMultiplier: 1 - comp.antiHeal,
     reward: Math.max(1, Math.round(BALANCE.enemies.baseReward * def.rewardMult * mult * (element?.rewardMultiplier ?? 1))),
     waypointIndex: 1,
     x: start.x,

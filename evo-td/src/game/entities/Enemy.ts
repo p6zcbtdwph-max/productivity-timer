@@ -26,6 +26,8 @@ export interface Enemy {
   x: number;
   y: number;
   statuses: StatusEffect[];
+  /** Faktor auf Selbstheilung (Kompendium-Anti-Heilung); fehlt in alten Spielständen. */
+  healMultiplier?: number;
   /** Für Targeting "first": wie weit auf dem Pfad (in Zellen). */
   distanceTravelled: number;
 }

@@ -69,6 +69,9 @@ export class DevPanel {
         this.button('Alle Artefakte', () => {
           for (const a of ARTIFACT_ORDER) if (g.meta.upgrades[a.id] === 0) g.meta.upgrades[a.id] = 1;
         }),
+        this.button('Kompendium füllen', () => {
+          for (const id of BASE_TOWER_IDS) g.meta.compendium[id] = { maxLevel: 50, maxPrestige: 1 };
+        }),
         this.button('Bestwelle +50', () => {
           g.meta.bestWaveByMap[g.map.id] = (g.meta.bestWaveByMap[g.map.id] ?? 0) + 50;
         }),

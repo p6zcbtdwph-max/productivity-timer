@@ -15,6 +15,7 @@ import {
 } from '../../data/meta';
 import { getTowerDef, parentOf, unlockCost, UNLOCK_FROM_TIER, type TowerId } from '../../data/towers';
 import { overallBestWave, type MetaState } from '../MetaState';
+import { compendiumTotals, type CompendiumTotals } from './CompendiumSystem';
 
 export function metaLevel(meta: MetaState, id: MetaUpgradeId): number {
   return meta.upgrades[id] ?? 0;
@@ -78,6 +79,8 @@ export interface MetaValues {
   passiveDnaMult: number;
   offlineCapSeconds: number;
   offlinePower: number;
+  /** Kompendium-Boni aller je gezüchteten Arten. */
+  compendium: CompendiumTotals;
 }
 
 export function metaValues(meta: MetaState): MetaValues {
@@ -106,6 +109,7 @@ export function metaValues(meta: MetaState): MetaValues {
     passiveDnaMult: 1 + d.amber.perLevel * lv('amber'),
     offlineCapSeconds: (BALANCE.passive.offlineCapHours + d.hibernation.perLevel * lv('hibernation')) * 3600,
     offlinePower: Math.min(1, BALANCE.passive.offlinePower + d.winterFur.perLevel * lv('winterFur')),
+    compendium: compendiumTotals(meta),
   };
 }
 

@@ -6,7 +6,7 @@ import { GameLoop } from './core/GameLoop';
 import { START_MAP } from './data/map';
 import { Game } from './game/Game';
 import type { GameState } from './game/GameState';
-import { createInitialMeta, type MetaState } from './game/MetaState';
+import { normalizeMeta, type MetaState } from './game/MetaState';
 import { getTowerDef } from './data/towers';
 import { formatNumber } from './ui/dom';
 import { SaveManager } from './persistence/SaveManager';
@@ -17,6 +17,7 @@ import { ElementLegend } from './ui/ElementLegend';
 import { EventLog } from './ui/EventLog';
 import { GlobalPanel } from './ui/GlobalPanel';
 import { ChambersPanel } from './ui/ChambersPanel';
+import { CompendiumPanel } from './ui/CompendiumPanel';
 import { OfflineReport } from './ui/OfflineReport';
 import { tickPassive } from './game/systems/PassiveSystem';
 import { Hud } from './ui/Hud';
@@ -28,7 +29,7 @@ import { TreeView } from './ui/TreeView';
 
 const runSaves = new SaveManager<GameState>(BALANCE.persistence.runKey, BALANCE.persistence.runVersion);
 const metaSaves = new SaveManager<MetaState>(BALANCE.persistence.metaKey, BALANCE.persistence.metaVersion);
-const game = new Game(START_MAP, metaSaves.load() ?? createInitialMeta(), runSaves.load());
+const game = new Game(START_MAP, normalizeMeta(metaSaves.load()), runSaves.load());
 
 const canvas = $<HTMLCanvasElement>('#game-canvas');
 const renderer = new CanvasRenderer(canvas, START_MAP);
@@ -68,7 +69,10 @@ const loop = new GameLoop(
       passiveTimer = now;
       const report = tickPassive(game.meta, now);
       for (const e of report.evolutions) eventLog.push(`🥚 Kammer: ${getTowerDef(e.from).name} → ${getTowerDef(e.to).name}`, 'evo');
-      if (report.evolutions.length > 0) chambersPanel.invalidate();
+      if (report.evolutions.length > 0) {
+        chambersPanel.invalidate();
+        game.invalidateStats();
+      }
     }
     const highlightTowerIds = activeAction === 'fuse' && selectedTowerId !== undefined
       ? game.fusionCandidatesFor(selectedTowerId).map((t) => t.id)
@@ -98,6 +102,9 @@ const loop = new GameLoop(
         break;
       case 'chambers':
         chambersPanel.render();
+        break;
+      case 'compendium':
+        compendiumPanel.render();
         break;
     }
   },
@@ -144,6 +151,7 @@ const itemsPanel = new ItemsPanel(game);
 const treeView = new TreeView(game);
 const globalPanel = new GlobalPanel(game, endRun);
 const chambersPanel = new ChambersPanel(game);
+const compendiumPanel = new CompendiumPanel(game);
 const eventLog = new EventLog(game);
 new ElementLegend();
 new DevPanel(game, loop, () => {

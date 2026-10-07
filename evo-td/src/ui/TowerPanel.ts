@@ -60,7 +60,7 @@ export class TowerPanel {
       tower.kills, env.neighbours.join(','), chance.toFixed(4), candidates.length, charges, activeAction ?? '',
       Math.floor(this.game.state.gold) >= this.game.relocateCost(), unlockedKids.length,
       // globale Einflüsse: Run-Upgrades, Items, Artefakte, Erfolge
-      JSON.stringify([this.game.state.upgrades, this.game.state.equippedItemIds, this.game.meta.upgrades, this.game.meta.bestWaveByMap]),
+      JSON.stringify([this.game.state.upgrades, this.game.state.equippedItemIds, this.game.meta.upgrades, this.game.meta.bestWaveByMap, Object.keys(this.game.meta.compendium).length]),
     ].join('|');
     if (key === this.lastRenderedKey) return;
     this.lastRenderedKey = key;
@@ -191,5 +191,6 @@ function describeBreakdown(b: Breakdown): string {
   factor(b.level, 'Level');
   factor(b.meta, 'Artefakte');
   factor(b.erfolge, 'Erfolge');
+  factor(b.kompendium, 'Kompendium');
   return `${parts.join(' ')} = ${num(b.result)}`;
 }

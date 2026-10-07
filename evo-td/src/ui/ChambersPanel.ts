@@ -40,6 +40,7 @@ export class ChambersPanel {
   private act(action: () => unknown): () => void {
     return () => {
       action();
+      this.game.invalidateStats();
       this.invalidate();
     };
   }

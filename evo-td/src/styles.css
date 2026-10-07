@@ -430,3 +430,8 @@ body {
   background: var(--accent);
   transition: width 0.15s;
 }
+
+.tree.compendium li {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}

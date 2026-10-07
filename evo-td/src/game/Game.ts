@@ -14,6 +14,7 @@ import { createInitialState, type GameState } from './GameState';
 import { createInitialMeta, type MetaState } from './MetaState';
 import { bestWaveOn, buyMetaUpgrade, computeDna, metaValues, settleRun, unlockArtifact, unlockTower, type DnaReport } from './systems/MetaSystem';
 import { updateAutoUpgrades } from './systems/AutoSystem';
+import { recordSpecies } from './systems/CompendiumSystem';
 import type { MetaUpgradeId } from '../data/meta';
 import { fuseTowers, fusionCandidates, updateAutoFusion } from './systems/FusionSystem';
 import { buildTower, canBuild, currentTowerCost, updateAutoBuild } from './systems/BuildSystem';
@@ -50,6 +51,12 @@ export class Game {
   ) {
     this.state = state ?? this.freshState();
     this.rng = new Rng(this.state.rngState);
+    // Kompendium: Rekorde jeder Art mitschreiben (auch während der Winterruhe).
+    const record = ({ tower }: { tower: Tower }): void => {
+      recordSpecies(this.meta, tower.defId, tower.level, tower.prestige);
+    };
+    for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused'] as const) this.bus.on(event, record);
+    for (const tower of this.state.towers) recordSpecies(this.meta, tower.defId, tower.level, tower.prestige);
     const clear = (): void => this.invalidateStats();
     for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused', 'towerRelocated', 'upgradeBought'] as const) {
       this.bus.on(event, clear);

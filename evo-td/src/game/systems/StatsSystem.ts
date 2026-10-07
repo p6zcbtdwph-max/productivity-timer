@@ -14,6 +14,7 @@
  *           × (1 + 0.07 · (Level − 1))     Level
  *           × Meta-Faktor                  Artefakte (Globaler Shop)
  *           × Erfolgs-Faktor               Karten-Erfolge (alle 50 Bestwellen)
+ *           × (1 + Kompendium)             Rekorde aller je gezüchteten Arten
  *
  *   Feuerrate und Reichweite folgen demselben Muster (ohne Mutations-Faktoren).
  *   Krit-Chance: additiv, gedeckelt. Krit-Multiplikator: additiv.
@@ -60,6 +61,7 @@ export interface Breakdown {
   level: number;
   meta: number;
   erfolge: number;
+  kompendium: number;
   result: number;
 }
 
@@ -160,8 +162,8 @@ export function statsFor(ctx: GameContext, tower: Tower): EffectiveStats {
 }
 
 function breakdown(parts: Omit<Breakdown, 'result'>): Breakdown {
-  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge } = parts;
-  return { ...parts, result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge };
+  const { base, art, ausruestung, mutation, synergie, prestige, level, meta, erfolge, kompendium } = parts;
+  return { ...parts, result: base * art * ausruestung * mutation * synergie * prestige * level * meta * erfolge * kompendium };
 }
 
 /** Anzahl direkt angrenzender Türme derselben Art. */
@@ -252,6 +254,7 @@ export function computeStats(
     }
   }
 
+  const comp = env.meta.compendium;
   const twins = twinCount(tower.defId, env);
   const syn = BALANCE.synergy;
   const damageB = breakdown({
@@ -264,6 +267,7 @@ export function computeStats(
     level,
     meta: env.meta.damageMult,
     erfolge: env.meta.achievementDamageMult,
+    kompendium: 1 + comp.damage,
   });
   const fireRateB = breakdown({
     base: 1 / base.cooldown,
@@ -275,6 +279,7 @@ export function computeStats(
     level,
     meta: env.meta.fireRateMult,
     erfolge: 1,
+    kompendium: 1 + comp.fireRate,
   });
   const rangeB = breakdown({
     base: base.range,
@@ -286,6 +291,7 @@ export function computeStats(
     level: 1,
     meta: 1,
     erfolge: 1,
+    kompendium: 1 + comp.range,
   });
 
   const damage = damageB.result;
@@ -299,13 +305,13 @@ export function computeStats(
     cooldown: 1 / fireRateB.result,
     range: rangeB.result,
     projectileSpeed: base.projectileSpeed,
-    critChance: Math.min(0.9, critChance),
-    critMultiplier: critMultiplier + critBonus,
+    critChance: Math.min(0.9, critChance + comp.critChance),
+    critMultiplier: (critChance + comp.critChance > 0 ? Math.max(2, critMultiplier) : critMultiplier) + critBonus + comp.critDamage,
     targets: 1 + Math.round(extraTargets),
     splashRadius,
-    shieldBreaker,
-    goldMultiplier: (1 + artGold) * (1 + m.passive),
-    xpMultiplier: (1 + artXp) * (1 + m.passive),
+    shieldBreaker: shieldBreaker + comp.shieldBreaker,
+    goldMultiplier: (1 + artGold) * (1 + m.passive) * (1 + comp.gold),
+    xpMultiplier: (1 + artXp) * (1 + m.passive) * (1 + comp.xp),
     onHit,
     targeting: def.targeting,
     breakdown: { damage: damageB, fireRate: fireRateB, range: rangeB },

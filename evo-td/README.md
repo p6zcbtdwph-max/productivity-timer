@@ -66,6 +66,27 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
   (+passive DNA), Winterschlaf-Höhle (+2 h Offline je Stufe), Winterfell (+5 % Offline-Kraft je Stufe).
 - Entwickler-Panel: "Zeit +1 h" simuliert eine Stunde Abwesenheit.
 
+## Kompendium
+
+Reiter "Kompendium": jede Art, die du je hattest (Run, Winterruhe oder Evolutionskammer), mit
+Rekord-Level und Rekord-Prestige. Jede Art gibt dauerhaft einen kleinen Bonus. Der Typ folgt aus
+ihrer Eigenschaft:
+
+| Eigenschaft der Art | Kompendium-Bonus |
+|---|---|
+| Schaden, Titan, Gift, Fläche | Schaden (eigener Topf) |
+| Feuerrate | Feuerrate (eigener Topf) |
+| Reichweite | Reichweite (max. +50 %) |
+| Krit / Krit-Schaden | Krit-Chance (max. +25 %) / Krit-Schaden |
+| Gold, Mehrfachziel | Gold |
+| XP | XP |
+| Slow | alle Roboter langsamer (max. −30 %) |
+| Schildbrecher | Schaden gegen Schilde |
+| Anti-Heilung | Nanobot-Heilung schwächer (max. −60 %) |
+
+Stärke: `Grundwert × (Rekord-Level + 25 × Rekord-Prestige) × (1 + 0,5 × Tier)`.
+Basisarten stehen immer in der Liste, Mutationen erst, wenn man sie hatte.
+
 ## Stammbaum: 33 Basisarten + Mutationen
 
 Basisarten bis Tier 4 sind von Hand gepflegt (echte Stammesgeschichte, siehe `src/data/towers.ts`).
@@ -88,6 +109,7 @@ Schaden = Basis(Tier, Archetyp)
         × (1 + 0.07 · (Level − 1))
         × Artefakt-Faktor           Raubtierzahn
         × Erfolgs-Faktor            Karten-Erfolge
+        × (1 + Kompendium)          Rekorde aller je gezüchteten Arten
 ```
 
 Feuerrate und Reichweite folgen demselben Muster. Krit-Chance additiv (gedeckelt), Krit-Schaden

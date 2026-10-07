@@ -14,6 +14,7 @@ import { getTowerDef, ROOT_TOWER, type TowerId } from '../../data/towers';
 import type { MetaState, PassiveAnimal } from '../MetaState';
 import { bestWaveOn, isUnlocked, metaValues } from './MetaSystem';
 import { childrenOf } from '../../data/towers';
+import { recordSpecies } from './CompendiumSystem';
 
 const P = BALANCE.passive;
 
@@ -54,6 +55,7 @@ export function buyAnimal(meta: MetaState, chamber: number): PassiveAnimal | und
   meta.passive.animalsBought++;
   const animal: PassiveAnimal = { id: meta.passive.nextAnimalId++, defId: ROOT_TOWER, chamber, mapId: null, evolutionLocked: false };
   meta.passive.animals.push(animal);
+  recordSpecies(meta, animal.defId, 1, 0);
   return animal;
 }
 
@@ -164,6 +166,7 @@ export function tickPassive(meta: MetaState, nowMs: number): PassiveReport {
       const from = animal.defId;
       animal.defId = rng.pick(unlockedChildrenOf(meta, from));
       report.evolutions.push({ animalId: animal.id, from, to: animal.defId });
+      recordSpecies(meta, animal.defId, 1, 0);
     }
   }
   passive.rngState = rng.getState();

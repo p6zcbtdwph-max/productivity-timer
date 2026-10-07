@@ -3,6 +3,7 @@
  * Speicherstand, getrennt vom Run-Zustand.
  */
 import { META_UPGRADE_IDS, type MetaUpgradeId } from '../data/meta';
+import type { CompendiumRecord } from '../data/compendium';
 import type { TowerId } from '../data/towers';
 import type { ModifierKind } from '../data/upgrades';
 
@@ -25,6 +26,8 @@ export interface MetaState {
   /** Letzter Zeitpunkt (ms), an dem das Spiel sichtbar lief; Grundlage der Winterruhe. */
   lastSeen: number;
   passive: PassiveState;
+  /** Rekorde je Art (Kompendium). */
+  compendium: Record<TowerId, CompendiumRecord>;
 }
 
 /** Ein Tier aus der Evolutionskammer: entweder in einer Kammer oder in einem Revier. */
@@ -73,6 +76,24 @@ export function createInitialMeta(): MetaState {
       dnaFraction: 0,
       dnaEarned: 0,
     },
+    compendium: {},
+  };
+}
+
+/**
+ * Ergänzt fehlende Felder eines geladenen Stands (neue Features ohne
+ * Versionssprung, damit bestehende Spielstände erhalten bleiben).
+ */
+export function normalizeMeta(loaded: Partial<MetaState> | undefined): MetaState {
+  const fresh = createInitialMeta();
+  if (!loaded) return fresh;
+  return {
+    ...fresh,
+    ...loaded,
+    upgrades: { ...fresh.upgrades, ...loaded.upgrades },
+    autoUpgrades: { ...fresh.autoUpgrades, ...loaded.autoUpgrades },
+    passive: { ...fresh.passive, ...loaded.passive },
+    compendium: { ...loaded.compendium },
   };
 }
 

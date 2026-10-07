@@ -72,6 +72,7 @@ export const ELEMENT_DEFS: Readonly<Record<ElementId, ElementDef>> = {
       let healPerSecond = enemy.maxHp * BALANCE.elements.healFractionPerSecond;
       const suppressed = enemy.statuses.find((s) => s.kind === 'antiHeal');
       if (suppressed && suppressed.kind === 'antiHeal') healPerSecond *= 1 - suppressed.percent;
+      healPerSecond *= enemy.healMultiplier ?? 1;
       enemy.hp = Math.min(enemy.maxHp, enemy.hp + healPerSecond * dt);
     },
   },
