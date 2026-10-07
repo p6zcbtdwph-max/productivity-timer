@@ -13,65 +13,67 @@ mit Tauri, ohne die Spiellogik anzufassen. Der Renderer ist austauschbar (z.B. P
 
 ## Spielprinzip
 
+Ziel ist es, in einem Run so weit wie möglich zu kommen (Welle 1000+). Jeder Run endet
+irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
+
 - Du baust ausschließlich **Einzeller** (jeder weitere wird teurer).
-- Türme sammeln XP durch Schaden und Kills und steigen im Level (mehr Schaden, höhere Feuerrate).
-- Alle 2 Sekunden würfelt jeder Turm auf **Evolution**. Die Chance steigt mit dem Level
-  und mit der Zahl gleichartiger Türme auf dem Feld. Der Nachfahre wird zufällig aus den
-  direkten Kindern im Stammbaum gewählt.
+- Türme sammeln XP durch Schaden und Kills und steigen im Level.
+- Alle 2 Sekunden würfelt jeder Turm auf **Evolution**. Die Chance steigt mit Level, Anzahl
+  gleichartiger Türme, Prestige und Upgrades. **Ab Tier 2 muss jede Art mit DNA freigeschaltet
+  sein**, sonst steht sie nicht zur Wahl.
 - **Jede Art hat genau einen Bonus.** Bei einer Evolution bleiben die Boni erhalten:
-  eigener Bonus 100 %, Boni aller Vorfahren 50 %, Boni der Geschwister-Arten 25 %.
-  Dazu kommt 25 % des eigenen Bonus jedes **direkt angrenzenden Turms** (8er-Nachbarschaft).
-- Pro Turm lässt sich die Evolution **anhalten** (Button im Panel oder Taste `L`).
-- **Prestige durch Fusion** (`F`): zwei Türme derselben Art und Prestige-Stufe verschmelzen zu
-  einem Turm mit Prestige +1 (mehr Schaden, Feuerrate, Reichweite, Evolutionschance). Der
-  andere Bauplatz wird frei. Kostet kein Gold.
-- **Verlegen** (`V`): alle 5 Wellen gibt es eine Verlegung; jede kostet Gold (halbe Turmkosten).
-- **Gold fließt nie in einzelne Türme.** Es gibt nur: neue Einzeller (jeder teurer als der
-  vorige), Verlegungen, **globale Upgrades** für alle Türme (Schaden, Angriffsgeschwindigkeit,
-  Reichweite, Evolutionschance, sekundäre Effekte, Passiv = Gold & XP) und **Items**.
-- **Items** haben dieselben Kategorien und eine Qualität: Bronze, Silber, Gold, Platin,
-  Legendär (Wirkung ×1, ×2, ×4, ×8, ×16). Man kauft eine Stufe; mit 25 % / 15 % / 8 % / 3 %
-  springt der Kauf jeweils eine Stufe höher (verkettet). Legendär ist nicht kaufbar und fällt
-  aus Bronze mit 0,009 %. Preise skalieren mit Gegner-Tier und Kaufanzahl. 4 Items gleichzeitig
-  ausrüstbar.
-- Wellen starten automatisch. Alle 5 Wellen verdoppeln sich HP und Belohnung der Gegner.
-  Jede 10. Welle bringt einen Boss.
-- **Roboter-Elemente** ab Welle 4: Titan-Kern (zweites Leben), Gold-Legierung
-  (doppeltes Gold), Plasma-Schild (Schild zuerst abbauen), Nanobots (Selbstheilung).
-  Türme kontern mit Schildbrecher- und Anti-Heilungs-Boni.
-- Idle-Komfort: Geschwindigkeit 1×/2×/4×, Pause (Leertaste), **Auto-Bau** und Autosave
-  im `localStorage`.
+  eigener Bonus 100 %, Vorfahren 50 %, Geschwister 25 %, direkt angrenzende Türme 25 %.
+- **Prestige durch Fusion** (`F`): zwei gleiche Türme gleicher Prestige-Stufe → ein Turm mit
+  Prestige +1. **Verlegen** (`V`): eine Verlegung je 5 Wellen, kostet Gold.
+- **Gold fließt nie in einzelne Türme**: nur neue Einzeller, Verlegungen, globale Upgrades
+  für alle Türme und Items (Bronze bis Legendär, verkettete Glücks-Aufwertung).
+- **Roboter-Elemente** ab Welle 4: Titan-Kern (zweites Leben), Gold-Legierung, Plasma-Schild,
+  Nanobots. Gegner-HP verdoppelt sich alle 5 Wellen, Bosse kosten 3 Leben.
 
-## Stammbaum (33 Arten, jede Art teilt sich 2- bis 3-fach bis Tier 4)
+## Globaler Shop (DNA)
+
+- Ein Run endet bei 0 Leben oder freiwillig ("Run beenden"). Dann gibt es DNA:
+  jede Welle ist `ceil(welle^1.5 / 10)` DNA wert, aber **nur Wellen jenseits der bisherigen
+  Bestwelle zählen voll**, bereits erreichte Wellen bringen 10 %. Pushen lohnt, Farmen nicht.
+- **Freischaltungen** im Stammbaum: Tier 2 kostet 25 DNA, jedes weitere Tier das Vierfache.
+  Der Elternknoten muss frei sein.
+- **Permanente Upgrades**: Startkapital, Zähigkeit (Leben), Zellteilung (Turmkosten),
+  Mutationsdruck (Evolutionschance), Raubtierinstinkt (Schaden ×), Stoffwechsel (Feuerrate ×),
+  Erbgut (sekundäre Boni), Glücksgen (Item-Aufwertung), Tragkraft (Item-Slots), Wanderlust
+  (Verlegen), Genbank (+DNA), Symbiose (Auto-Fusion).
+
+## Stammbaum: 33 Basisarten + Mutationen
+
+Basisarten bis Tier 4 sind von Hand gepflegt (echte Stammesgeschichte, siehe `src/data/towers.ts`).
+Ab Tier 5 teilt sich jede Endform in zwei **Mutationen** (Alpha, Titan, Blitz, Adleraugen, Gift,
+Frost, Schwarm, Beben, Kristall, Wucht, Gold, Weise, Brecher, Nova), deterministisch aus der
+Kennung abgeleitet, z.B. `wolf+alpha+titan` = "Titan-Alpha-Wolf". Jede Mutation bringt ihren
+eigenen Bonus mit. Die Obergrenze ist `MAX_TIER` (aktuell 8) und lässt sich jederzeit anheben.
+
+Kampfwerte werden aus **Tier** (Schaden ×2 pro Tier) und **Archetyp** abgeleitet.
+
+## Verrechnung der Boni (Töpfe)
 
 ```
-Einzeller (+XP)
-├─ Wurm (Gift)
-│  ├─ Schnecke (Slow)
-│  │  ├─ Tintenfisch (+2 Ziele) ─ Oktopus (+3 Ziele), Kalmar (Feuerrate)
-│  │  └─ Muschel (+Gold)        ─ Auster (+Gold), Riesenmuschel (Fläche)
-│  └─ Trilobit (Schildbrecher)
-│     ├─ Seeskorpion (+Schaden) ─ Skorpion (Gift), Spinne (Slow)
-│     └─ Insekt (Feuerrate)     ─ Käfer (Schildbrecher), Libelle (Krit)
-└─ Fisch (+Reichweite)
-   ├─ Knorpelfisch (Krit)
-   │  ├─ Hai (+Schaden)         ─ Weißer Hai (+Schaden), Hammerhai (Krit)
-   │  └─ Rochen (Anti-Heilung)  ─ Manta (+Reichweite), Zitterrochen (Anti-Heilung)
-   └─ Frosch (Fläche)
-      ├─ Echse (+Reichweite)    ─ Krokodil (Slow), Vogel (+Reichweite), Schlange (Gift)
-      └─ Spitzmaus (Feuerrate)  ─ Wolf (+1 Ziel), Elefant (Fläche), Affe (Krit)
+Schaden = Basis(Tier, Archetyp)
+        × (1 + Σ Art-Boni)          Topf "Art": eigener, Vorfahren-, Geschwister-, Nachbar-Boni (additiv)
+        × (1 + Σ Ausrüstung)        Topf "Ausrüstung": Run-Upgrades + Items (additiv)
+        × Π Mutations-Faktoren      reine Multiplikatoren (Titan ×1.25 ...), stapeln multiplikativ
+        × (1 + 0.75 · Prestige)
+        × (1 + 0.07 · (Level − 1))
+        × Meta-Faktor               Globaler Shop (Raubtierinstinkt)
 ```
 
-Kampfwerte werden nicht pro Art gepflegt, sondern aus **Tier** (Schaden ×2 pro Tier) und
-**Archetyp** (ausgewogen, schnell, schwer, weit) abgeleitet. Neue Arten brauchen nur
-Name, Linie, Eltern, Archetyp, Bonus und Farbe.
+Feuerrate und Reichweite folgen demselben Muster. Krit-Chance additiv (gedeckelt), Krit-Schaden
+additiv auf den Multiplikator, Gold/XP = (1 + Art) × (1 + Ausrüstung). Das Turm-Panel zeigt die
+Aufschlüsselung für jeden Turm.
 
 ## Entwicklung
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # Vitest (Stammbaum, Evolution, Wellen, Karte, Speichern)
+npm test           # Vitest (Stammbaum, Mutationen, Stats-Töpfe, Evolution, Meta, Shop, Wellen, Karte, Speichern)
 npm run build      # Typecheck + Production-Build nach dist/
 ```
 
@@ -81,16 +83,17 @@ npm run build      # Typecheck + Production-Build nach dist/
 src/
   config/balance.ts        alle Zahlen, die das Spielgefühl steuern
   core/                    Loop (fixed timestep), RNG (deterministisch), EventBus, Vec2
-  data/                    Inhalte: towers (Stammbaum), bonuses, elements, enemies, upgrades, items, map
+  data/                    Inhalte: towers (Stammbaum + Mutationen), bonuses, elements, enemies, upgrades, items, meta, map
   game/
-    GameState.ts           reiner Datenzustand (1:1 speicherbar)
+    GameState.ts           Run-Zustand (1:1 speicherbar)
+    MetaState.ts           permanenter Zustand (DNA, Freischaltungen, Meta-Upgrades)
     Game.ts                Fassade: Update-Reihenfolge + Aktionen für die UI
     entities/              Tower, Enemy, Projectile (nur Typen)
     systems/               Wave, Movement, Status, Element, Combat, Projectile, Damage, Level, Stats,
-                           Modifier, Evolution, Build, Fusion, Relocate, Shop
+                           Modifier, Meta, Evolution, Build, Fusion, Relocate, Shop
   render/CanvasRenderer.ts Darstellung (liest nur)
-  ui/                      HUD, Tabs, Turm-Panel, Shop, Items, Stammbaum, Protokoll (DOM, kein Framework)
-  persistence/             SaveManager (localStorage, versioniert)
+  ui/                      HUD, Tabs, Turm-Panel, Shop, Items, Stammbaum (Freischalten), Global, Protokoll
+  persistence/             SaveManager (localStorage, versioniert; je ein Key für Run und Meta)
 tests/                     Vitest
 ```
 
@@ -103,7 +106,8 @@ Grundregeln:
 
 ## Nächste Schritte (Ideen)
 
-- Weitere Elemente (Teilung, Tarnung, Flug) in `data/elements.ts`.
-- Grund, die Evolution zu stoppen: Synergien pro Linie, Fusion erfordert gleiche Art.
-- Run-Reset mit permanenten Boni für den Idle-Kern.
-- Weitere Karten, echte Sprites statt Blöcken.
+- Balance-Pass auf den Meta-Loop mit der Headless-Simulation (Run-Länge, DNA-Tempo).
+- Offline-Fortschritt und 8×-Tempo für lange Pushes.
+- Synergien pro Linie als Grund, die Evolution zu stoppen.
+- Weitere Elemente (Teilung, Tarnung, Flug) in `data/elements.ts`, Boss-Elemente kombiniert.
+- Zweite Karte, echte Sprites statt Blöcken, später Tauri-Bundle für den Mac.

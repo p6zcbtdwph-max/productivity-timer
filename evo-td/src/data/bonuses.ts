@@ -9,7 +9,12 @@
  */
 
 export type BonusDef =
+  /** Additiv im Topf "Art" (siehe StatsSystem). */
   | { kind: 'damage'; percent: number }
+  /** Reiner Multiplikator auf den Schaden (eigener Faktor, stapelt multiplikativ). */
+  | { kind: 'damageMult'; factor: number }
+  /** Erhöht den Krit-Multiplikator additiv (×2 → ×2.5). */
+  | { kind: 'critDamage'; bonus: number }
   | { kind: 'fireRate'; percent: number }
   | { kind: 'range'; percent: number }
   | { kind: 'crit'; chance: number; multiplier: number }
@@ -40,6 +45,10 @@ export function scaleBonus(bonus: BonusDef, strength: number): BonusDef {
       return { ...bonus, percent: bonus.percent * strength };
     case 'crit':
       return { ...bonus, chance: bonus.chance * strength };
+    case 'damageMult':
+      return { ...bonus, factor: 1 + (bonus.factor - 1) * strength };
+    case 'critDamage':
+      return { ...bonus, bonus: bonus.bonus * strength };
     case 'multi':
       return { ...bonus, extraTargets: bonus.extraTargets * strength };
     case 'splash':
@@ -66,6 +75,10 @@ export function describeBonus(bonus: BonusDef): string {
       return `+${pct(bonus.percent)} Reichweite`;
     case 'crit':
       return `${pct(bonus.chance)} Krit (×${bonus.multiplier})`;
+    case 'damageMult':
+      return `Schaden ×${bonus.factor.toFixed(2)}`;
+    case 'critDamage':
+      return `Krit-Schaden +${bonus.bonus.toFixed(2)}×`;
     case 'multi':
       return `+${bonus.extraTargets.toFixed(bonus.extraTargets % 1 ? 2 : 0)} Ziele`;
     case 'splash':

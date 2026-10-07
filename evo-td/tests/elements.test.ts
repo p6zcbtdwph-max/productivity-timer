@@ -3,13 +3,14 @@ import { BALANCE } from '../src/config/balance';
 import { START_MAP } from '../src/data/map';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
+import { createInitialMeta } from '../src/game/MetaState';
 import { applyDamage } from '../src/game/systems/DamageSystem';
 import { updateElements } from '../src/game/systems/ElementSystem';
 import { applyOnHit } from '../src/game/systems/StatusSystem';
 import { elementChance, spawnEnemy } from '../src/game/systems/WaveSystem';
 
 function freshGame(): Game {
-  return new Game(START_MAP, createInitialState(11));
+  return new Game(START_MAP, createInitialMeta(), createInitialState(11));
 }
 
 describe('Gegner-Elemente', () => {

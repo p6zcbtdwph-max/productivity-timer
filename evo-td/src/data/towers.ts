@@ -28,7 +28,7 @@
  */
 import type { BonusDef } from './bonuses';
 
-export type TowerId =
+export type BaseTowerId =
   | 'einzeller'
   | 'wurm'
   | 'fisch'
@@ -63,6 +63,12 @@ export type TowerId =
   | 'elefant'
   | 'affe';
 
+/**
+ * Kennung einer Art. Basisarten sind `BaseTowerId`; ab Tier BASE_MAX_TIER+1
+ * entstehen Mutationen mit Kennungen wie "wolf+alpha" oder "wolf+alpha+titan".
+ */
+export type TowerId = string;
+
 export type Targeting = 'first' | 'strongest' | 'closest';
 
 /**
@@ -96,8 +102,11 @@ export interface BaseStats {
   projectileSpeed: number;
 }
 
-/** Tier der Endformen. */
-export const MAX_TIER = 4;
+/** Höchstes Tier der von Hand gepflegten Basisarten. */
+export const BASE_MAX_TIER = 4;
+
+/** Tier der Endformen (inkl. Mutationen). Konfigurierbar, der Baum wächst mit. */
+export const MAX_TIER = 8;
 
 /** Der einzige Turm, den der Spieler direkt bauen kann. */
 export const ROOT_TOWER: TowerId = 'einzeller';
@@ -122,7 +131,7 @@ export function baseStatsFor(tier: number, archetype: Archetype): BaseStats {
 
 type Def = Omit<TowerDef, 'id'>;
 
-const DEFS: Readonly<Record<TowerId, Def>> = {
+const DEFS: Readonly<Record<BaseTowerId, Def>> = {
   // --- Tier 0 ---------------------------------------------------------------
   einzeller: {
     name: 'Einzeller',
@@ -497,28 +506,136 @@ const DEFS: Readonly<Record<TowerId, Def>> = {
   },
 };
 
-export const TOWER_IDS = Object.keys(DEFS) as TowerId[];
+export const BASE_TOWER_IDS = Object.keys(DEFS) as BaseTowerId[];
 
-export const TOWER_DEFS: Readonly<Record<TowerId, TowerDef>> = Object.fromEntries(
-  TOWER_IDS.map((id) => [id, { id, ...DEFS[id] }]),
-) as Record<TowerId, TowerDef>;
+export const BASE_TOWER_DEFS: Readonly<Record<BaseTowerId, TowerDef>> = Object.fromEntries(
+  BASE_TOWER_IDS.map((id) => [id, { id, ...DEFS[id] }]),
+) as Record<BaseTowerId, TowerDef>;
 
-const CHILDREN: ReadonlyMap<TowerId, readonly TowerId[]> = new Map(
-  TOWER_IDS.map((id) => [id, TOWER_IDS.filter((c) => TOWER_DEFS[c].parent === id)]),
-);
+/** Nur die Basisarten (für Stammbaum-Ansicht und Tests). */
+export const TOWER_IDS: readonly TowerId[] = BASE_TOWER_IDS;
 
-export function getTowerDef(id: TowerId): TowerDef {
-  return TOWER_DEFS[id];
+export const TOWER_DEFS: Readonly<Record<BaseTowerId, TowerDef>> = BASE_TOWER_DEFS;
+
+// --- Mutationen (Tier > BASE_MAX_TIER) ---------------------------------------
+
+/**
+ * Jenseits der Basisarten teilt sich jede Art weiter in Mutationen. Eine
+ * Mutation hängt einen Präfix an den Namen und bringt einen eigenen Bonus mit.
+ * Welche zwei Mutationen eine Art bekommt, ist deterministisch aus ihrer
+ * Kennung abgeleitet; eine Mutation kommt in einer Linie nie doppelt vor.
+ */
+export interface MutationDef {
+  id: string;
+  prefix: string;
+  bonus: BonusDef;
+  description: string;
 }
 
-/** Direkte Nachfahren im Stammbaum. */
+export const MUTATIONS: readonly MutationDef[] = [
+  { id: 'alpha', prefix: 'Alpha', bonus: { kind: 'damage', percent: 0.4 }, description: 'Anführer seiner Art, schlägt härter zu.' },
+  { id: 'titan', prefix: 'Titan', bonus: { kind: 'damageMult', factor: 1.25 }, description: 'Gigantischer Wuchs: multipliziert den Schaden.' },
+  { id: 'blitz', prefix: 'Blitz', bonus: { kind: 'fireRate', percent: 0.35 }, description: 'Schnellere Reflexe, schnellere Angriffe.' },
+  { id: 'adler', prefix: 'Adleraugen', bonus: { kind: 'range', percent: 0.3 }, description: 'Sieht weiter als jede andere Form.' },
+  { id: 'gift', prefix: 'Gift', bonus: { kind: 'poison', percentOfDamage: 0.5, duration: 4 }, description: 'Giftige Absonderungen zersetzen Schaltkreise.' },
+  { id: 'frost', prefix: 'Frost', bonus: { kind: 'slow', amount: 0.4, duration: 2 }, description: 'Kälte legt Motoren lahm.' },
+  { id: 'schwarm', prefix: 'Schwarm', bonus: { kind: 'multi', extraTargets: 1 }, description: 'Greift ein zusätzliches Ziel an.' },
+  { id: 'beben', prefix: 'Beben', bonus: { kind: 'splash', radius: 1.0 }, description: 'Jeder Treffer erschüttert die Umgebung.' },
+  { id: 'kristall', prefix: 'Kristall', bonus: { kind: 'crit', chance: 0.2, multiplier: 2 }, description: 'Kristalline Klauen finden Schwachstellen.' },
+  { id: 'wucht', prefix: 'Wucht', bonus: { kind: 'critDamage', bonus: 1 }, description: 'Kritische Treffer richten noch mehr an.' },
+  { id: 'gold', prefix: 'Gold', bonus: { kind: 'gold', percent: 0.3 }, description: 'Lockt wertvollere Beute an.' },
+  { id: 'weise', prefix: 'Weise', bonus: { kind: 'xp', percent: 0.4 }, description: 'Lernt aus jedem Kampf.' },
+  { id: 'brecher', prefix: 'Brecher', bonus: { kind: 'shieldBreaker', percent: 0.8 }, description: 'Durchschlägt Energieschilde.' },
+  { id: 'nova', prefix: 'Nova', bonus: { kind: 'antiHeal', percent: 0.8, duration: 4 }, description: 'Strahlung stoppt Reparaturen.' },
+];
+
+const MUTATION_COLORS = ['#ff8a65', '#ba68c8', '#4dd0e1', '#aed581', '#ffd54f', '#f06292', '#90caf9', '#a1887f'];
+
+/** Einfacher deterministischer Hash für die Mutationswahl. */
+function hash(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h;
+}
+
+export function isMutation(id: TowerId): boolean {
+  return id.includes('+');
+}
+
+/** Basisart einer (mutierten) Kennung. */
+export function baseIdOf(id: TowerId): BaseTowerId {
+  return id.split('+')[0] as BaseTowerId;
+}
+
+export function mutationIdsOf(id: TowerId): string[] {
+  return id.split('+').slice(1);
+}
+
+const defCache = new Map<TowerId, TowerDef>();
+
+function buildMutationDef(id: TowerId): TowerDef {
+  const parentId = id.slice(0, id.lastIndexOf('+'));
+  const parent = getTowerDef(parentId);
+  const mutationId = id.slice(id.lastIndexOf('+') + 1);
+  const mutation = MUTATIONS.find((m) => m.id === mutationId);
+  if (!mutation) throw new Error(`Unbekannte Mutation: ${mutationId}`);
+  const chain = mutationIdsOf(id);
+  return {
+    id,
+    name: `${mutation.prefix}-${parent.name}`,
+    lineage: `${parent.lineage} · Mutation ${chain.length}`,
+    tier: parent.tier + 1,
+    parent: parentId,
+    archetype: parent.archetype,
+    targeting: parent.targeting,
+    bonus: mutation.bonus,
+    color: MUTATION_COLORS[hash(id) % MUTATION_COLORS.length] as string,
+    description: mutation.description,
+  };
+}
+
+export function isValidTowerId(id: string): boolean {
+  const base = baseIdOf(id);
+  if (!(base in DEFS)) return false;
+  return mutationIdsOf(id).every((m) => MUTATIONS.some((def) => def.id === m));
+}
+
+export function getTowerDef(id: TowerId): TowerDef {
+  const base = BASE_TOWER_DEFS[id as BaseTowerId];
+  if (base) return base;
+  const cached = defCache.get(id);
+  if (cached) return cached;
+  if (!isValidTowerId(id)) throw new Error(`Unbekannte Art: ${id}`);
+  const def = buildMutationDef(id);
+  defCache.set(id, def);
+  return def;
+}
+
+const BASE_CHILDREN: ReadonlyMap<BaseTowerId, readonly TowerId[]> = new Map(
+  BASE_TOWER_IDS.map((id) => [id, BASE_TOWER_IDS.filter((c) => DEFS[c].parent === id)]),
+);
+
+/** Direkte Nachfahren im Stammbaum (Basis oder generierte Mutationen). */
 export function childrenOf(id: TowerId): readonly TowerId[] {
-  return CHILDREN.get(id) ?? [];
+  const def = getTowerDef(id);
+  if (def.tier >= MAX_TIER) return [];
+  if (def.tier < BASE_MAX_TIER) return BASE_CHILDREN.get(id as BaseTowerId) ?? [];
+  // Zwei Mutationen, deterministisch aus der Kennung, ohne Wiederholung in der Linie.
+  const used = new Set(mutationIdsOf(id));
+  const available = MUTATIONS.filter((m) => !used.has(m.id));
+  const seed = hash(id);
+  const first = available[seed % available.length] as MutationDef;
+  const rest = available.filter((m) => m !== first);
+  const second = rest[Math.floor(seed / 7) % rest.length] as MutationDef;
+  return [`${id}+${first.id}`, `${id}+${second.id}`];
 }
 
 /** Elternknoten (null für den Einzeller). */
 export function parentOf(id: TowerId): TowerId | null {
-  return TOWER_DEFS[id].parent;
+  return getTowerDef(id).parent;
 }
 
 /** Geschwister: andere Arten mit demselben Elternknoten. */
@@ -541,4 +658,14 @@ export function lineageOf(id: TowerId): TowerId[] {
 
 export function isFinalForm(id: TowerId): boolean {
   return childrenOf(id).length === 0;
+}
+
+/** Ab diesem Tier muss eine Art im Globalen Shop freigeschaltet werden. */
+export const UNLOCK_FROM_TIER = 2;
+
+/** DNA-Kosten, um eine Art freizuschalten (0 = immer frei). */
+export function unlockCost(id: TowerId): number {
+  const tier = getTowerDef(id).tier;
+  if (tier < UNLOCK_FROM_TIER) return 0;
+  return Math.round(25 * 4 ** (tier - UNLOCK_FROM_TIER));
 }

@@ -5,11 +5,12 @@ import { START_MAP } from '../src/data/map';
 import { QUALITY_DEFS, type ItemQuality } from '../src/data/items';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
+import { createInitialMeta } from '../src/game/MetaState';
 import { globalModifiers } from '../src/game/systems/ModifierSystem';
 import { itemPrice, rollQuality, upgradePrice } from '../src/game/systems/ShopSystem';
 
 function richGame(seed = 1): Game {
-  const game = new Game(START_MAP, createInitialState(seed));
+  const game = new Game(START_MAP, createInitialMeta(), createInitialState(seed));
   game.state.gold = 10_000_000;
   return game;
 }

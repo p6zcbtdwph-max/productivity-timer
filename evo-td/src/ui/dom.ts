@@ -18,8 +18,15 @@ export function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+
+/** Kurze Zahlendarstellung bis in astronomische Bereiche (Welle 1000+). */
 export function formatNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 10_000) return `${(n / 1000).toFixed(1)}k`;
-  return Math.round(n).toLocaleString('de-DE');
+  if (!Number.isFinite(n)) return '∞';
+  const abs = Math.abs(n);
+  if (abs < 10_000) return Math.round(n).toLocaleString('de-DE');
+  const group = Math.floor(Math.log10(abs) / 3);
+  if (group >= SUFFIXES.length) return n.toExponential(2).replace('+', '');
+  const scaled = n / 10 ** (group * 3);
+  return `${scaled.toFixed(scaled >= 100 ? 0 : 1)}${SUFFIXES[group]}`;
 }

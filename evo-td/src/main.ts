@@ -5,11 +5,14 @@ import { BALANCE } from './config/balance';
 import { GameLoop } from './core/GameLoop';
 import { START_MAP } from './data/map';
 import { Game } from './game/Game';
+import type { GameState } from './game/GameState';
+import { createInitialMeta, type MetaState } from './game/MetaState';
 import { SaveManager } from './persistence/SaveManager';
 import { CanvasRenderer } from './render/CanvasRenderer';
 import { $ } from './ui/dom';
 import { ElementLegend } from './ui/ElementLegend';
 import { EventLog } from './ui/EventLog';
+import { GlobalPanel } from './ui/GlobalPanel';
 import { Hud } from './ui/Hud';
 import { ItemsPanel } from './ui/ItemsPanel';
 import { ShopPanel } from './ui/ShopPanel';
@@ -17,8 +20,9 @@ import { Tabs } from './ui/Tabs';
 import { TowerPanel, type TowerAction } from './ui/TowerPanel';
 import { TreeView } from './ui/TreeView';
 
-const saves = new SaveManager();
-const game = new Game(START_MAP, saves.load());
+const runSaves = new SaveManager<GameState>(BALANCE.persistence.runKey, BALANCE.persistence.runVersion);
+const metaSaves = new SaveManager<MetaState>(BALANCE.persistence.metaKey, BALANCE.persistence.metaVersion);
+const game = new Game(START_MAP, metaSaves.load() ?? createInitialMeta(), runSaves.load());
 
 const canvas = $<HTMLCanvasElement>('#game-canvas');
 const renderer = new CanvasRenderer(canvas, START_MAP);
@@ -72,18 +76,35 @@ const loop = new GameLoop(
       case 'tree':
         treeView.render();
         break;
+      case 'global':
+        globalPanel.render();
+        break;
     }
   },
 );
 
-const resetGame = (): void => {
-  saves.clear();
-  game.reset();
+const afterNewRun = (): void => {
+  runSaves.clear();
+  metaSaves.save(game.meta);
   selectedTowerId = undefined;
   setAction(undefined);
   eventLog.clear();
+  treeView.invalidate();
+  globalPanel.invalidate();
   $('#game-over').classList.add('hidden');
   loop.paused = false;
+};
+
+/** Run abbrechen ohne DNA. */
+const resetGame = (): void => {
+  game.reset();
+  afterNewRun();
+};
+
+/** Run abschließen: DNA kassieren, neuen Run starten. */
+const endRun = (): void => {
+  game.endRun();
+  afterNewRun();
 };
 
 const tabs = new Tabs();
@@ -94,6 +115,7 @@ const towerPanel = new TowerPanel(game, {
 const shopPanel = new ShopPanel(game);
 const itemsPanel = new ItemsPanel(game);
 const treeView = new TreeView(game);
+const globalPanel = new GlobalPanel(game, endRun);
 const eventLog = new EventLog(game);
 new ElementLegend();
 
@@ -147,21 +169,30 @@ window.addEventListener('keydown', (e) => {
 // --- Game Over --------------------------------------------------------------
 
 game.bus.on('gameOver', ({ wave }) => {
+  const report = game.dnaPreview();
   $('#game-over-text').textContent = `Du hast ${wave} Wellen überstanden, ${game.state.stats.evolutions} Evolutionen und ${game.state.stats.fusions} Fusionen erlebt und ${game.state.stats.kills} Roboter zerlegt.`;
+  $('#game-over-dna').textContent =
+    report.fromNewWaves > 0
+      ? `+${report.total} DNA (davon ${report.fromNewWaves} für neue Bestwellen über ${report.bestWaveBefore}).`
+      : `+${report.total} DNA. Keine neue Bestwelle (${report.bestWaveBefore}), daher nur der kleine Wiederholungs-Anteil.`;
   $('#game-over').classList.remove('hidden');
 });
-$('#game-over-restart').addEventListener('click', resetGame);
+$('#game-over-restart').addEventListener('click', endRun);
+$('#game-over-shop').addEventListener('click', () => {
+  endRun();
+  tabs.show('global');
+});
 game.bus.on('towerFused', ({ consumedId }) => {
   if (selectedTowerId === consumedId) selectedTowerId = undefined;
 });
 
 // --- Speichern --------------------------------------------------------------
 
-setInterval(() => {
-  if (!game.state.gameOver) saves.save(game.state);
-}, BALANCE.persistence.autosaveSeconds * 1000);
-window.addEventListener('beforeunload', () => {
-  if (!game.state.gameOver) saves.save(game.state);
-});
+const saveAll = (): void => {
+  if (!game.state.gameOver) runSaves.save(game.state);
+  metaSaves.save(game.meta);
+};
+setInterval(saveAll, BALANCE.persistence.autosaveSeconds * 1000);
+window.addEventListener('beforeunload', saveAll);
 
 loop.start();

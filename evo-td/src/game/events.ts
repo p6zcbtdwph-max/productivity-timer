@@ -1,6 +1,7 @@
 import type { Item, ItemQuality } from '../data/items';
 import type { TowerId } from '../data/towers';
 import type { ModifierKind } from '../data/upgrades';
+import type { DnaReport } from './systems/MetaSystem';
 import type { Enemy } from './entities/Enemy';
 import type { Tower } from './entities/Tower';
 
@@ -19,4 +20,5 @@ export interface GameEvents extends Record<string, unknown> {
   waveStarted: { wave: number; tier: number };
   waveCleared: { wave: number; bonus: number };
   gameOver: { wave: number };
+  runEnded: { report: DnaReport };
 }

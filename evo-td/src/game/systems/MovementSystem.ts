@@ -2,6 +2,7 @@
  * Bewegt Gegner entlang der Wegpunkte. Erreicht ein Gegner das Ende,
  * verliert der Spieler ein Leben.
  */
+import { BALANCE } from '../../config/balance';
 import type { Enemy } from '../entities/Enemy';
 import type { GameContext } from '../GameContext';
 import { onEnemyRemoved } from './WaveSystem';
@@ -24,7 +25,7 @@ export function updateMovement(ctx: GameContext, dt: number): void {
       const target = map.waypoints[enemy.waypointIndex];
       if (!target) {
         state.enemies.splice(i, 1);
-        state.lives--;
+        state.lives -= enemy.defId === 'boss' ? BALANCE.player.bossLeakLives : 1;
         ctx.bus.emit('enemyLeaked', { enemy });
         onEnemyRemoved(ctx);
         if (state.lives <= 0 && !state.gameOver) {

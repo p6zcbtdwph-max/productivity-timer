@@ -3,8 +3,8 @@ import { xpForLevel } from '../config/balance';
 import { describeBonus } from '../data/bonuses';
 import { childrenOf, getTowerDef, lineageOf } from '../data/towers';
 import type { Game } from '../game/Game';
-import { canEvolve, countSameType, evolutionChanceFor } from '../game/systems/EvolutionSystem';
-import { environmentFor, computeStats, resolveBonuses, type BonusSource, type EffectiveStats } from '../game/systems/StatsSystem';
+import { canEvolve, countSameType, evolutionChanceFor, unlockedChildren } from '../game/systems/EvolutionSystem';
+import { environmentFor, computeStats, resolveBonuses, type BonusSource, type Breakdown, type EffectiveStats } from '../game/systems/StatsSystem';
 import { $, el, formatNumber } from './dom';
 
 const SOURCE_LABEL: Record<BonusSource, string> = {
@@ -52,12 +52,13 @@ export class TowerPanel {
     const env = environmentFor(ctx, tower);
     const sameType = countSameType(this.game.state.towers, tower.defId);
     const chance = evolutionChanceFor(ctx, tower);
+    const unlockedKids = unlockedChildren(ctx, tower.defId);
     const candidates = this.game.fusionCandidatesFor(tower.id);
     const charges = this.game.relocateCharges();
     const key = [
       tower.id, tower.defId, tower.level, tower.prestige, Math.floor(tower.xp), tower.evolutionLocked, sameType,
       tower.kills, env.neighbours.join(','), chance.toFixed(4), candidates.length, charges, activeAction ?? '',
-      Math.floor(this.game.state.gold) >= this.game.relocateCost(),
+      Math.floor(this.game.state.gold) >= this.game.relocateCost(), unlockedKids.length,
     ].join('|');
     if (key === this.lastRenderedKey) return;
     this.lastRenderedKey = key;
@@ -88,13 +89,19 @@ export class TowerPanel {
     relocateButton.addEventListener('click', () => this.callbacks.onAction('relocate'));
 
     const children = childrenOf(tower.defId);
-    const evolutionInfo = canEvolve(tower)
+    const lockedKids = children.filter((id) => !unlockedKids.includes(id));
+    const evolutionInfo = canEvolve(ctx, tower)
       ? el('p', {}, [
           `Evolutionschance ${(chance * 100).toFixed(1)} % alle paar Sekunden. `,
-          `Mögliche Nachfahren: ${children.map((id) => getTowerDef(id).name).join(', ')}.`,
+          `Mögliche Nachfahren: ${unlockedKids.map((id) => getTowerDef(id).name).join(', ')}.`,
+          lockedKids.length ? ` Gesperrt: ${lockedKids.map((id) => getTowerDef(id).name).join(', ')}.` : '',
         ])
       : el('p', { className: 'muted' }, [
-          tower.evolutionLocked ? 'Evolution ist angehalten.' : 'Endform dieser Linie erreicht.',
+          tower.evolutionLocked
+            ? 'Evolution ist angehalten.'
+            : children.length === 0
+              ? 'Endform dieser Linie erreicht.'
+              : `Keine Nachfahren freigeschaltet (${lockedKids.map((id) => getTowerDef(id).name).join(', ')}). Im Stammbaum mit DNA freischalten.`,
         ]);
 
     const bonusList = el('ul', { className: 'bonus-list' });
@@ -142,6 +149,9 @@ export class TowerPanel {
         el('dt', {}, ['Nachbarn']),
         el('dd', {}, [env.neighbours.length ? env.neighbours.map((id) => getTowerDef(id).name).join(', ') : '–']),
       ]),
+      el('h3', {}, ['Verrechnung']),
+      el('p', { className: 'muted small' }, [`Schaden: ${describeBreakdown(stats.breakdown.damage)}`]),
+      el('p', { className: 'muted small' }, [`Feuerrate: ${describeBreakdown(stats.breakdown.fireRate)}`]),
       el('h3', {}, ['Eigenschaften']),
       bonusList,
       evolutionInfo,
@@ -162,4 +172,19 @@ function describeAttack(stats: EffectiveStats): string {
   if (stats.goldMultiplier > 1) parts.push(`Gold ×${stats.goldMultiplier.toFixed(2)}`);
   parts.push(`Ziel: ${stats.targeting}`);
   return parts.join(' · ');
+}
+
+/** "64 × 1.45 (Art) × 1.20 (Ausrüstung) × 1.25 (Mutation) × 1.75 (Prestige) × 1.14 (Level) × 1.08 (Meta)" */
+function describeBreakdown(b: Breakdown): string {
+  const parts = [formatNumber(b.base)];
+  const factor = (value: number, label: string): void => {
+    if (Math.abs(value - 1) > 0.0005) parts.push(`× ${value.toFixed(2)} (${label})`);
+  };
+  factor(b.art, 'Art');
+  factor(b.ausruestung, 'Ausrüstung');
+  factor(b.mutation, 'Mutation');
+  factor(b.prestige, 'Prestige');
+  factor(b.level, 'Level');
+  factor(b.meta, 'Meta');
+  return `${parts.join(' ')} = ${formatNumber(b.result)}`;
 }

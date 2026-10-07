@@ -10,6 +10,10 @@ import type { Tower } from './entities/Tower';
 import type { GameEvents } from './events';
 import type { GameContext } from './GameContext';
 import { createInitialState, type GameState } from './GameState';
+import { createInitialMeta, type MetaState } from './MetaState';
+import { buyMetaUpgrade, computeDna, metaValues, settleRun, unlockTower, type DnaReport } from './systems/MetaSystem';
+import type { MetaUpgradeId } from '../data/meta';
+import { fuseTowers, fusionCandidates, updateAutoFusion } from './systems/FusionSystem';
 import { buildTower, canBuild, currentTowerCost, updateAutoBuild } from './systems/BuildSystem';
 import { updateCombat } from './systems/CombatSystem';
 import { updateElements } from './systems/ElementSystem';
@@ -18,7 +22,6 @@ import { updateMovement } from './systems/MovementSystem';
 import { updateProjectiles } from './systems/ProjectileSystem';
 import { updateStatuses } from './systems/StatusSystem';
 import { updateWaves } from './systems/WaveSystem';
-import { fuseTowers, fusionCandidates } from './systems/FusionSystem';
 import { canRelocate, relocateCharges, relocateCost, relocateTower } from './systems/RelocateSystem';
 import { buyItem, buyUpgrade, toggleEquip } from './systems/ShopSystem';
 import type { ItemQuality } from '../data/items';
@@ -31,14 +34,22 @@ export class Game {
 
   constructor(
     readonly map: MapDef,
+    readonly meta: MetaState = createInitialMeta(),
     state?: GameState,
   ) {
-    this.state = state ?? createInitialState(Date.now() >>> 0);
+    this.state = state ?? this.freshState();
     this.rng = new Rng(this.state.rngState);
   }
 
+  private freshState(): GameState {
+    const values = metaValues(this.meta);
+    const state = createInitialState(Date.now() >>> 0, { gold: values.startGold, lives: values.startLives });
+    state.bestWaveAtStart = this.meta.bestWave;
+    return state;
+  }
+
   get ctx(): GameContext {
-    return { state: this.state, map: this.map, rng: this.rng, bus: this.bus };
+    return { state: this.state, meta: this.meta, map: this.map, rng: this.rng, bus: this.bus };
   }
 
   /** Ein Simulationsschritt. Reihenfolge ist bewusst gewählt (siehe Kommentare). */
@@ -54,6 +65,7 @@ export class Game {
     updateProjectiles(ctx, dt); // 6. Projektile fliegen/treffen
     updateEvolution(ctx, dt); //   7. Evolution würfelt
     updateAutoBuild(ctx); //       8. Idle-Automatik baut nach
+    updateAutoFusion(ctx); //      9. Idle-Automatik fusioniert (Meta-Freischaltung)
     this.state.rngState = this.rng.getState();
   }
 
@@ -132,9 +144,37 @@ export class Game {
     if (tower) evolveTower(this.ctx, tower, to);
   }
 
+  /** Startet einen neuen Run (ohne DNA-Abrechnung). */
   reset(): void {
-    this.state = createInitialState(Date.now() >>> 0);
+    this.state = this.freshState();
     this.rng.setState(this.state.rngState);
+  }
+
+  // Globaler Shop -----------------------------------------------------------
+
+  /** DNA-Vorschau für den laufenden Run. */
+  dnaPreview(): DnaReport {
+    return computeDna(this.meta, this.state.wave.current);
+  }
+
+  /** Beendet den Run: DNA gutschreiben, Bestwelle aktualisieren, neuen Run starten. */
+  endRun(): DnaReport {
+    const report = settleRun(this.meta, this.state.wave.current);
+    this.bus.emit('runEnded', { report });
+    this.reset();
+    return report;
+  }
+
+  unlock(id: TowerId): boolean {
+    return unlockTower(this.meta, id);
+  }
+
+  buyMetaUpgrade(id: MetaUpgradeId): boolean {
+    return buyMetaUpgrade(this.meta, id);
+  }
+
+  setAutoFusion(enabled: boolean): void {
+    this.meta.autoFusionEnabled = enabled && metaValues(this.meta).autoFusion;
   }
 
   /** Lädt einen gespeicherten Zustand (ersetzt den aktuellen). */

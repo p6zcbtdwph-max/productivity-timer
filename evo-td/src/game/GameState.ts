@@ -33,6 +33,8 @@ export interface GameState {
   lives: number;
   towersBuilt: number;
   nextEntityId: number;
+  /** Bestwelle zu Run-Beginn (für die DNA-Vorschau). */
+  bestWaveAtStart: number;
   towers: Tower[];
   enemies: Enemy[];
   projectiles: Projectile[];
@@ -60,15 +62,19 @@ export interface GameState {
   };
 }
 
-export function createInitialState(seed: number): GameState {
+export function createInitialState(
+  seed: number,
+  start: { gold: number; lives: number } = { gold: BALANCE.player.startGold, lives: BALANCE.player.startLives },
+): GameState {
   return {
     seed,
     rngState: seed,
     time: 0,
-    gold: BALANCE.player.startGold,
-    lives: BALANCE.player.startLives,
+    gold: start.gold,
+    lives: start.lives,
     towersBuilt: 0,
     nextEntityId: 1,
+    bestWaveAtStart: 0,
     towers: [],
     enemies: [],
     projectiles: [],

@@ -11,6 +11,7 @@ export class Hud {
   private readonly countdown = $('#hud-countdown');
   private readonly cost = $('#hud-cost');
   private readonly relocates = $('#hud-relocates');
+  private readonly dna = $('#hud-dna');
   private readonly autoBuild = $<HTMLInputElement>('#hud-autobuild');
   private readonly speedButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-speed]'));
   private readonly pauseButton = $<HTMLButtonElement>('#hud-pause');
@@ -31,7 +32,7 @@ export class Hud {
       loop.paused = !loop.paused;
     });
     $('#hud-reset').addEventListener('click', () => {
-      if (confirm('Spielstand wirklich löschen und neu starten?')) onReset();
+      if (confirm('Run wirklich abbrechen? Es gibt dafür keine DNA.')) onReset();
     });
   }
 
@@ -43,6 +44,7 @@ export class Hud {
     this.countdown.textContent = `${Math.max(0, state.wave.countdown).toFixed(0)}s`;
     this.cost.textContent = formatNumber(this.game.towerCost());
     this.relocates.textContent = String(this.game.relocateCharges());
+    this.dna.textContent = formatNumber(this.game.meta.dna);
     this.autoBuild.checked = state.autoBuild;
     for (const button of this.speedButtons) {
       button.classList.toggle('active', !this.loop.paused && Number(button.dataset['speed']) === this.loop.speed);

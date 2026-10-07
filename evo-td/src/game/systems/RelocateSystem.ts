@@ -6,9 +6,10 @@ import { BALANCE } from '../../config/balance';
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { currentTowerCost, isSlotFree } from './BuildSystem';
+import { metaValues } from './MetaSystem';
 
 export function relocateCharges(ctx: GameContext): number {
-  const earned = Math.floor(ctx.state.wave.current / BALANCE.relocate.wavesPerCharge);
+  const earned = Math.floor(ctx.state.wave.current / metaValues(ctx.meta).wavesPerRelocate);
   return Math.max(0, earned - ctx.state.relocatesUsed);
 }
 

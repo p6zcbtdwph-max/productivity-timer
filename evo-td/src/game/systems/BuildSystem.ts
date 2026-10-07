@@ -1,12 +1,13 @@
 /** Bauen von Türmen. Direkt baubar ist nur der Einzeller. */
-import { BALANCE, towerCost } from '../../config/balance';
+import { BALANCE } from '../../config/balance';
+import { metaValues } from './MetaSystem';
 import { ROOT_TOWER } from '../../data/towers';
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { allocId } from '../GameState';
 
 export function currentTowerCost(ctx: GameContext): number {
-  return towerCost(ctx.state.towersBuilt);
+  return Math.round(BALANCE.economy.towerBaseCost * metaValues(ctx.meta).towerCostGrowth ** ctx.state.towersBuilt);
 }
 
 export function isSlotFree(ctx: GameContext, slot: number): boolean {

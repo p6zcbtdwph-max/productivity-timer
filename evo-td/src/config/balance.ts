@@ -12,7 +12,9 @@ export const BALANCE = {
 
   player: {
     startGold: 60,
-    startLives: 20,
+    startLives: 10,
+    /** Leben, die ein durchgebrochener Boss kostet. */
+    bossLeakLives: 3,
   },
 
   economy: {
@@ -30,6 +32,8 @@ export const BALANCE = {
     spawnGap: 0.7,
     baseCount: 4,
     countPerWave: 0.6,
+    /** Obergrenze an Gegnern pro Welle; darüber wächst nur noch die HP. */
+    maxCount: 24,
     /** Alle N Wellen verdoppeln sich Gegner-HP und -Belohnung (2er-Potenzen). */
     wavesPerTier: 5,
     bossEvery: 10,
@@ -112,7 +116,10 @@ export const BALANCE = {
 
   persistence: {
     autosaveSeconds: 10,
-    storageKey: 'evo-td-save-v3',
+    runKey: 'evo-td-run',
+    runVersion: 4,
+    metaKey: 'evo-td-meta',
+    metaVersion: 1,
   },
 } as const;
 

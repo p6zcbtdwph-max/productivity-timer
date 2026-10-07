@@ -3,12 +3,13 @@ import { BALANCE, tierForWave, tierMultiplier } from '../src/config/balance';
 import { START_MAP } from '../src/data/map';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
+import { createInitialMeta } from '../src/game/MetaState';
 import { Rng } from '../src/core/Rng';
 import { composeWave, spawnEnemy } from '../src/game/systems/WaveSystem';
 
 describe('Wellen und Gegner', () => {
   it('Gegner-HP verdoppelt sich pro Tier (2er-Potenzen)', () => {
-    const game = new Game(START_MAP, createInitialState(1));
+    const game = new Game(START_MAP, createInitialMeta(), createInitialState(1));
     const perTier = BALANCE.waves.wavesPerTier;
     const hpTier0 = spawnEnemy(game.ctx, { defId: 'drohne', element: null }, 1).maxHp;
     const hpTier1 = spawnEnemy(game.ctx, { defId: 'drohne', element: null }, perTier + 1).maxHp;
@@ -28,13 +29,13 @@ describe('Wellen und Gegner', () => {
   });
 
   it('ohne Türme verliert der Spieler irgendwann Leben', () => {
-    const game = new Game(START_MAP, createInitialState(3));
+    const game = new Game(START_MAP, createInitialMeta(), createInitialState(3));
     for (let i = 0; i < 60 * 60; i++) game.update(BALANCE.stepSeconds);
     expect(game.state.lives).toBeLessThan(BALANCE.player.startLives);
   });
 
   it('ein Einzeller tötet Gegner der ersten Welle und sammelt XP', () => {
-    const game = new Game(START_MAP, createInitialState(5));
+    const game = new Game(START_MAP, createInitialMeta(), createInitialState(5));
     // Alle Bauplätze mit Einzellern füllen, Gold dafür spendieren.
     game.state.gold = 1_000_000;
     for (let slot = 0; slot < START_MAP.buildSlots.length; slot++) game.build(slot);

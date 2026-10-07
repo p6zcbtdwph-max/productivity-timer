@@ -14,6 +14,7 @@ import { UPGRADE_DEFS, upgradeCost, type ModifierKind } from '../../data/upgrade
 import type { Rng } from '../../core/Rng';
 import type { GameContext } from '../GameContext';
 import { allocId } from '../GameState';
+import { metaValues } from './MetaSystem';
 
 // --- Upgrades ---------------------------------------------------------------
 
@@ -41,11 +42,11 @@ export function itemPrice(ctx: GameContext, quality: ItemQuality): number | unde
 }
 
 /** Würfelt, auf welche Stufe ein Kauf tatsächlich fällt (verkettete Aufwertung). */
-export function rollQuality(bought: ItemQuality, rng: Rng): ItemQuality {
+export function rollQuality(bought: ItemQuality, rng: Rng, luckMultiplier = 1): ItemQuality {
   let quality = bought;
   for (;;) {
     const next = nextQuality(quality);
-    if (!next || !rng.chance(QUALITY_DEFS[quality].upgradeChance)) return quality;
+    if (!next || !rng.chance(Math.min(0.9, QUALITY_DEFS[quality].upgradeChance * luckMultiplier))) return quality;
     quality = next;
   }
 }
@@ -58,7 +59,7 @@ export function buyItem(ctx: GameContext, quality: ItemQuality): Item | undefine
   const item: Item = {
     id: allocId(ctx.state),
     category: ctx.rng.pick(ITEM_CATEGORY_IDS),
-    quality: rollQuality(quality, ctx.rng),
+    quality: rollQuality(quality, ctx.rng, metaValues(ctx.meta).itemLuckMult),
   };
   ctx.state.items.push(item);
   ctx.bus.emit('itemObtained', { item, boughtQuality: quality });
@@ -77,7 +78,7 @@ export function toggleEquip(ctx: GameContext, itemId: number): boolean {
     state.equippedItemIds.splice(index, 1);
     return true;
   }
-  if (state.equippedItemIds.length >= BALANCE.shop.itemSlots) return false;
+  if (state.equippedItemIds.length >= metaValues(ctx.meta).itemSlots) return false;
   state.equippedItemIds.push(itemId);
   return true;
 }

@@ -34,3 +34,19 @@ export function fuseTowers(ctx: GameContext, target: Tower, consumed: Tower): bo
   ctx.bus.emit('towerFused', { tower: target, consumedId: consumed.id });
   return true;
 }
+
+/** Idle-Komfort (Meta-Freischaltung): fusioniert automatisch passende Paare. */
+export function updateAutoFusion(ctx: GameContext): void {
+  if (!ctx.meta.autoFusionEnabled || ctx.state.gameOver) return;
+  const towers = ctx.state.towers;
+  for (let i = 0; i < towers.length; i++) {
+    const a = towers[i] as Tower;
+    for (let j = i + 1; j < towers.length; j++) {
+      const b = towers[j] as Tower;
+      if (canFuse(a, b)) {
+        fuseTowers(ctx, a, b);
+        return; // höchstens eine Fusion pro Schritt
+      }
+    }
+  }
+}

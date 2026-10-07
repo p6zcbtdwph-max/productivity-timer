@@ -4,8 +4,11 @@ import { describeBonus, scaleBonus } from '../src/data/bonuses';
 import { START_MAP } from '../src/data/map';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
+import { createInitialMeta } from '../src/game/MetaState';
+import { metaValues } from '../src/game/systems/MetaSystem';
+import { childrenOf } from '../src/data/towers';
 import { NO_MODIFIERS } from '../src/game/systems/ModifierSystem';
-import { computeStats, neighbourDefIds, resolveBonuses } from '../src/game/systems/StatsSystem';
+import { computeStats, EMPTY_ENVIRONMENT, neighbourDefIds, resolveBonuses } from '../src/game/systems/StatsSystem';
 
 describe('Boni und effektive Stats', () => {
   it('Einzeller hat nur seinen eigenen Bonus', () => {
@@ -60,7 +63,7 @@ describe('Boni und effektive Stats', () => {
 
 describe('Nachbarn, Prestige und globale Modifikatoren', () => {
   it('direkt angrenzende Türme geben ein Viertel ihres eigenen Bonus', () => {
-    const env = { neighbours: ['hai' as const], modifiers: NO_MODIFIERS };
+    const env = { ...EMPTY_ENVIRONMENT, neighbours: ['hai'] };
     const alone = computeStats({ defId: 'einzeller', level: 1, prestige: 0 });
     const withNeighbour = computeStats({ defId: 'einzeller', level: 1, prestige: 0 }, env);
     // Hai: +30 % Schaden → als Nachbar +7.5 %
@@ -70,7 +73,7 @@ describe('Nachbarn, Prestige und globale Modifikatoren', () => {
   });
 
   it('Nachbarschaft wird aus den Bauplätzen berechnet', () => {
-    const game = new Game(START_MAP, createInitialState(5));
+    const game = new Game(START_MAP, createInitialMeta(), createInitialState(5));
     game.state.gold = 1_000_000;
     // Plätze 0 und 1 liegen nebeneinander (Zeile 1, Spalten 0 und 1), Platz 20 weit weg.
     const a = game.build(0);
@@ -90,11 +93,34 @@ describe('Nachbarn, Prestige und globale Modifikatoren', () => {
   });
 
   it('"Sekundäre Effekte" verstärkt geerbte Boni, nicht den eigenen', () => {
-    const env = { neighbours: [], modifiers: { ...NO_MODIFIERS, secondary: 1 } };
+    const env = { ...EMPTY_ENVIRONMENT, modifiers: { ...NO_MODIFIERS, secondary: 1 } };
     const bonuses = resolveBonuses('fisch', env);
     const own = bonuses.find((b) => b.source === 'eigen');
     const inherited = bonuses.find((b) => b.source === 'vorfahre');
     expect(own?.strength).toBe(1);
     expect(inherited?.strength).toBeCloseTo(BALANCE.bonuses.ancestorStrength * 2);
+  });
+});
+
+describe('Verrechnungstöpfe', () => {
+  it('Art additiv, Ausrüstung additiv, Töpfe multiplikativ, Mutation als eigener Faktor', () => {
+    const titanWolf = childrenOf('wolf').find((id) => id.endsWith('+titan')) ?? 'wolf+titan';
+    const env = { ...EMPTY_ENVIRONMENT, modifiers: { ...NO_MODIFIERS, damage: 0.5 } };
+    const stats = computeStats({ defId: titanWolf, level: 3, prestige: 1 }, env);
+    const b = stats.breakdown.damage;
+    expect(b.ausruestung).toBeCloseTo(1.5);
+    expect(b.mutation).toBeCloseTo(1.25);
+    expect(b.prestige).toBeCloseTo(1 + BALANCE.prestige.damagePerLevel);
+    expect(b.level).toBeCloseTo(1 + 2 * BALANCE.xp.statPerLevel);
+    expect(b.result).toBeCloseTo(b.base * b.art * b.ausruestung * b.mutation * b.prestige * b.level * b.meta);
+    expect(stats.damage).toBeCloseTo(b.result);
+  });
+
+  it('Meta-Schaden ist ein eigener Topf', () => {
+    const meta = createInitialMeta();
+    meta.upgrades.damage = 5;
+    const env = { ...EMPTY_ENVIRONMENT, meta: metaValues(meta) };
+    const stats = computeStats({ defId: 'wurm', level: 1, prestige: 0 }, env);
+    expect(stats.breakdown.damage.meta).toBeCloseTo(1.4);
   });
 });

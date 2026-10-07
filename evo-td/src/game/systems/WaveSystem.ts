@@ -25,7 +25,7 @@ export function elementChance(wave: number): number {
 
 /** Zusammensetzung einer Welle aus Wellennummer (Typen) und RNG (Elemente). */
 export function composeWave(wave: number, rng: Rng): SpawnOrder[] {
-  const count = Math.round(BALANCE.waves.baseCount + BALANCE.waves.countPerWave * (wave - 1));
+  const count = Math.min(BALANCE.waves.maxCount, Math.round(BALANCE.waves.baseCount + BALANCE.waves.countPerWave * (wave - 1)));
   const chance = elementChance(wave);
   const queue: SpawnOrder[] = [];
   for (let i = 0; i < count; i++) {

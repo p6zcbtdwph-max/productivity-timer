@@ -30,6 +30,7 @@ export class EventLog {
       this.push(`🎁 ${describeItem(item)}${lucky}`, item.quality === 'legendaer' ? 'evo' : '');
       void QUALITY_DEFS;
     });
+    game.bus.on('runEnded', ({ report }) => this.push(`🧬 Run beendet in Welle ${report.wave}: +${report.total} DNA`, 'evo'));
     game.bus.on('enemyRevived', () => this.push('Titan-Kern: ein Roboter steht wieder auf.', 'bad'));
     game.bus.on('enemyLeaked', () => this.push('Ein Roboter ist durchgebrochen!', 'bad'));
     game.bus.on('gameOver', ({ wave }) => this.push(`Game Over in Welle ${wave}.`, 'bad'));

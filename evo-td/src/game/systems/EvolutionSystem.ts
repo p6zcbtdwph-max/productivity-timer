@@ -11,6 +11,7 @@ import { childrenOf, type TowerId } from '../../data/towers';
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { globalModifiers } from './ModifierSystem';
+import { isUnlocked, metaValues } from './MetaSystem';
 
 export function evolutionChance(level: number, sameTypeCount: number, prestige = 0, globalBonus = 0): number {
   const e = BALANCE.evolution;
@@ -29,7 +30,7 @@ export function evolutionChanceFor(ctx: GameContext, tower: Tower): number {
     tower.level,
     countSameType(ctx.state.towers, tower.defId),
     tower.prestige,
-    globalModifiers(ctx.state).evolution,
+    globalModifiers(ctx.state).evolution + metaValues(ctx.meta).evolutionBase,
   );
 }
 
@@ -37,8 +38,13 @@ export function countSameType(towers: readonly Tower[], defId: TowerId): number 
   return towers.reduce((n, t) => n + (t.defId === defId ? 1 : 0), 0);
 }
 
-export function canEvolve(tower: Tower): boolean {
-  return !tower.evolutionLocked && childrenOf(tower.defId).length > 0;
+/** Nachfahren, die im Globalen Shop freigeschaltet sind. */
+export function unlockedChildren(ctx: GameContext, id: TowerId): TowerId[] {
+  return childrenOf(id).filter((child) => isUnlocked(ctx.meta, child));
+}
+
+export function canEvolve(ctx: GameContext, tower: Tower): boolean {
+  return !tower.evolutionLocked && unlockedChildren(ctx, tower.defId).length > 0;
 }
 
 export function evolveTower(ctx: GameContext, tower: Tower, to: TowerId): void {
@@ -54,14 +60,13 @@ export function evolveTower(ctx: GameContext, tower: Tower, to: TowerId): void {
 export function updateEvolution(ctx: GameContext, dt: number): void {
   const { state, rng } = ctx;
   for (const tower of state.towers) {
-    if (!canEvolve(tower)) continue;
+    if (!canEvolve(ctx, tower)) continue;
     tower.evolutionTimer -= dt;
     if (tower.evolutionTimer > 0) continue;
     tower.evolutionTimer += BALANCE.evolution.checkInterval;
 
     if (!rng.chance(evolutionChanceFor(ctx, tower))) continue;
 
-    const options = childrenOf(tower.defId);
-    evolveTower(ctx, tower, rng.pick(options));
+    evolveTower(ctx, tower, rng.pick(unlockedChildren(ctx, tower.defId)));
   }
 }
