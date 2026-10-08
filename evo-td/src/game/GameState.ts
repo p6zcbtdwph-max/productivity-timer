@@ -3,7 +3,6 @@
  * Systeme lesen und verändern ihn; der SaveManager serialisiert ihn 1:1.
  */
 import { BALANCE } from '../config/balance';
-import type { Item } from '../data/items';
 import type { TowerId } from '../data/towers';
 import type { ModifierKind } from '../data/upgrades';
 import type { Enemy } from './entities/Enemy';
@@ -22,6 +21,10 @@ export interface WaveState {
   spawnTimer: number;
   /** Lebende Gegner, die noch zur aktuellen Welle gehören (für den Bonus). */
   aliveFromCurrent: number;
+  /** Weitester Anteil des Weges, den ein Roboter seit dem letzten Auto-Kauf geschafft hat (0..1). */
+  danger?: number;
+  /** Durchbrüche seit dem letzten Auto-Kauf. */
+  leaks?: number;
 }
 
 /** Schadensarten, an die sich Roboter anpassen können (Roboterfabrik). */
@@ -74,10 +77,6 @@ export interface GameState {
   autoBuild: boolean;
   /** Stufen der globalen Upgrades. */
   upgrades: Record<ModifierKind, number>;
-  /** Alle besessenen Items. */
-  items: Item[];
-  /** Ausgerüstete Items (IDs aus `items`), begrenzt durch shop.itemSlots. */
-  equippedItemIds: number[];
   /** Anzahl bisher gekaufter Items (Preissteigerung). */
   itemPurchases: number;
   /** Verbrauchte Verlegungen (verfügbar = floor(welle / wavesPerCharge) - verbraucht). */
@@ -122,8 +121,6 @@ export function createInitialState(
     discovered: ['einzeller'],
     autoBuild: false,
     upgrades: { damage: 0, fireRate: 0, range: 0, evolution: 0, secondary: 0, passive: 0 },
-    items: [],
-    equippedItemIds: [],
     itemPurchases: 0,
     relocatesUsed: 0,
     gameOver: false,

@@ -19,14 +19,20 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
 - Du baust ausschließlich **Einzeller** (jeder weitere wird teurer).
 - Türme sammeln XP durch Schaden und Kills und steigen im Level.
 - Alle 2 Sekunden würfelt jeder Turm auf **Evolution**. Die Chance steigt mit Level, Anzahl
-  gleichartiger Türme, Prestige und Upgrades. **Ab Tier 2 muss jede Art mit DNA freigeschaltet
-  sein**, sonst steht sie nicht zur Wahl.
+  gleichartiger Türme, Prestige und Upgrades. **Ab Tier 2 muss jede Art freigeschaltet
+  sein**, sonst steht sie nicht zur Wahl. Freigeschaltet wird über **XP im Kompendium**: Die XP
+  aller Türme einer Art zählen über alle Runs; hat die Elternart `300 × 5^(Tier − 2)` XP gesammelt,
+  wird das Kind frei (Tier 2: 300, Tier 3: 1.500, Tier 4: 7.500 …). Fortschritt im Stammbaum.
 - **Jede Art hat genau einen Bonus.** Bei einer Evolution bleiben die Boni erhalten:
   eigener Bonus 100 %, Vorfahren 50 %, Geschwister 25 %, direkt angrenzende Türme 25 %.
 - **Prestige durch Fusion** (`F`): zwei gleiche Türme gleicher Prestige-Stufe → ein Turm mit
   Prestige +1. **Verlegen** (`V`): eine Verlegung je 5 Wellen, kostet Gold.
-- **Gold fließt nie in einzelne Türme**: nur neue Einzeller, Verlegungen, globale Upgrades
-  für alle Türme und Items (Bronze bis Legendär, verkettete Glücks-Aufwertung).
+- **Gold** fließt in neue Einzeller (Kosten des nächsten Turms stehen immer im HUD und beim
+  Überfahren eines freien Platzes), Verlegungen, globale Upgrades für alle Türme und **Items**.
+- **Items** kauft man direkt am Turm (Turm anklicken): Bronze bis Platin, Kategorie zufällig,
+  verkettete Glücks-Aufwertung bis Legendär. **Höchstens 3 Items je Turm** (Artefakt Beutel
+  gibt spät mehr). Items wirken nur auf ihren Turm, bleiben bei Evolution erhalten und wandern
+  bei einer Fusion mit, soweit Platz ist.
 - **Roboter-Elemente** ab Welle 4: Titan-Kern (zweites Leben), Gold-Legierung, Plasma-Schild,
   Nanobots. Gegner-HP verdoppelt sich alle 5 Wellen, Bosse kosten 3 Leben.
 
@@ -35,7 +41,6 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
 - Ein Run endet bei 0 Leben oder freiwillig ("Run beenden"). Dann gibt es DNA:
   jede Welle ist `ceil(welle^1.5 / 10)` DNA wert, aber **nur Wellen jenseits der bisherigen
   Bestwelle dieser Karte zählen voll**, bereits erreichte Wellen bringen 10 %.
-- **Arten freischalten** im Stammbaum: Tier 2 kostet 25 DNA, jedes weitere Tier das Vierfache.
 - **Artefakte** in fester Reihenfolge. Das nächste Artefakt braucht das vorige, eine Bestwelle
   und DNA; danach lässt es sich mit DNA weiter aufstufen. Reihenfolge (Bestwelle):
   Goldener Kiesel (0), Ursuppe (10), Raubtierzahn (15), Schildkrötenpanzer (20),
@@ -43,8 +48,10 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
   Revierstein (45), Zellkern (50), Bernstein (55), **Symbiose-Koralle** (60, Auto-Fusion),
   Winterschlaf-Höhle (70), Vierblättriger Klee (75), Winterfell (85), Doppelhelix (90),
   **Gedächtnis** (100, Auto-Kauf von Artefakt-Stufen am Run-Ende), Zugvogelfeder (125), Beutel (150).
-- **Auto-Modi**: Instinkt kauft jede Sekunde das billigste der im Shop angehakten Run-Upgrades
-  und hält bei Auto-Bau Gold für den nächsten Turm zurück. Gedächtnis kauft am Run-Ende die
+- **Auto-Modi**: Instinkt (Schalter im Shop) kauft **einmal pro Welle** Run-Upgrades, und nur,
+  wenn gerade kein neuer Turm bezahlbar ist. Er schaut, wie weit die Roboter in der letzten Welle
+  kamen: über die Hälfte des Weges oder ein Durchbruch → **Gefahr**, Schaden und Feuerrate zuerst;
+  sonst **ruhig**, Gold zuerst, der Rest gewichtet dahinter. Gekauft wird nach Gewicht/Preis. Gedächtnis kauft am Run-Ende die
   angehakten Artefakt-Stufen, billigste zuerst.
 - **Karten-Erfolge**: alle 50 Bestwellen auf einer Karte gibt es dauerhaft den Bonus der Karte.
   Urmeer: +10 % Schaden je Erfolg, als eigener Topf.
@@ -97,9 +104,10 @@ Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerech
 Reiter "Garten": Bäume aus der Pflanzen-Evolution wachsen in Töpfen.
 
 - **Töpfe**: Man beginnt mit einem Topf. Weitere nur für **Harz** (20, dann ×3, maximal 6).
-- **Samen** findet man zufällig nach geschafften Wellen (ab Welle 5: 4 %, Bosswellen 40 %),
-  **nur beim aktiven Spielen**, nie in der Winterruhe.
-  Seltenheit: häufig 70 %, selten 22 %, sehr selten 7 %, legendär 1 %. Samen bleiben über Runs erhalten.
+- **Samen**: Man startet mit einem Moos-Samen. Danach sind Samen **sehr selten** (Gacha):
+  ab Welle 5 je geschaffter Welle 0,3 %, Bosswellen 3 %, **nur beim aktiven Spielen**, nie in
+  der Winterruhe. Seltenheit: häufig 90 %, selten 8,5 %, sehr selten 1,4 %, legendär 0,1 %.
+  Samen bleiben über Runs erhalten.
 - **Wachstum** in Echtzeit (auch offline, wie Kammern): Level n → n+1 dauert n Stunden
   (Level 10 nach ~2 Tagen, Level 30 nach ~3 Wochen), maximal Level 100.
 - **Boni** steigen mit Level und Seltenheit (×1 / ×1,5 / ×2 / ×3). Schaden, Feuerrate und
@@ -169,7 +177,7 @@ Kampfwerte werden aus **Tier** (Schaden ×2 pro Tier) und **Archetyp** abgeleite
 ```
 Schaden = Basis(Tier, Archetyp)
         × (1 + Σ Art-Boni)          Topf "Art": eigener, Vorfahren-, Geschwister-, Nachbar-Boni (additiv)
-        × (1 + Σ Ausrüstung)        Topf "Ausrüstung": Run-Upgrades + Items (additiv)
+        × (1 + Σ Ausrüstung)        Topf "Ausrüstung": Run-Upgrades + Items des Turms (additiv)
         × Π Mutations-Faktoren      reine Multiplikatoren (Titan ×1.25 ...), stapeln multiplikativ
         × (1 + 0.10 · gleiche Nachbarn)  Synergie: angrenzende Türme derselben Art
         × (1 + 0.75 · Prestige)
@@ -236,9 +244,9 @@ src/
     Game.ts                Fassade: Update-Reihenfolge + Aktionen für die UI
     entities/              Tower, Enemy, Projectile (nur Typen)
     systems/               Wave, Movement, Status, Element, Combat, Projectile, Damage, Level, Stats,
-                           Modifier, Meta, Evolution, Build, Fusion, Relocate, Shop
+                           Modifier, Meta, Evolution, Build, Fusion, Relocate, Shop, Auto, Compendium, Garden
   render/CanvasRenderer.ts Darstellung (liest nur)
-  ui/                      HUD, Tabs, Turm-Panel, Shop, Items, Stammbaum (Freischalten), Global, Protokoll
+  ui/                      HUD, Tabs, Turm-Panel, Shop (Upgrades, Auto-Kauf), Stammbaum (XP-Fortschritt), Global, Protokoll
   persistence/             SaveManager (localStorage, versioniert; je ein Key für Run und Meta)
 tests/                     Vitest
 ```
@@ -251,6 +259,9 @@ Grundregeln:
 - **Zufall nur über `ctx.rng`**, damit Spielstände deterministisch weiterlaufen.
 
 ## Nächste Schritte (Ideen)
+
+Siehe auch `BACKLOG.md` (u. a. Steuerung des Stammbaums überarbeiten).
+
 
 - Balance-Pass auf den Meta-Loop mit der Headless-Simulation (Run-Länge, DNA-Tempo).
 - Weitere Elemente (Teilung, Tarnung, Flug) in `data/elements.ts`, Boss-Elemente kombiniert.

@@ -323,6 +323,16 @@ export class CanvasRenderer {
       if (index === options.hoveredSlot) {
         const ok = options.highlightFreeSlots ? game.canRelocateTo(index) : game.canBuildAt(index);
         ctx.fillStyle = ok ? COLORS.slotHoverOk : COLORS.slotHoverBad;
+        const label = options.highlightFreeSlots ? `Verlegen: ${game.relocateCost()}💰` : `Turm: ${game.towerCost()}💰`;
+        ctx.save();
+        ctx.font = `bold ${Math.round(cell * 0.28)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000';
+        ctx.fillText(label, x + cell / 2 + 1, y - 3);
+        ctx.fillStyle = ok ? '#9be7a0' : '#ff8a80';
+        ctx.fillText(label, x + cell / 2, y - 4);
+        ctx.restore();
+        ctx.fillStyle = ok ? COLORS.slotHoverOk : COLORS.slotHoverBad;
       } else if (options.highlightFreeSlots) {
         ctx.fillStyle = 'rgba(255,213,79,0.18)';
       } else {

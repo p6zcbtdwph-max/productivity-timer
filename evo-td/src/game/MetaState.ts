@@ -20,8 +20,10 @@ export interface MetaState {
   upgrades: Record<MetaUpgradeId, number>;
   /** Spieler-Schalter für Auto-Fusion (nur wirksam, wenn freigeschaltet). */
   autoFusionEnabled: boolean;
-  /** Auto-Kauf je Run-Upgrade (wirksam ab Artefakt "Instinkt"). */
+  /** Veraltet (früher pro Upgrade); bleibt für alte Spielstände. */
   autoUpgrades: Record<ModifierKind, boolean>;
+  /** Auto-Kauf der Run-Upgrades an/aus (wirksam ab Artefakt "Instinkt"). */
+  autoUpgradeEnabled: boolean;
   /** Auto-Kauf je Artefakt am Run-Ende (wirksam ab Artefakt "Gedächtnis"). */
   autoArtifacts: Partial<Record<MetaUpgradeId, boolean>>;
   /** Letzter Zeitpunkt (ms), an dem das Spiel sichtbar lief; Grundlage der Winterruhe. */
@@ -55,7 +57,7 @@ export interface GardenState {
 export function createGarden(): GardenState {
   return {
     pots: [{ tree: null, level: 0, growth: 0 }],
-    seeds: {},
+    seeds: { moos: 1 }, // Basis-Samen zum Start
     resin: 0,
     resinFraction: 0,
     resinEarned: 0,
@@ -98,6 +100,7 @@ export function createInitialMeta(): MetaState {
     upgrades: Object.fromEntries(META_UPGRADE_IDS.map((id) => [id, 0])) as Record<MetaUpgradeId, number>,
     autoFusionEnabled: false,
     autoUpgrades: { damage: false, fireRate: false, range: false, evolution: false, secondary: false, passive: false },
+    autoUpgradeEnabled: false,
     autoArtifacts: {},
     lastSeen: Date.now(),
     passive: {

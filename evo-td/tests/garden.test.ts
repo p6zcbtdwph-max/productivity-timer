@@ -6,7 +6,7 @@ import { START_MAP } from '../src/data/map';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
 import { createInitialMeta, normalizeMeta } from '../src/game/MetaState';
-import { buyGardenUpgrade, gardenTotals, gardenUpgradePrice, plantSeed, potUnlockCost, rollTree, seedChance, tickGarden, unlockPot, uproot } from '../src/game/systems/GardenSystem';
+import { buyGardenUpgrade, gardenTotals, gardenUpgradePrice, maybeDropSeed, plantSeed, potUnlockCost, rollTree, seedChance, tickGarden, unlockPot, uproot } from '../src/game/systems/GardenSystem';
 import { metaValues } from '../src/game/systems/MetaSystem';
 import { tickPassive } from '../src/game/systems/PassiveSystem';
 import { computeStats, EMPTY_ENVIRONMENT } from '../src/game/systems/StatsSystem';
@@ -124,17 +124,18 @@ describe('Garten: Samenfund', () => {
   it('Seltenheiten werden gemäß Gewicht gewürfelt; legendär ist rar', () => {
     const rng = new Rng(7);
     const counts = new Map<string, number>(TREE_IDS.map((id) => [id, 0]));
-    const n = 50_000;
+    const n = 200_000;
     for (let i = 0; i < n; i++) {
       const id = rollTree(rng);
       counts.set(id, (counts.get(id) ?? 0) + 1);
     }
     const c = (id: string): number => counts.get(id) ?? 0;
     const legendary = c('mammutbaum') / n;
-    expect(legendary).toBeGreaterThan(0.005);
-    expect(legendary).toBeLessThan(0.02);
+    expect(legendary).toBeGreaterThan(0.0002);
+    expect(legendary).toBeLessThan(0.003);
     const common = (c('moos') + c('farn') + c('schachtelhalm')) / n;
-    expect(common).toBeGreaterThan(0.65);
+    expect(common).toBeGreaterThan(0.87);
+    expect(common).toBeLessThan(0.93);
   });
 
   it('nach geschafften Wellen landen Samen im Inventar', () => {
@@ -142,13 +143,15 @@ describe('Garten: Samenfund', () => {
     const game = new Game(START_MAP, meta, createInitialState(11));
     let found = 0;
     game.bus.on('seedFound', () => found++);
-    for (let wave = 5; wave <= 400; wave++) {
+    for (let wave = 5; wave <= 3000; wave++) {
       game.state.wave.current = wave;
       game.state.wave.aliveFromCurrent = 1;
       game.bus.emit('waveStarted', { wave, tier: 0 });
       onEnemyRemoved(game.ctx); // Welle geschafft
     }
+    // Sehr selten: grob 0,3 % je Welle, 3 % bei Bossen.
     expect(found).toBeGreaterThan(5);
+    expect(found).toBeLessThan(60);
     expect(meta.garden.seedsFound).toBe(found);
   });
 });
@@ -216,24 +219,21 @@ describe('Pflege (Harz)', () => {
 });
 
 describe('Samen nur aktiv', () => {
-  it('in der Winterruhe gibt es keine Samen', async () => {
-    const { simulateOfflineRun } = await import('../src/game/OfflineRun');
+  it('in der Winterruhe gibt es keine Samen, aktiv schon', () => {
     const meta = createInitialMeta();
-    meta.garden.upgrades.vogelfutter = 15; // Chance hoch, damit ein Fund sicher wäre
+    meta.garden.upgrades.vogelfutter = 15;
     const game = new Game(START_MAP, meta, createInitialState(4));
-    game.state.gold = 1e9;
-    for (let slot = 0; slot < 40; slot++) game.build(slot);
-    for (const t of game.state.towers) t.level = 200;
-    const report = await simulateOfflineRun(game, 2 * HOUR, { sync: true });
-    expect(report.waveAfter).toBeGreaterThan(20);
+    const offline = { ...game.ctx, offline: true };
+    for (let i = 0; i < 2000; i++) expect(maybeDropSeed(offline, 10, true)).toBeUndefined();
     expect(meta.garden.seedsFound).toBe(0);
+    let found = 0;
+    for (let i = 0; i < 2000; i++) if (maybeDropSeed(game.ctx, 10, true)) found++;
+    expect(found).toBeGreaterThan(0);
+    expect(meta.garden.seedsFound).toBe(found);
+  });
 
-    // aktiv dagegen schon
-    const active = new Game(START_MAP, meta, createInitialState(4));
-    active.state.gold = 1e9;
-    for (let slot = 0; slot < 40; slot++) active.build(slot);
-    for (const t of active.state.towers) t.level = 200;
-    for (let i = 0; i < 60 * 60 * 10; i++) active.update(BALANCE.stepSeconds);
-    expect(meta.garden.seedsFound).toBeGreaterThan(0);
+  it('Start mit einem Basis-Samen (Moos)', () => {
+    expect(createInitialMeta().garden.seeds).toEqual({ [GARDEN.starterSeed]: 1 });
+    expect(GARDEN.starterSeed).toBe('moos');
   });
 });

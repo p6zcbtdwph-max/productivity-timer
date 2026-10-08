@@ -1,11 +1,12 @@
 /**
- * Stammbaum: entdeckte Arten, Anzahl auf dem Feld und Freischaltung
- * (DNA) für alle Arten ab Tier 2. Mutationen erscheinen erst, wenn der
- * Elternknoten freigeschaltet ist.
+ * Stammbaum: entdeckte Arten, Anzahl auf dem Feld und Freischaltung.
+ * Ab Tier 2 wird eine Art frei, sobald ihre Elternart genug XP im
+ * Kompendium gesammelt hat (über alle Runs). Mutationen erscheinen erst,
+ * wenn der Elternknoten frei ist.
  */
-import { childrenOf, getTowerDef, ROOT_TOWER, unlockCost, type TowerId } from '../data/towers';
+import { childrenOf, getTowerDef, ROOT_TOWER, type TowerId } from '../data/towers';
 import type { Game } from '../game/Game';
-import { canUnlock, isUnlocked } from '../game/systems/MetaSystem';
+import { isUnlocked, unlockProgress } from '../game/systems/MetaSystem';
 import { $, el, formatNumber } from './dom';
 
 export class TreeView {
@@ -23,7 +24,8 @@ export class TreeView {
     const { meta } = this.game;
     const counts = new Map<TowerId, number>();
     for (const t of towers) counts.set(t.defId, (counts.get(t.defId) ?? 0) + 1);
-    const key = `${discovered.join(',')}|${[...counts.entries()].map(([k, v]) => `${k}:${v}`).join(',')}|${meta.unlockedTowers.length}|${meta.dna}`;
+    const xpKey = Object.entries(meta.compendium).map(([id, r]) => `${id}:${Math.floor((r.xp ?? 0) / 10)}`).join(',');
+    const key = `${discovered.join(',')}|${[...counts.entries()].map(([k, v]) => `${k}:${v}`).join(',')}|${meta.unlockedTowers.length}|${xpKey}`;
     if (key === this.lastKey) return;
     this.lastKey = key;
 
@@ -45,13 +47,16 @@ export class TreeView {
         count > 0 ? el('span', { className: 'count' }, [` ×${count}`]) : '',
       ];
       if (!unlocked) {
-        const cost = unlockCost(id);
-        const button = el('button', { className: 'btn small', disabled: !canUnlock(meta, id) }, [`${formatNumber(cost)} 🧬`]);
-        button.addEventListener('click', () => {
-          this.game.unlock(id);
-          this.invalidate();
-        });
-        children.push(' ', button);
+        const p = unlockProgress(meta, id);
+        const parentName = p.parent ? getTowerDef(p.parent).name : '';
+        const pct = Math.min(100, Math.floor((p.xp / p.need) * 100));
+        children.push(
+          ' ',
+          el('span', { className: 'unlock-progress', title: `${parentName} braucht ${formatNumber(p.need)} XP im Kompendium` }, [
+            el('span', { className: 'unlock-bar', style: `width:${pct}%` }),
+            el('span', { className: 'unlock-label' }, [`🔒 ${parentName}-XP ${formatNumber(p.xp)}/${formatNumber(p.need)}`]),
+          ]),
+        );
       }
       list.append(el('li', { className: unlocked ? (known ? 'known' : 'unlocked') : 'locked', style: `--depth:${depth}` }, children));
 
@@ -63,7 +68,7 @@ export class TreeView {
     this.root.replaceChildren(
       el('h2', {}, [`Stammbaum · ${unlockedCount}/${shownCount} frei`]),
       el('p', { className: 'muted small' }, [
-        `🧬 ${formatNumber(meta.dna)} DNA. Ab Tier 2 muss jede Art freigeschaltet werden; ab Tier 5 teilt sich jede Endform in Mutationen.`,
+        'Ab Tier 2 schaltet sich eine Art frei, sobald ihre Elternart genug XP gesammelt hat. Die XP aller Türme einer Art zählen im Kompendium über alle Runs, auch in der Winterruhe.',
       ]),
       list,
     );

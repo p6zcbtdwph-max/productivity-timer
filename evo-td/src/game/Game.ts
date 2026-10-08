@@ -12,8 +12,7 @@ import type { GameEvents } from './events';
 import type { GameContext } from './GameContext';
 import { createInitialState, type GameState } from './GameState';
 import { createInitialMeta, type MetaState } from './MetaState';
-import { bestWaveOn, isMapUnlocked, buyMetaUpgrade, computeDna, metaValues, settleRun, unlockArtifact, unlockTower, type DnaReport } from './systems/MetaSystem';
-import { updateAutoUpgrades } from './systems/AutoSystem';
+import { bestWaveOn, isMapUnlocked, buyMetaUpgrade, computeDna, metaValues, settleRun, unlockArtifact, type DnaReport } from './systems/MetaSystem';
 import { recordSpecies } from './systems/CompendiumSystem';
 import type { MetaUpgradeId } from '../data/meta';
 import { fuseTowers, fusionCandidates, updateAutoFusion } from './systems/FusionSystem';
@@ -28,7 +27,7 @@ import { updateProjectiles } from './systems/ProjectileSystem';
 import { updateStatuses } from './systems/StatusSystem';
 import { updateWaves } from './systems/WaveSystem';
 import { canRelocate, relocateCharges, relocateCost, relocateTower } from './systems/RelocateSystem';
-import { buyItem, buyUpgrade, toggleEquip } from './systems/ShopSystem';
+import { buyItemForTower, buyUpgrade } from './systems/ShopSystem';
 import type { ItemQuality } from '../data/items';
 import type { ModifierKind } from '../data/upgrades';
 
@@ -60,7 +59,7 @@ export class Game {
     for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused'] as const) this.bus.on(event, record);
     for (const tower of this.state.towers) recordSpecies(this.meta, tower.defId, tower.level, tower.prestige);
     const clear = (): void => this.invalidateStats();
-    for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused', 'towerRelocated', 'upgradeBought'] as const) {
+    for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused', 'towerRelocated', 'upgradeBought', 'itemObtained'] as const) {
       this.bus.on(event, clear);
     }
   }
@@ -101,7 +100,6 @@ export class Game {
     updateEvolution(ctx, dt); //   7. Evolution würfelt
     updateAutoBuild(ctx); //       8. Idle-Automatik baut nach
     updateAutoFusion(ctx); //      9. Idle-Automatik fusioniert (Artefakt)
-    updateAutoUpgrades(ctx, dt); // 10. Idle-Automatik kauft Upgrades (Artefakt)
     this.state.rngState = this.rng.getState();
   }
 
@@ -129,6 +127,11 @@ export class Game {
     const tower = this.state.towers.find((t) => t.id === towerId);
     if (!tower) return undefined;
     return cycleTargeting(tower, getTowerDef(tower.defId).targeting);
+  }
+
+  /** Auto-Kauf der Run-Upgrades an/aus (wirkt nur mit Artefakt "Instinkt"). */
+  setAutoUpgrades(enabled: boolean): void {
+    this.meta.autoUpgradeEnabled = enabled;
   }
 
   setAutoBuild(enabled: boolean): void {
@@ -173,13 +176,10 @@ export class Game {
     return buyUpgrade(this.ctx, kind);
   }
 
-  buyItem(quality: ItemQuality): boolean {
-    return buyItem(this.ctx, quality) !== undefined;
-  }
-
-  toggleEquip(itemId: number): boolean {
-    this.invalidateStats();
-    return toggleEquip(this.ctx, itemId);
+  /** Item direkt für einen Turm kaufen. */
+  buyItemFor(towerId: number, quality: ItemQuality): boolean {
+    const tower = this.state.towers.find((t) => t.id === towerId);
+    return !!tower && buyItemForTower(this.ctx, tower, quality) !== undefined;
   }
 
   /** Debug/Test-Helfer: erzwingt eine Evolution. */
@@ -231,10 +231,6 @@ export class Game {
 
   obstacleClearCost(): number {
     return obstacleClearCost(this.ctx);
-  }
-
-  unlock(id: TowerId): boolean {
-    return unlockTower(this.meta, id);
   }
 
   buyMetaUpgrade(id: MetaUpgradeId): boolean {

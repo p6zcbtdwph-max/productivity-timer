@@ -6,7 +6,7 @@ import { COMPENDIUM_EFFECT_IDS, COMPENDIUM_EFFECTS, POINTS_PER_PRESTIGE, tierWei
 import { BASE_TOWER_IDS, childrenOf, getTowerDef, ROOT_TOWER, type TowerId } from '../data/towers';
 import type { Game } from '../game/Game';
 import { compendiumTotals, speciesBonus, speciesEffect } from '../game/systems/CompendiumSystem';
-import { $, el } from './dom';
+import { $, el, formatNumber } from './dom';
 
 export class CompendiumPanel {
   private readonly root = $('#compendium-panel');
@@ -20,7 +20,7 @@ export class CompendiumPanel {
 
   render(): void {
     const { meta } = this.game;
-    const key = JSON.stringify(meta.compendium);
+    const key = JSON.stringify(Object.entries(meta.compendium).map(([id, r]) => [id, r.maxLevel, r.maxPrestige, Math.floor((r.xp ?? 0) / 10)]));
     if (key === this.lastKey) return;
     this.lastKey = key;
 
@@ -46,7 +46,7 @@ export class CompendiumPanel {
           ` ${record ? def.name : '???'} `,
           el('span', { className: 'muted small' }, [`T${def.tier} `]),
           record
-            ? el('span', { className: 'small' }, [`Lvl ${record.maxLevel}${record.maxPrestige > 0 ? ` ★${record.maxPrestige}` : ''} · `, el('strong', {}, [effect.format(speciesBonus(meta, id))])])
+            ? el('span', { className: 'small' }, [`Lvl ${record.maxLevel}${record.maxPrestige > 0 ? ` ★${record.maxPrestige}` : ''} · ${formatNumber(record.xp ?? 0)} XP · `, el('strong', {}, [effect.format(speciesBonus(meta, id))])])
             : el('span', { className: 'muted small' }, [`bringt ${effect.name}`]),
         ]),
       );

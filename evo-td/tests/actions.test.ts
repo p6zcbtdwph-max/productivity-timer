@@ -6,8 +6,14 @@ import { QUALITY_DEFS, type ItemQuality } from '../src/data/items';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
 import { createInitialMeta } from '../src/game/MetaState';
+import type { Tower } from '../src/game/entities/Tower';
 import { globalModifiers } from '../src/game/systems/ModifierSystem';
+import { computeStats, environmentFor } from '../src/game/systems/StatsSystem';
 import { itemPrice, rollQuality, upgradePrice } from '../src/game/systems/ShopSystem';
+
+function statsOf(game: Game, tower: Tower) {
+  return computeStats(tower, environmentFor(game.ctx, tower));
+}
 
 function richGame(seed = 1): Game {
   const game = new Game(START_MAP, createInitialMeta(), createInitialState(seed));
@@ -98,11 +104,14 @@ describe('Shop', () => {
     game.state.wave.current = BALANCE.waves.wavesPerTier * 3 + 1;
     expect(itemPrice(game.ctx, 'bronze')).toBe(early * tierMultiplier(tierForWave(game.state.wave.current)));
     expect(itemPrice(game.ctx, 'legendaer')).toBeUndefined();
-    expect(game.buyItem('legendaer')).toBe(false);
+    const tower = game.build(0);
+    if (!tower) throw new Error('Bau fehlgeschlagen');
+    expect(game.buyItemFor(tower.id, 'legendaer')).toBe(false);
     const before = itemPrice(game.ctx, 'silber') ?? 0;
-    expect(game.buyItem('silber')).toBe(true);
+    expect(game.buyItemFor(tower.id, 'silber')).toBe(true);
     expect(itemPrice(game.ctx, 'silber')).toBeGreaterThan(before);
-    expect(game.state.items).toHaveLength(1);
+    expect(tower.items).toHaveLength(1);
+    expect(game.buyItemFor(9999, 'bronze')).toBe(false); // unbekannter Turm
   });
 
   it('Aufwertung ist verkettet: Legendär aus Bronze ist extrem selten', () => {
@@ -119,15 +128,29 @@ describe('Shop', () => {
     expect(rollQuality('legendaer', rng)).toBe('legendaer');
   });
 
-  it('nur begrenzt viele Items ausrüstbar, ausgerüstete wirken global', () => {
+  it('Items gehören zu einem Turm: höchstens 3 je Turm, wirken nur dort', () => {
     const game = richGame();
-    for (let i = 0; i < BALANCE.shop.itemSlots + 1; i++) {
-      game.state.items.push({ id: 1000 + i, category: 'range', quality: 'gold' });
-    }
-    for (let i = 0; i < BALANCE.shop.itemSlots; i++) expect(game.toggleEquip(1000 + i)).toBe(true);
-    expect(game.toggleEquip(1000 + BALANCE.shop.itemSlots)).toBe(false);
-    expect(globalModifiers(game.state).range).toBeCloseTo(0.05 * 4 * BALANCE.shop.itemSlots);
-    expect(game.toggleEquip(1000)).toBe(true); // ablegen
-    expect(game.state.equippedItemIds).toHaveLength(BALANCE.shop.itemSlots - 1);
+    const a = game.build(0);
+    const b = game.build(5);
+    if (!a || !b) throw new Error('Bau fehlgeschlagen');
+    expect(BALANCE.shop.itemSlots).toBe(3);
+    const before = statsOf(game, b);
+    for (let i = 0; i < BALANCE.shop.itemSlots; i++) expect(game.buyItemFor(a.id, 'bronze')).toBe(true);
+    expect(game.buyItemFor(a.id, 'bronze')).toBe(false); // voll
+    expect(a.items).toHaveLength(3);
+    expect(b.items ?? []).toHaveLength(0);
+    // Der Nachbar b profitiert nicht von a's Items.
+    const after = statsOf(game, b);
+    expect(after.damage).toBeCloseTo(before.damage);
+    expect(after.cooldown).toBeCloseTo(before.cooldown);
+  });
+
+  it('Turm-Items fließen in den Ausrüstungs-Topf des Turms', () => {
+    const game = richGame();
+    const t = game.build(0);
+    if (!t) throw new Error('Bau fehlgeschlagen');
+    const base = statsOf(game, t).range;
+    t.items = [{ id: 1000, category: 'range', quality: 'gold' }];
+    expect(statsOf(game, t).range).toBeGreaterThan(base);
   });
 });

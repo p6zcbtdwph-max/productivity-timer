@@ -1,8 +1,7 @@
 /**
- * Globale Modifikatoren aus Upgrades und ausgerüsteten Items. Wirken auf
- * alle Türme gleichzeitig; Gold kann nie in einen einzelnen Turm fließen.
+ * Globale Modifikatoren aus den Run-Upgrades. Wirken auf alle Türme
+ * gleichzeitig. Items wirken dagegen nur auf ihren eigenen Turm.
  */
-import { itemPower } from '../../data/items';
 import { UPGRADE_DEFS, UPGRADE_IDS, type ModifierKind } from '../../data/upgrades';
 import type { GameState } from '../GameState';
 
@@ -17,14 +16,10 @@ export const NO_MODIFIERS: GlobalModifiers = {
   passive: 0,
 };
 
-export function globalModifiers(state: Pick<GameState, 'upgrades' | 'items' | 'equippedItemIds'>): GlobalModifiers {
+export function globalModifiers(state: Pick<GameState, 'upgrades'>): GlobalModifiers {
   const result: GlobalModifiers = { ...NO_MODIFIERS };
   for (const kind of UPGRADE_IDS) {
     result[kind] += UPGRADE_DEFS[kind].perLevel * (state.upgrades[kind] ?? 0);
-  }
-  for (const id of state.equippedItemIds) {
-    const item = state.items.find((i) => i.id === id);
-    if (item) result[item.category] += itemPower(item);
   }
   return result;
 }

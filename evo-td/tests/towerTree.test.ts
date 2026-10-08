@@ -13,7 +13,7 @@ import {
   parentOf,
   ROOT_TOWER,
   siblingsOf,
-  unlockCost,
+  unlockXp,
   UNLOCK_FROM_TIER,
   type TowerId,
 } from '../src/data/towers';
@@ -60,14 +60,13 @@ describe('Stammbaum der Türme', () => {
     expect(() => getTowerDef('nix')).toThrow();
   });
 
-  it('Freischaltkosten: frei bis Tier 1, danach ×4 je Tier', () => {
-    expect(unlockCost('einzeller')).toBe(0);
-    expect(unlockCost('wurm')).toBe(0);
-    expect(UNLOCK_FROM_TIER).toBe(2);
-    expect(unlockCost('schnecke')).toBe(25);
-    expect(unlockCost('tintenfisch')).toBe(100);
-    expect(unlockCost('oktopus')).toBe(400);
-    expect(unlockCost(childrenOf('oktopus')[0] as TowerId)).toBe(1600);
+  it('Freischalt-XP: frei bis Tier 1, danach 300 XP der Elternart, ×5 je Tier', () => {
+    expect(unlockXp('einzeller')).toBe(0);
+    expect(unlockXp('wurm')).toBe(0);
+    expect(unlockXp('schnecke')).toBe(300);
+    expect(unlockXp('tintenfisch')).toBe(1500);
+    expect(unlockXp('oktopus')).toBe(7500);
+    expect(unlockXp(childrenOf('oktopus')[0] as TowerId)).toBe(37500);
   });
 
   it('alle Basisarten sind vom Einzeller aus erreichbar und haben genau einen Elternknoten', () => {

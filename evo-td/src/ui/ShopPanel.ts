@@ -1,9 +1,9 @@
-/** Shop: globale Upgrades und Item-Kauf nach Qualitätsstufe. */
-import { QUALITY_DEFS, QUALITY_ORDER } from '../data/items';
+/** Shop: Run-Upgrades für alle Türme und der Auto-Kauf. Items kauft man direkt am Turm. */
 import { UPGRADE_DEFS, UPGRADE_IDS } from '../data/upgrades';
 import type { Game } from '../game/Game';
-import { itemPrice, upgradePrice } from '../game/systems/ShopSystem';
+import { autoMode, AUTO_WEIGHTS } from '../game/systems/AutoSystem';
 import { metaValues } from '../game/systems/MetaSystem';
+import { upgradePrice } from '../game/systems/ShopSystem';
 import { $, el, formatNumber } from './dom';
 
 export class ShopPanel {
@@ -13,10 +13,11 @@ export class ShopPanel {
   constructor(private readonly game: Game) {}
 
   render(): void {
-    const { state } = this.game;
+    const { state, meta } = this.game;
     const ctx = this.game.ctx;
-    const auto = metaValues(this.game.meta).autoUpgrades;
-    const key = `${Math.floor(state.gold)}|${UPGRADE_IDS.map((k) => state.upgrades[k]).join(',')}|${state.itemPurchases}|${state.wave.current}|${auto}|${JSON.stringify(this.game.meta.autoUpgrades)}`;
+    const unlocked = metaValues(meta).autoUpgrades;
+    const mode = autoMode(ctx);
+    const key = `${Math.floor(state.gold)}|${UPGRADE_IDS.map((k) => state.upgrades[k]).join(',')}|${unlocked}|${meta.autoUpgradeEnabled}|${mode}`;
     if (key === this.lastKey) return;
     this.lastKey = key;
 
@@ -31,55 +32,43 @@ export class ShopPanel {
         this.lastKey = '';
       });
       const value = kind === 'evolution' ? `+${(def.perLevel * level * 100).toFixed(1)} %` : `+${Math.round(def.perLevel * level * 100)} %`;
-      const row: (Node | string)[] = [
-        el('span', {}, [`${def.name} `, el('span', { className: 'muted' }, [`Stufe ${level} (${value})`])]),
-        button,
-        el('span', { className: 'desc' }, [def.description]),
-      ];
-      if (auto) {
-        const box = el('input', { type: 'checkbox', checked: this.game.meta.autoUpgrades[kind] });
-        box.addEventListener('change', () => {
-          this.game.meta.autoUpgrades[kind] = box.checked;
-          this.lastKey = '';
-        });
-        row.push(el('label', { className: 'toggle desc' }, [box, ' Auto-Kauf']));
-      }
-      upgrades.append(el('li', {}, row));
-    }
-
-    const items = el('ul', { className: 'shop-list' });
-    for (const quality of QUALITY_ORDER) {
-      const def = QUALITY_DEFS[quality];
-      const price = itemPrice(ctx, quality);
-      if (price === undefined) continue;
-      const button = el('button', { className: 'btn small', disabled: state.gold < price }, [`${formatNumber(price)} 💰`]);
-      button.addEventListener('click', () => {
-        this.game.buyItem(quality);
-        this.lastKey = '';
-      });
-      items.append(
+      upgrades.append(
         el('li', {}, [
-          el('span', { className: 'quality', style: `color:${def.color}` }, [`${def.name}-Item`]),
+          el('span', {}, [`${def.name} `, el('span', { className: 'muted' }, [`Stufe ${level} (${value})`])]),
           button,
-          el('span', { className: 'desc' }, [
-            `Zufällige Kategorie, Wirkung ×${def.power}. Chance auf Aufwertung: ${Math.round(def.upgradeChance * 100)} %.`,
-          ]),
+          el('span', { className: 'desc' }, [def.description]),
         ]),
       );
     }
 
+    let auto: Node;
+    if (!unlocked) {
+      auto = el('p', { className: 'muted small' }, ['Auto-Kauf schaltet das Artefakt "Instinkt" frei.']);
+    } else {
+      const box = el('input', { type: 'checkbox', id: 'auto-upgrades', checked: meta.autoUpgradeEnabled });
+      box.addEventListener('change', () => {
+        this.game.setAutoUpgrades(box.checked);
+        this.lastKey = '';
+      });
+      const top = [...UPGRADE_IDS].sort((a, b) => AUTO_WEIGHTS[mode][b] - AUTO_WEIGHTS[mode][a]).slice(0, 2);
+      auto = el('div', {}, [
+        el('label', { className: 'toggle' }, [box, ' Auto-Kauf (einmal pro Welle)']),
+        el('p', { className: 'muted small' }, [
+          'Kauft am Ende jeder Welle, wenn gerade kein neuer Turm möglich ist. ',
+          mode === 'gefahr'
+            ? 'Lage: Gefahr, die Roboter kamen weit. Priorität: '
+            : 'Lage: ruhig. Priorität: ',
+          el('strong', {}, [top.map((k) => UPGRADE_DEFS[k].name).join(' und ')]),
+          ', der Rest gewichtet dahinter.',
+        ]),
+      ]);
+    }
+
     this.root.replaceChildren(
       el('h2', {}, ['Upgrades für alle Türme']),
-      el('p', { className: 'muted small' }, [
-        'Gold fließt nie in einzelne Türme. Upgrades wirken auf jeden Turm, jetzt und später.',
-        auto ? ' Auto-Kauf kauft jede Sekunde das billigste gewählte Upgrade und hält bei Auto-Bau Gold für den nächsten Turm zurück.' : ' Auto-Kauf schaltet das Artefakt "Instinkt" frei.',
-      ]),
+      el('p', { className: 'muted small' }, ['Wirken auf jeden Turm, jetzt und später. Items kaufst du direkt am Turm (Turm anklicken).']),
+      auto,
       upgrades,
-      el('h2', { style: 'margin-top:14px' }, ['Items kaufen']),
-      el('p', { className: 'muted small' }, [
-        `Jeder Kauf kann mit Glück eine höhere Stufe liefern (verkettet). Legendär gibt es nur so. Preise steigen mit Gegner-Tier und Kaufanzahl. ${metaValues(this.game.meta).itemSlots} Items gleichzeitig ausrüstbar.`,
-      ]),
-      items,
     );
   }
 }

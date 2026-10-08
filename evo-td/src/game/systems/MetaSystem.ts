@@ -13,9 +13,9 @@ import {
   REPEAT_WAVE_FACTOR,
   type MetaUpgradeId,
 } from '../../data/meta';
-import { getTowerDef, parentOf, unlockCost, UNLOCK_FROM_TIER, type TowerId } from '../../data/towers';
+import { getTowerDef, parentOf, unlockXp, UNLOCK_FROM_TIER, type TowerId } from '../../data/towers';
 import { overallBestWave, type MetaState } from '../MetaState';
-import { compendiumTotals, type CompendiumTotals } from './CompendiumSystem';
+import { compendiumTotals, speciesXp, type CompendiumTotals } from './CompendiumSystem';
 import { gardenTotals, gardenUpgradeValues } from './GardenSystem';
 
 export function metaLevel(meta: MetaState, id: MetaUpgradeId): number {
@@ -195,23 +195,21 @@ export function isMapUnlocked(meta: MetaState, map: MapDef): boolean {
 
 // --- Arten freischalten -------------------------------------------------------
 
+/**
+ * Eine Art ist frei, wenn ihr Tier unter UNLOCK_FROM_TIER liegt oder ihre
+ * Elternart genug Kompendium-XP gesammelt hat. `unlockedTowers` enthält
+ * frühere DNA-Freischaltungen und Entwickler-Freischaltungen; sie bleiben gültig.
+ */
 export function isUnlocked(meta: MetaState, id: TowerId): boolean {
-  return getTowerDef(id).tier < UNLOCK_FROM_TIER || meta.unlockedTowers.includes(id);
-}
-
-/** Freischaltbar, wenn noch gesperrt, der Elternknoten frei ist und DNA reicht. */
-export function canUnlock(meta: MetaState, id: TowerId): boolean {
-  if (isUnlocked(meta, id)) return false;
+  if (getTowerDef(id).tier < UNLOCK_FROM_TIER || meta.unlockedTowers.includes(id)) return true;
   const parent = parentOf(id);
-  if (parent && !isUnlocked(meta, parent)) return false;
-  return meta.dna >= unlockCost(id);
+  return !!parent && speciesXp(meta, parent) >= unlockXp(id);
 }
 
-export function unlockTower(meta: MetaState, id: TowerId): boolean {
-  if (!canUnlock(meta, id)) return false;
-  meta.dna -= unlockCost(id);
-  meta.unlockedTowers.push(id);
-  return true;
+/** Fortschritt zur Freischaltung: gesammelte XP der Elternart und benötigte XP. */
+export function unlockProgress(meta: MetaState, id: TowerId): { parent: TowerId | null; xp: number; need: number } {
+  const parent = parentOf(id);
+  return { parent, xp: parent ? speciesXp(meta, parent) : 0, need: unlockXp(id) };
 }
 
 // --- Artefakte ----------------------------------------------------------------

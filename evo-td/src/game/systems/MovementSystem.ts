@@ -3,6 +3,7 @@
  * verliert der Spieler ein Leben.
  */
 import { BALANCE } from '../../config/balance';
+import { pathLength } from '../../data/map';
 import type { Enemy } from '../entities/Enemy';
 import type { GameContext } from '../GameContext';
 import { onEnemyRemoved } from './WaveSystem';
@@ -17,8 +18,10 @@ export function effectiveSpeed(enemy: Enemy): number {
 
 export function updateMovement(ctx: GameContext, dt: number): void {
   const { state, map } = ctx;
+  let danger = state.wave.danger ?? 0;
   for (let i = state.enemies.length - 1; i >= 0; i--) {
     const enemy = state.enemies[i] as Enemy;
+    danger = Math.max(danger, enemy.distanceTravelled / pathLength(map, enemy.pathIndex ?? 0));
     let remaining = effectiveSpeed(enemy) * dt;
 
     while (remaining > 0) {
@@ -26,6 +29,7 @@ export function updateMovement(ctx: GameContext, dt: number): void {
       if (!target) {
         state.enemies.splice(i, 1);
         state.lives -= enemy.defId === 'boss' ? BALANCE.player.bossLeakLives : 1;
+        state.wave.leaks = (state.wave.leaks ?? 0) + 1;
         ctx.bus.emit('enemyLeaked', { enemy });
         onEnemyRemoved(ctx);
         if (state.lives <= 0 && !state.gameOver) {
@@ -51,4 +55,5 @@ export function updateMovement(ctx: GameContext, dt: number): void {
       }
     }
   }
+  state.wave.danger = Math.min(1, danger);
 }

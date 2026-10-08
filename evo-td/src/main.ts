@@ -25,7 +25,6 @@ import { OfflineReport } from './ui/OfflineReport';
 import { tickPassive } from './game/systems/PassiveSystem';
 import { CATEGORY_NAMES } from './game/systems/AdaptationSystem';
 import { Hud } from './ui/Hud';
-import { ItemsPanel } from './ui/ItemsPanel';
 import { ShopPanel } from './ui/ShopPanel';
 import { Tabs } from './ui/Tabs';
 import { TowerPanel, type TowerAction } from './ui/TowerPanel';
@@ -108,9 +107,6 @@ const loop = new GameLoop(
       case 'shop':
         shopPanel.render();
         break;
-      case 'items':
-        itemsPanel.render();
-        break;
       case 'tree':
         treeView.render();
         break;
@@ -181,7 +177,6 @@ const towerPanel = new TowerPanel(game, {
   onAction: (action) => setAction(activeAction === action ? undefined : action),
 });
 const shopPanel = new ShopPanel(game);
-const itemsPanel = new ItemsPanel(game);
 const treeView = new TreeView(game);
 const globalPanel = new GlobalPanel(game, endRun, switchMap);
 const chambersPanel = new ChambersPanel(game);
@@ -209,6 +204,10 @@ game.bus.on('towerLevelUp', ({ tower }) => {
   if (tower.level % 10 === 0) renderer.float(tower.x, tower.y - 0.4, `Lvl ${tower.level}`, '#80deea', 1.5);
 });
 game.bus.on('enemyRevived', ({ enemy }) => renderer.float(enemy.x, enemy.y, 'Titan!', '#ffffff'));
+game.bus.on('speciesUnlocked', ({ id }) => {
+  renderer.float(game.map.cols / 2, 2.5, `🔓 ${getTowerDef(id).name} freigeschaltet`, '#9be7a0', 2.5);
+  treeView.invalidate();
+});
 game.bus.on('seedFound', ({ tree }) => {
   renderer.float(game.map.cols / 2, 1.5, `🌰 ${TREE_DEFS[tree].name}-Samen!`, '#9be7a0', 2.5);
   gardenPanel.invalidate();

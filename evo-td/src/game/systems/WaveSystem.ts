@@ -13,6 +13,7 @@ import { allocId } from '../GameState';
 import type { Rng } from '../../core/Rng';
 import { metaValues } from './MetaSystem';
 import { adaptRobots } from './AdaptationSystem';
+import { runAutoUpgrades } from './AutoSystem';
 import { maybeDropSeed } from './GardenSystem';
 
 export interface SpawnOrder {
@@ -100,6 +101,8 @@ export function updateWaves(ctx: GameContext, dt: number): void {
     wave.aliveFromCurrent = 0;
     ctx.bus.emit('waveStarted', { wave: wave.current, tier: tierForWave(wave.current) });
     adaptRobots(ctx);
+    // Ende der vorigen Welle: Auto-Kauf (einmal pro Welle).
+    if (wave.current >= 2) runAutoUpgrades(ctx);
   }
 }
 

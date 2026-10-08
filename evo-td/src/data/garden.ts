@@ -20,10 +20,11 @@ export interface RarityDef {
 }
 
 export const RARITIES: Readonly<Record<TreeRarity, RarityDef>> = {
-  haeufig: { id: 'haeufig', name: 'häufig', color: '#9e9e9e', weight: 70, power: 1 },
-  selten: { id: 'selten', name: 'selten', color: '#4fc3f7', weight: 22, power: 1.5 },
-  sehr_selten: { id: 'sehr_selten', name: 'sehr selten', color: '#ba68c8', weight: 7, power: 2 },
-  legendaer: { id: 'legendaer', name: 'legendär', color: '#ffb300', weight: 1, power: 3 },
+  // Gacha-artig: seltene Samen sind extrem selten (Anteile pro gefundenem Samen).
+  haeufig: { id: 'haeufig', name: 'häufig', color: '#9e9e9e', weight: 90, power: 1 },
+  selten: { id: 'selten', name: 'selten', color: '#4fc3f7', weight: 8.5, power: 1.5 },
+  sehr_selten: { id: 'sehr_selten', name: 'sehr selten', color: '#ba68c8', weight: 1.4, power: 2 },
+  legendaer: { id: 'legendaer', name: 'legendär', color: '#ffb300', weight: 0.1, power: 3 },
 };
 
 export interface TreeDef {
@@ -61,9 +62,11 @@ export const GARDEN = {
   maxLevel: 100,
   /** Harz pro Stunde = resinPerLevel × Level × Seltenheit. */
   resinPerLevel: 0.2,
-  /** Samenchance nach einer geschafften Welle (ab `seedFromWave`), bei Bosswellen höher. */
-  seedChance: 0.04,
-  bossSeedChance: 0.4,
+  /** Samenchance nach einer geschafften Welle (ab `seedFromWave`), bei Bosswellen höher. Sehr selten. */
+  seedChance: 0.003,
+  bossSeedChance: 0.03,
+  /** Basis-Samen, den jeder Garten zu Beginn hat. */
+  starterSeed: 'moos' as TreeId,
   seedFromWave: 5,
 } as const;
 

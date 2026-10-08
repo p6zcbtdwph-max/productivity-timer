@@ -16,13 +16,15 @@ export interface GameEvents extends Record<string, unknown> {
   towerFused: { tower: Tower; consumedId: number };
   towerRelocated: { tower: Tower; fromSlot: number; toSlot: number };
   upgradeBought: { kind: ModifierKind; level: number };
-  itemObtained: { item: Item; boughtQuality: ItemQuality };
+  itemObtained: { item: Item; boughtQuality: ItemQuality; tower: Tower };
   enemyKilled: { enemy: Enemy; byTowerId: number; reward: number };
   enemyRevived: { enemy: Enemy };
   enemyLeaked: { enemy: Enemy };
   waveStarted: { wave: number; tier: number };
   waveCleared: { wave: number; bonus: number };
   gameOver: { wave: number };
+  autoUpgraded: { kinds: ModifierKind[]; mode: 'gefahr' | 'ruhig' };
+  speciesUnlocked: { id: TowerId; by: TowerId };
   seedFound: { tree: TreeId; wave: number };
   obstacleCleared: { slot: number; kind: ObstacleKind; cost: number };
   robotsAdapted: { category: DamageCategory; resist: number };

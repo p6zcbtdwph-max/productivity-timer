@@ -21,9 +21,10 @@ Alternativ lokal:
 ## 1. Erster Run (ohne Panel)
 
 - [ ] Einzeller bauen per Klick, jeder weitere wird teurer
+- [ ] HUD "Nächster Turm: X 💰" stimmt (grün, wenn bezahlbar); beim Überfahren eines freien Platzes steht der Preis
 - [ ] Wellen starten von selbst, Tempo 1×/2×/4×, Pause mit Leertaste
 - [ ] Auto-Bau an: baut, sobald Gold reicht
-- [ ] Erste Evolution zu Wurm oder Fisch passiert (Tier 2 ist ohne DNA gesperrt)
+- [ ] Erste Evolution zu Wurm oder Fisch passiert (Tier 2 ist gesperrt, bis Wurm/Fisch 300 XP gesammelt haben)
 - [ ] Turm anklicken: Panel verständlich? Formelzeile "Verrechnung" lesbar?
 - [ ] Elemente erkennbar (Buchstaben T/G/P/N, Rahmen, Schildbalken)
 - [ ] Wie weit kommst du? Wann und warum stirbst du? → notieren
@@ -41,11 +42,13 @@ Alternativ lokal:
 ## 3. Shop, Items, Global
 
 - [ ] Run-Shop: Upgrades kaufen, Preise steigen
-- [ ] Items kaufen, Glücks-Aufwertung gesehen? Ausrüsten (4 Slots)
-- [ ] Stammbaum: Tier 2 mit DNA freischalten, danach entwickeln sich Türme dorthin
+- [ ] Turm anklicken → Items direkt am Turm kaufen; max. 3, danach "Alle Plätze belegt"
+- [ ] Item wirkt nur auf diesen Turm (Verrechnung "Ausrüstung"), bleibt bei Evolution
+- [ ] Stammbaum: "🔒 Wurm-XP x/300" füllt sich beim Spielen; bei 300 Meldung "freigeschaltet", danach entwickeln sich Türme dorthin
 - [ ] Global: erstes Artefakt freischalten und aufstufen, "Unbekanntes Artefakt" als Ziel sichtbar
 - [ ] Zweiter Run: neue Bestwelle → spürbar mehr DNA? Gleiche Welle → fast nichts?
-- [ ] Ab Artefakt "Instinkt": Auto-Kauf-Häkchen im Shop funktionieren
+- [ ] Ab Artefakt "Instinkt": Auto-Kauf-Schalter im Shop. Kauft einmal pro Welle, nur wenn kein Turm bezahlbar ist; Protokoll "🧠 Auto-Kauf (Gefahr|ruhig)"
+- [ ] Gefahr (Roboter über die Hälfte/Durchbruch) → Schaden+Feuerrate; ruhig → Gold zuerst
 
 ## 4. Karten (mit Panel: "Alle Karten frei")
 
@@ -74,7 +77,7 @@ Alternativ lokal:
 ## 7. Kompendium und Garten
 
 - [ ] Kompendium füllt sich mit gebauten Arten, Boni steigen mit Rekord-Level/Prestige
-- [ ] Garten startet mit 1 Topf; Samen nur aktiv nach Wellen (ab Welle 5, Bosse 40 %)
+- [ ] Garten startet mit 1 Topf und 1 Moos-Samen; weitere Samen sehr selten (0,3 % je Welle, Bosse 3 %), nur aktiv
 - [ ] Samen pflanzen, "Garten +24 h": Level und Harz steigen
 - [ ] Topf 2 für 20 Harz, Pflege kaufen (Dünger, Kompost, Nistmaterial …)
 
@@ -86,7 +89,8 @@ Alternativ lokal:
 ## Fragen für das Feedback
 
 - Erster Run: zu leicht, zu schwer, zu lang, zu kurz?
-- DNA-Tempo: fühlt sich Pushen lohnend an? Freischaltpreise (Tier 2: 25, ×4 je Tier) ok?
+- DNA-Tempo: fühlt sich Pushen lohnend an? Freischalt-XP (Tier 2: 300, ×5 je Tier) ok?
+- Samen: selten genug, aber nicht frustrierend?
 - Was war unklar oder versteckt? Welche Anzeige fehlt?
 - Garten- und Kammer-Tempo: zu langsam am Anfang?
 - Luft mit globaler Reichweite: Balance?

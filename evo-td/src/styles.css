@@ -469,3 +469,47 @@ body {
 #dev-panel {
   max-width: calc(100% - 24px);
 }
+
+.unlock-progress {
+  position: relative;
+  display: inline-block;
+  min-width: 150px;
+  max-width: 100%;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 0.78rem;
+  vertical-align: middle;
+}
+
+.unlock-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgba(155, 231, 160, 0.18);
+}
+
+.unlock-label {
+  position: relative;
+}
+
+.hud-cost {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.hud-cost.affordable {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.hud-cost.expensive {
+  border-color: var(--danger);
+}
+
+.item-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

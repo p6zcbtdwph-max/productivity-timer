@@ -13,6 +13,7 @@ export class Hud {
   private readonly wave = $('#hud-wave');
   private readonly countdown = $('#hud-countdown');
   private readonly cost = $('#hud-cost');
+  private readonly costBox = $('#hud-cost-box');
   private readonly relocates = $('#hud-relocates');
   private readonly dna = $('#hud-dna');
   private readonly mapName = $('#hud-map');
@@ -48,7 +49,10 @@ export class Hud {
     this.lives.textContent = String(state.lives);
     this.wave.textContent = state.wave.current === 0 ? '–' : `${state.wave.current} (Tier ${tierForWave(state.wave.current)})`;
     this.countdown.textContent = `${Math.max(0, state.wave.countdown).toFixed(0)}s`;
-    this.cost.textContent = formatNumber(this.game.towerCost());
+    const towerCost = this.game.towerCost();
+    this.cost.textContent = formatNumber(towerCost);
+    this.costBox.classList.toggle('affordable', state.gold >= towerCost);
+    this.costBox.classList.toggle('expensive', state.gold < towerCost);
     this.relocates.textContent = String(this.game.relocateCharges());
     this.dna.textContent = formatNumber(this.game.meta.dna);
     this.mapName.textContent = this.game.map.name;

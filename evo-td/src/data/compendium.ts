@@ -70,6 +70,8 @@ export const EFFECT_BY_BONUS: Readonly<Record<BonusKind, CompendiumEffect>> = {
 export interface CompendiumRecord {
   maxLevel: number;
   maxPrestige: number;
+  /** Gesammelte XP dieser Art über alle Runs (schaltet Nachfahren frei). Fehlt in alten Ständen. */
+  xp?: number;
 }
 
 /** Ein Prestige zählt so viel wie diese Anzahl Level. */

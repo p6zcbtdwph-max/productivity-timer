@@ -50,7 +50,7 @@ export const ARTIFACT_ORDER: readonly MetaUpgradeDef[] = [
   { id: 'evolutionBase', name: 'Ursuppe', icon: '🧪', description: '+0,4 % Grund-Evolutionschance je Stufe.', perLevel: 0.004, maxLevel: 25, unlockWave: 10, unlockCost: 20, levelCost: 15, levelGrowth: 1.45 },
   { id: 'damage', name: 'Raubtierzahn', icon: '🦷', description: 'Schaden ×(1 + 0,08 je Stufe), eigener Topf.', perLevel: 0.08, maxLevel: 100, unlockWave: 15, unlockCost: 40, levelCost: 25, levelGrowth: 1.3 },
   { id: 'startLives', name: 'Schildkrötenpanzer', icon: '🐢', description: '+1 Startleben je Stufe.', perLevel: 1, maxLevel: 15, unlockWave: 20, unlockCost: 60, levelCost: 30, levelGrowth: 1.6 },
-  { id: 'autoUpgrades', name: 'Instinkt', icon: '🧠', description: 'Schaltet Auto-Kauf für Run-Upgrades frei (im Shop pro Upgrade wählbar).', perLevel: 1, maxLevel: 1, unlockWave: 25, unlockCost: 100, levelCost: 0, levelGrowth: 1 },
+  { id: 'autoUpgrades', name: 'Instinkt', icon: '🧠', description: 'Schaltet den Auto-Kauf für Run-Upgrades frei (Schalter im Shop, einmal pro Welle).', perLevel: 1, maxLevel: 1, unlockWave: 25, unlockCost: 100, levelCost: 0, levelGrowth: 1 },
   { id: 'fireRate', name: 'Kolibriherz', icon: '❤️', description: 'Feuerrate ×(1 + 0,05 je Stufe), eigener Topf.', perLevel: 0.05, maxLevel: 100, unlockWave: 30, unlockCost: 120, levelCost: 25, levelGrowth: 1.3 },
   { id: 'hatchery', name: 'Brutwärme', icon: '🥚', description: 'Evolutionskammern entwickeln sich ×(1 + 0,25 je Stufe) schneller.', perLevel: 0.25, maxLevel: 20, unlockWave: 35, unlockCost: 150, levelCost: 30, levelGrowth: 1.45 },
   { id: 'inheritance', name: 'Fossil', icon: '🦴', description: '+5 % Stärke aller geerbten und Nachbar-Boni je Stufe.', perLevel: 0.05, maxLevel: 40, unlockWave: 40, unlockCost: 200, levelCost: 40, levelGrowth: 1.4 },
@@ -64,7 +64,7 @@ export const ARTIFACT_ORDER: readonly MetaUpgradeDef[] = [
   { id: 'dnaGain', name: 'Doppelhelix', icon: '🧬', description: '+10 % DNA am Run-Ende je Stufe.', perLevel: 0.1, maxLevel: 30, unlockWave: 90, unlockCost: 900, levelCost: 100, levelGrowth: 1.5 },
   { id: 'autoArtifacts', name: 'Gedächtnis', icon: '📜', description: 'Schaltet Auto-Kauf für Artefakt-Stufen am Run-Ende frei (pro Artefakt wählbar).', perLevel: 1, maxLevel: 1, unlockWave: 100, unlockCost: 1200, levelCost: 0, levelGrowth: 1 },
   { id: 'relocate', name: 'Zugvogelfeder', icon: '🪶', description: 'Verlegung eine Welle früher je Stufe (mindestens alle 2).', perLevel: 1, maxLevel: 3, unlockWave: 125, unlockCost: 1600, levelCost: 800, levelGrowth: 2.5 },
-  { id: 'itemSlots', name: 'Beutel', icon: '👝', description: '+1 Item-Slot je Stufe.', perLevel: 1, maxLevel: 4, unlockWave: 150, unlockCost: 2500, levelCost: 2000, levelGrowth: 3 },
+  { id: 'itemSlots', name: 'Beutel', icon: '👝', description: '+1 Item-Platz je Turm und Stufe (Basis 3).', perLevel: 1, maxLevel: 4, unlockWave: 150, unlockCost: 2500, levelCost: 2000, levelGrowth: 3 },
 ];
 
 export const META_UPGRADE_IDS: readonly MetaUpgradeId[] = ARTIFACT_ORDER.map((a) => a.id);

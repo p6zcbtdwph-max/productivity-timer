@@ -11,6 +11,7 @@ import { childrenOf, type TowerId } from '../../data/towers';
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { globalModifiers } from './ModifierSystem';
+import { towerItemModifiers } from './ShopSystem';
 import { isUnlocked, metaValues } from './MetaSystem';
 
 export function evolutionChance(level: number, sameTypeCount: number, prestige = 0, globalBonus = 0): number {
@@ -30,7 +31,10 @@ export function evolutionChanceFor(ctx: GameContext, tower: Tower): number {
     tower.level,
     countSameType(ctx.state.towers, tower.defId),
     tower.prestige,
-    globalModifiers(ctx.state).evolution + metaValues(ctx.meta).evolutionBase + metaValues(ctx.meta).passiveSum.evolution,
+    globalModifiers(ctx.state).evolution +
+      metaValues(ctx.meta).evolutionBase +
+      metaValues(ctx.meta).passiveSum.evolution +
+      towerItemModifiers(tower.items).evolution,
   );
 }
 

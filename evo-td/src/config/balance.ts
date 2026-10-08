@@ -92,8 +92,8 @@ export const BALANCE = {
   shop: {
     /** Item-Preise wachsen pro Kauf um diesen Faktor (zusätzlich zur Tier-Skalierung). */
     itemPriceGrowth: 1.1,
-    /** Maximal gleichzeitig ausgerüstete Items. */
-    itemSlots: 4,
+    /** Items pro Turm. */
+    itemSlots: 3,
   },
 
   /** Gegner-Elemente (Spezial-Eigenschaften). */

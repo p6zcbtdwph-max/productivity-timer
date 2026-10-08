@@ -6,6 +6,9 @@ import type { Game } from '../game/Game';
 import { canEvolve, countSameType, evolutionChanceFor, unlockedChildren } from '../game/systems/EvolutionSystem';
 import { environmentFor, computeStats, resolveBonuses, type BonusSource, type Breakdown, type EffectiveStats } from '../game/systems/StatsSystem';
 import { $, el, formatNumber } from './dom';
+import { describeItem, QUALITY_DEFS, QUALITY_ORDER } from '../data/items';
+import { itemPrice, towerItemSlots } from '../game/systems/ShopSystem';
+import type { Tower } from '../game/entities/Tower';
 import { BIOME_BONUS, BIOME_NAMES, speciesBiome } from '../data/biomes';
 
 const SOURCE_LABEL: Record<BonusSource, string> = {
@@ -32,6 +35,41 @@ export class TowerPanel {
 
   invalidate(): void {
     this.lastRenderedKey = '';
+  }
+
+  /** Items dieses Turms und Kauf-Knöpfe je Qualität. */
+  private itemSection(tower: Tower): HTMLElement {
+    const ctx = this.game.ctx;
+    const items = tower.items ?? [];
+    const slots = towerItemSlots(ctx);
+    const list = el('ul', { className: 'bonus-list item-list' });
+    for (const item of items) {
+      list.append(
+        el('li', {}, [el('span', { className: 'swatch', style: `background:${QUALITY_DEFS[item.quality].color}` }), ` ${describeItem(item)}`]),
+      );
+    }
+    for (let i = items.length; i < slots; i++) list.append(el('li', { className: 'muted' }, ['– freier Platz –']));
+    const buttons = QUALITY_ORDER.flatMap((quality) => {
+      const price = itemPrice(ctx, quality);
+      if (price === undefined) return [];
+      const def = QUALITY_DEFS[quality];
+      const b = el(
+        'button',
+        { className: 'btn small', disabled: items.length >= slots || this.game.state.gold < price, title: `Zufällige Kategorie, Wirkung ×${def.power}, ${Math.round(def.upgradeChance * 100)} % Chance auf Aufwertung` },
+        [el('span', { style: `color:${def.color}` }, [def.name]), ` ${formatNumber(price)} 💰`],
+      );
+      b.addEventListener('click', () => {
+        this.game.buyItemFor(tower.id, quality);
+        this.invalidate();
+      });
+      return [b];
+    });
+    return el('div', {}, [
+      el('h3', {}, [`Items (${items.length}/${slots})`]),
+      list,
+      el('div', { className: 'actions' }, items.length >= slots ? [el('span', { className: 'muted small' }, ['Alle Plätze belegt.'])] : buttons),
+      el('p', { className: 'muted small' }, ['Items wirken nur auf diesen Turm und bleiben bei Evolution erhalten. Mit Glück fällt eine höhere Stufe, Legendär gibt es nur so.']),
+    ]);
   }
 
   render(selectedTowerId: number | undefined, activeAction: TowerAction | undefined): void {
@@ -61,7 +99,7 @@ export class TowerPanel {
       tower.kills, env.neighbours.join(','), chance.toFixed(4), candidates.length, charges, activeAction ?? '',
       Math.floor(this.game.state.gold) >= this.game.relocateCost(), unlockedKids.length,
       // globale Einflüsse: Run-Upgrades, Items, Artefakte, Erfolge
-      JSON.stringify([this.game.state.upgrades, this.game.state.equippedItemIds, this.game.meta.upgrades, this.game.meta.bestWaveByMap, Object.keys(this.game.meta.compendium).length, this.game.meta.garden.pots]),
+      JSON.stringify([this.game.state.upgrades, (tower.items ?? []).map((i) => i.id), itemAffordKey(this.game), this.game.meta.upgrades, this.game.meta.bestWaveByMap, Object.keys(this.game.meta.compendium).length, this.game.meta.garden.pots]),
     ].join('|');
     if (key === this.lastRenderedKey) return;
     this.lastRenderedKey = key;
@@ -166,12 +204,20 @@ export class TowerPanel {
       el('h3', {}, ['Verrechnung']),
       el('p', { className: 'muted small' }, [`Schaden: ${describeBreakdown(stats.breakdown.damage)}`]),
       el('p', { className: 'muted small' }, [`Feuerrate: ${describeBreakdown(stats.breakdown.fireRate)}`]),
+      this.itemSection(tower),
       el('h3', {}, ['Eigenschaften']),
       bonusList,
       evolutionInfo,
       el('div', { className: 'actions' }, [targetButton, lockButton, fuseButton, relocateButton]),
     );
   }
+}
+
+function itemAffordKey(game: Game): string {
+  return QUALITY_ORDER.map((q) => {
+    const price = itemPrice(game.ctx, q);
+    return price !== undefined && game.state.gold >= price ? '1' : '0';
+  }).join('');
 }
 
 function describeAttack(stats: EffectiveStats): string {

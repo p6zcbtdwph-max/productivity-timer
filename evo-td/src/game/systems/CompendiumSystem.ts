@@ -7,7 +7,7 @@ import {
   tierWeight,
   type CompendiumEffect,
 } from '../../data/compendium';
-import { getTowerDef, isValidTowerId, type TowerId } from '../../data/towers';
+import { childrenOf, getTowerDef, isValidTowerId, unlockXp, type TowerId } from '../../data/towers';
 import type { MetaState } from '../MetaState';
 
 export type CompendiumTotals = Record<CompendiumEffect, number>;
@@ -54,4 +54,26 @@ export function compendiumTotals(meta: MetaState): CompendiumTotals {
     if (cap !== undefined) totals[e] = Math.min(cap, totals[e]);
   }
   return totals;
+}
+
+export function speciesXp(meta: MetaState, id: TowerId): number {
+  return meta.compendium[id]?.xp ?? 0;
+}
+
+/**
+ * Schreibt XP einer Art ins Kompendium und gibt die Nachfahren zurück, die
+ * dadurch gerade freigeschaltet wurden.
+ */
+export function addSpeciesXp(meta: MetaState, id: TowerId, amount: number): TowerId[] {
+  if (amount <= 0) return [];
+  const record = (meta.compendium[id] ??= { maxLevel: 0, maxPrestige: 0 });
+  const before = record.xp ?? 0;
+  const after = before + amount;
+  record.xp = after;
+  const unlocked: TowerId[] = [];
+  for (const child of childrenOf(id)) {
+    const need = unlockXp(child);
+    if (need > 0 && before < need && after >= need && !meta.unlockedTowers.includes(child)) unlocked.push(child);
+  }
+  return unlocked;
 }

@@ -282,3 +282,23 @@ export const MAPS: readonly MapDef[] = [START_MAP, CONTINENT_MAP, FACTORY_MAP];
 export function getMap(id: string | undefined): MapDef {
   return MAPS.find((m) => m.id === id) ?? START_MAP;
 }
+
+const lengthCache = new WeakMap<MapDef, number[]>();
+
+/** Länge eines Weges in Zellen. */
+export function pathLength(map: MapDef, index: number): number {
+  let lengths = lengthCache.get(map);
+  if (!lengths) {
+    lengths = map.paths.map((path) => {
+      let sum = 0;
+      for (let i = 1; i < path.length; i++) {
+        const a = path[i - 1] as Vec2;
+        const b = path[i] as Vec2;
+        sum += Math.abs(b.x - a.x) + Math.abs(b.y - a.y);
+      }
+      return sum;
+    });
+    lengthCache.set(map, lengths);
+  }
+  return lengths[index] ?? lengths[0] ?? 1;
+}

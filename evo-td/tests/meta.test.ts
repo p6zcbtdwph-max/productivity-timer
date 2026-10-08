@@ -6,18 +6,20 @@ import { childrenOf } from '../src/data/towers';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
 import { createInitialMeta, overallBestWave } from '../src/game/MetaState';
+import { AUTO_WEIGHTS, autoMode, DANGER_THRESHOLD, runAutoUpgrades } from '../src/game/systems/AutoSystem';
+import { addSpeciesXp, speciesXp } from '../src/game/systems/CompendiumSystem';
+import { grantXp } from '../src/game/systems/LevelSystem';
 import {
   achievementStatus,
   artifactState,
   buyMetaUpgrade,
-  canUnlock,
   canUnlockArtifact,
   computeDna,
   isUnlocked,
   metaValues,
   settleRun,
   unlockArtifact,
-  unlockTower,
+  unlockProgress,
 } from '../src/game/systems/MetaSystem';
 import { formatNumber } from '../src/ui/dom';
 
@@ -59,24 +61,46 @@ describe('DNA', () => {
   });
 });
 
-describe('Arten freischalten', () => {
-  it('verlangt freien Elternknoten und DNA', () => {
+describe('Arten freischalten (über Kompendium-XP)', () => {
+  it('Tier 2 frei, danach XP der Elternart nötig – kein DNA', () => {
     const meta = createInitialMeta();
+    meta.dna = 1_000_000; // DNA hilft nicht
     expect(isUnlocked(meta, 'wurm')).toBe(true);
     expect(isUnlocked(meta, 'schnecke')).toBe(false);
-    expect(canUnlock(meta, 'tintenfisch')).toBe(false);
-    meta.dna = 125;
-    expect(unlockTower(meta, 'schnecke')).toBe(true);
-    expect(unlockTower(meta, 'tintenfisch')).toBe(true);
-    expect(meta.dna).toBe(0);
+    expect(unlockProgress(meta, 'schnecke')).toEqual({ parent: 'wurm', xp: 0, need: 300 });
+    const unlocked = addSpeciesXp(meta, 'wurm', 300);
+    expect(unlocked).toEqual(expect.arrayContaining([...childrenOf('wurm')]));
+    expect(isUnlocked(meta, 'schnecke')).toBe(true);
+    expect(meta.dna).toBe(1_000_000);
+    expect(addSpeciesXp(meta, 'wurm', 1000)).toEqual([]); // nur einmal gemeldet
+    expect(speciesXp(meta, 'wurm')).toBe(1300);
   });
 
-  it('Mutationen lassen sich freischalten, sobald die Endform frei ist', () => {
+  it('XP von Türmen zählen im Kompendium und melden Freischaltungen', () => {
     const meta = createInitialMeta();
-    meta.dna = 1_000_000;
-    for (const id of ['fisch', 'frosch', 'spitzmaus', 'wolf']) unlockTower(meta, id);
+    const game = new Game(START_MAP, meta, createInitialState(5));
+    game.state.gold = 10_000;
+    const tower = game.build(0);
+    if (!tower) throw new Error('Bau fehlgeschlagen');
+    game.forceEvolve(tower.id, 'wurm');
+    const seen: string[] = [];
+    game.bus.on('speciesUnlocked', ({ id, by }) => {
+      expect(by).toBe('wurm');
+      seen.push(id);
+    });
+    grantXp(game.ctx, tower, 299);
+    expect(seen).toEqual([]);
+    grantXp(game.ctx, tower, 1);
+    expect(seen.sort()).toEqual([...childrenOf('wurm')].sort());
+  });
+
+  it('Mutationen werden über XP der Endform frei', () => {
+    const meta = createInitialMeta();
     const mutation = childrenOf('wolf')[0] as string;
-    expect(unlockTower(meta, mutation)).toBe(true);
+    const { need } = unlockProgress(meta, mutation);
+    expect(isUnlocked(meta, mutation)).toBe(false);
+    addSpeciesXp(meta, 'wolf', need);
+    expect(isUnlocked(meta, mutation)).toBe(true);
   });
 });
 
@@ -134,30 +158,68 @@ describe('Artefakte (feste Reihenfolge)', () => {
 });
 
 describe('Auto-Kauf im Run (Instinkt)', () => {
-  it('kauft nur gewählte Upgrades und nur mit freigeschaltetem Artefakt', () => {
+  function autoGame(seed: number): Game {
     const meta = createInitialMeta();
-    const game = new Game(START_MAP, meta, createInitialState(3));
-    game.state.gold = 100_000;
-    meta.autoUpgrades.damage = true;
-    for (let i = 0; i < 120; i++) game.update(BALANCE.stepSeconds);
-    expect(game.state.upgrades.damage).toBe(0); // Instinkt fehlt
-
     meta.upgrades.autoUpgrades = 1;
-    for (let i = 0; i < 120; i++) game.update(BALANCE.stepSeconds);
-    expect(game.state.upgrades.damage).toBeGreaterThan(0);
-    expect(game.state.upgrades.range).toBe(0);
+    meta.autoUpgradeEnabled = true;
+    const game = new Game(START_MAP, meta, createInitialState(seed));
+    // Alle Plätze belegen, damit kein neuer Turm gekauft werden kann.
+    game.state.gold = 1e12;
+    for (let slot = 0; slot < START_MAP.buildSlots.length; slot++) game.build(slot);
+    game.state.gold = 2000;
+    return game;
+  }
+
+  it('braucht Instinkt und den Schalter', () => {
+    const game = autoGame(1);
+    game.meta.autoUpgradeEnabled = false;
+    expect(runAutoUpgrades(game.ctx)).toEqual([]);
+    game.meta.autoUpgradeEnabled = true;
+    game.meta.upgrades.autoUpgrades = 0;
+    expect(runAutoUpgrades(game.ctx)).toEqual([]);
+    game.meta.upgrades.autoUpgrades = 1;
+    expect(runAutoUpgrades(game.ctx).length).toBeGreaterThan(0);
   });
 
-  it('hält bei Auto-Bau Gold für den nächsten Turm zurück', () => {
+  it('kauft nichts, solange ein neuer Turm bezahlbar ist', () => {
     const meta = createInitialMeta();
     meta.upgrades.autoUpgrades = 1;
-    meta.autoUpgrades.damage = true;
-    const game = new Game(START_MAP, meta, createInitialState(4));
-    game.setAutoBuild(true);
-    game.state.gold = game.towerCost() + 10; // reicht nicht für Turm + Upgrade
-    for (let i = 0; i < 120; i++) game.update(BALANCE.stepSeconds);
-    expect(game.state.upgrades.damage).toBe(0);
-    expect(game.state.towers.length).toBeGreaterThan(0);
+    meta.autoUpgradeEnabled = true;
+    const game = new Game(START_MAP, meta, createInitialState(2));
+    game.state.gold = game.towerCost() + 500;
+    expect(runAutoUpgrades(game.ctx)).toEqual([]);
+    expect(game.state.gold).toBe(game.towerCost() + 500);
+  });
+
+  it('läuft einmal beim Start jeder Welle (ab Welle 2)', () => {
+    const game = autoGame(3);
+    let calls = 0;
+    game.bus.on('autoUpgraded', () => calls++);
+    for (let i = 0; i < 60 * 45; i++) game.update(BALANCE.stepSeconds);
+    expect(game.state.wave.current).toBeGreaterThanOrEqual(2);
+    expect(calls).toBeGreaterThan(0);
+    expect(calls).toBeLessThanOrEqual(game.state.wave.current - 1);
+  });
+
+  it('Gefahr: Schaden und Feuerrate zuerst; ruhig: Gold zuerst', () => {
+    expect(AUTO_WEIGHTS.gefahr.damage).toBeGreaterThan(AUTO_WEIGHTS.gefahr.passive);
+    expect(AUTO_WEIGHTS.ruhig.passive).toBeGreaterThan(AUTO_WEIGHTS.ruhig.damage);
+
+    const danger = autoGame(4);
+    danger.state.wave.danger = DANGER_THRESHOLD + 0.1;
+    expect(autoMode(danger.ctx)).toBe('gefahr');
+    const bought = runAutoUpgrades(danger.ctx);
+    expect(bought.slice(0, 2).sort()).toEqual(['damage', 'fireRate']);
+    expect(danger.state.wave.danger).toBe(0); // Messung zurückgesetzt
+
+    const calm = autoGame(5);
+    calm.state.wave.danger = 0.2;
+    expect(autoMode(calm.ctx)).toBe('ruhig');
+    expect(runAutoUpgrades(calm.ctx)[0]).toBe('passive');
+
+    const leak = autoGame(6);
+    leak.state.wave.leaks = 1;
+    expect(autoMode(leak.ctx)).toBe('gefahr');
   });
 });
 

@@ -14,7 +14,7 @@
         <span class="hud-item">❤️ <strong id="hud-lives">0</strong></span>
         <span class="hud-item">Welle <strong id="hud-wave">–</strong></span>
         <span class="hud-item muted">nächste in <strong id="hud-countdown">0s</strong></span>
-        <span class="hud-item">Einzeller: <strong id="hud-cost">0</strong> 💰</span>
+        <span class="hud-item hud-cost" id="hud-cost-box" title="Kosten des nächsten Turms">Nächster Turm: <strong id="hud-cost">0</strong> 💰</span>
         <span class="hud-item" title="Verlegungen">🚚 <strong id="hud-relocates">0</strong></span>
         <span class="hud-item" title="DNA (Globaler Shop)">🧬 <strong id="hud-dna">0</strong></span>
         <span class="hud-item" title="Harz (Garten)">🍯 <strong id="hud-resin">0</strong></span>
@@ -60,7 +60,6 @@
         <nav id="tabs">
           <button class="tab active" data-tab="tower">Turm</button>
           <button class="tab" data-tab="shop">Shop</button>
-          <button class="tab" data-tab="items">Items</button>
           <button class="tab" data-tab="tree">Stammbaum</button>
           <button class="tab" data-tab="global">Global</button>
           <button class="tab" data-tab="chambers">Kammern</button>
@@ -73,9 +72,6 @@
         </section>
         <section data-panel="shop" class="hidden">
           <div id="shop-panel" class="card"></div>
-        </section>
-        <section data-panel="items" class="hidden">
-          <div id="items-panel" class="card"></div>
         </section>
         <section data-panel="tree" class="hidden">
           <div id="tree-view" class="card"></div>

@@ -46,8 +46,7 @@ describe('Evolution', () => {
 
   it('Evolution landet immer bei einem freigeschalteten direkten Nachfahren', () => {
     const game = new Game(START_MAP, createInitialMeta(), createInitialState(7));
-    game.meta.dna = 1_000_000;
-    for (const id of BASE_TOWER_IDS) game.unlock(id);
+    game.meta.unlockedTowers.push(...BASE_TOWER_IDS);
     game.state.gold = 10_000;
     const tower = game.build(0);
     if (!tower) throw new Error('Bau fehlgeschlagen');

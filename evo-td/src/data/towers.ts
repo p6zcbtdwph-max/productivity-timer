@@ -758,12 +758,16 @@ export function isFinalForm(id: TowerId): boolean {
   return childrenOf(id).length === 0;
 }
 
-/** Ab diesem Tier muss eine Art im Globalen Shop freigeschaltet werden. */
+/** Ab diesem Tier muss eine Art freigeschaltet werden. */
 export const UNLOCK_FROM_TIER = 2;
 
-/** DNA-Kosten, um eine Art freizuschalten (0 = immer frei). */
-export function unlockCost(id: TowerId): number {
+/**
+ * Kompendium-XP, die der ELTERNART fehlen muss, damit diese Art freigeschaltet
+ * ist (0 = immer frei). Freischalten geschieht über Zeit: Türme der Elternart
+ * sammeln XP, die im Kompendium über alle Runs erhalten bleiben.
+ */
+export function unlockXp(id: TowerId): number {
   const tier = getTowerDef(id).tier;
   if (tier < UNLOCK_FROM_TIER) return 0;
-  return Math.round(25 * 4 ** (tier - UNLOCK_FROM_TIER));
+  return Math.round(300 * 5 ** (tier - UNLOCK_FROM_TIER));
 }
