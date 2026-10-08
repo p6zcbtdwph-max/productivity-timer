@@ -7,9 +7,11 @@ import { createInitialState } from '../src/game/GameState';
 import { createInitialMeta, type MetaState } from '../src/game/MetaState';
 import { simulateOfflineRun } from '../src/game/OfflineRun';
 import { metaValues } from '../src/game/systems/MetaSystem';
+import { NEST } from '../src/data/nest';
+import { buyNestUpgrade, eggChance, maybeDropEgg, nestUpgradePrice } from '../src/game/systems/NestSystem';
 import {
   animalCost,
-  animalDnaPerHour,
+  animalEggsPerHour,
   assignToMap,
   buyAnimal,
   chamberEvolutionRate,
@@ -25,39 +27,47 @@ const HOUR = 3600_000;
 
 function richMeta(): MetaState {
   const meta = createInitialMeta();
-  meta.dna = 1_000_000;
+  meta.eggs = 1_000_000;
   meta.passive.lastTick = 0;
   return meta;
 }
 
 describe('Evolutionskammern', () => {
-  it('Kammern kosten DNA, ×4 je Kammer, mit Obergrenze', () => {
+  it('Start mit einer Kammer und einem Ei; weitere Kammern kosten Eier (nicht DNA), ×3, mit Obergrenze', () => {
+    const fresh = createInitialMeta();
+    expect(fresh.passive.chambersUnlocked).toBe(1);
+    expect(fresh.eggs).toBe(1);
+    expect(buyAnimal(fresh, 0)?.defId).toBe('einzeller'); // Startei ausbrüten
+    expect(fresh.eggs).toBe(0);
+
     const meta = richMeta();
     meta.dna = 1e9;
-    expect(chamberUnlockCost(meta)).toBe(BALANCE.passive.chamberBaseCost);
+    meta.eggs = 0;
+    expect(unlockChamber(meta)).toBe(false); // DNA hilft nicht
+    meta.eggs = 1e9;
+    expect(chamberUnlockCost(meta)).toBe(NEST.chamberBaseCost);
     expect(unlockChamber(meta)).toBe(true);
-    expect(chamberUnlockCost(meta)).toBe(BALANCE.passive.chamberBaseCost * BALANCE.passive.chamberGrowth);
-    for (let i = 1; i < BALANCE.passive.maxChambers; i++) unlockChamber(meta);
-    expect(meta.passive.chambersUnlocked).toBe(BALANCE.passive.maxChambers);
+    expect(chamberUnlockCost(meta)).toBe(NEST.chamberBaseCost * NEST.chamberGrowth);
+    for (let i = 2; i < NEST.maxChambers; i++) unlockChamber(meta);
+    expect(meta.passive.chambersUnlocked).toBe(NEST.maxChambers);
     expect(chamberUnlockCost(meta)).toBeUndefined();
     expect(unlockChamber(meta)).toBe(false);
   });
 
   it('Tiere kaufen: nur in freie, freigeschaltete Kammern, Preis steigt', () => {
     const meta = richMeta();
-    expect(buyAnimal(meta, 0)).toBeUndefined(); // keine Kammer
-    unlockChamber(meta);
+    expect(buyAnimal(meta, 1)).toBeUndefined(); // Kammer 2 noch zu
     const first = animalCost(meta);
     const animal = buyAnimal(meta, 0);
     expect(animal?.defId).toBe('einzeller');
     expect(buyAnimal(meta, 0)).toBeUndefined(); // belegt
+    meta.passive.animalsBought += 4;
     expect(animalCost(meta)).toBeGreaterThan(first);
     expect(freeChamber(meta)).toBeUndefined();
   });
 
   it('entwickelt sich in Echtzeit nur zu freigeschalteten Arten, höhere Tiers langsamer', () => {
     const meta = richMeta();
-    unlockChamber(meta);
     const animal = buyAnimal(meta, 0);
     if (!animal) throw new Error('Kauf fehlgeschlagen');
     // Ohne Freischaltungen höchstens Tier 1
@@ -81,7 +91,6 @@ describe('Evolutionskammern', () => {
   it('lange Abwesenheit wird gedeckelt, kann aber mehrere Evolutionen enthalten', () => {
     const meta = richMeta();
     meta.unlockedTowers.push(...BASE_TOWER_IDS);
-    unlockChamber(meta);
     const animal = buyAnimal(meta, 0);
     if (!animal) throw new Error('Kauf fehlgeschlagen');
     meta.upgrades.hatchery = 20; // ×6
@@ -96,9 +105,8 @@ describe('Evolutionskammern', () => {
 });
 
 describe('Reviere', () => {
-  it('Zuweisung belegt Revierplätze, gibt die Kammer frei und bringt DNA pro Stunde', () => {
+  it('Zuweisung belegt Revierplätze, gibt die Kammer frei und bringt Eier pro Stunde', () => {
     const meta = richMeta();
-    unlockChamber(meta);
     unlockChamber(meta);
     const a = buyAnimal(meta, 0);
     const b = buyAnimal(meta, 1);
@@ -112,18 +120,60 @@ describe('Reviere', () => {
     expect(assignToMap(meta, b.id, START_MAP.id)).toBe(true);
 
     meta.bestWaveByMap[START_MAP.id] = 100;
-    const expected = BALANCE.passive.dnaPerHour * 16 * 3;
-    expect(animalDnaPerHour(meta, a)).toBeCloseTo(expected);
+    const expected = NEST.eggsPerHour * 16 * 3;
+    expect(animalEggsPerHour(meta, a)).toBeCloseTo(expected);
 
+    const eggsBefore = meta.eggs;
     const dnaBefore = meta.dna;
     meta.passive.lastTick = 0;
     const report = tickPassive(meta, 2 * HOUR);
-    const perHour = animalDnaPerHour(meta, a) + animalDnaPerHour(meta, b);
-    expect(report.dna).toBe(Math.floor(perHour * 2));
-    expect(meta.dna).toBe(dnaBefore + report.dna);
+    const perHour = animalEggsPerHour(meta, a) + animalEggsPerHour(meta, b);
+    expect(report.eggs).toBe(Math.floor(perHour * 2));
+    expect(meta.eggs).toBe(eggsBefore + report.eggs);
+    expect(meta.dna).toBe(dnaBefore); // Reviere bringen keine DNA mehr
 
     expect(returnToChamber(meta, a.id)).toBe(true);
     expect(a.chamber).toBe(0);
+  });
+});
+
+describe('Nest (Eier)', () => {
+  it('Eier nur aktiv, sehr selten, Bosswellen häufiger, Brutpflege erhöht', () => {
+    const meta = createInitialMeta();
+    expect(eggChance(meta, NEST.fromWave - 1, false)).toBe(0);
+    expect(eggChance(meta, NEST.fromWave, false)).toBe(NEST.eggChance);
+    expect(eggChance(meta, 10, true)).toBe(NEST.bossEggChance);
+    meta.nest.upgrades.brutpflege = 10;
+    expect(eggChance(meta, 10, true)).toBeCloseTo(NEST.bossEggChance * 2);
+
+    const game = new Game(START_MAP, meta, createInitialState(3));
+    const offline = { ...game.ctx, offline: true };
+    for (let i = 0; i < 2000; i++) expect(maybeDropEgg(offline, 10, true)).toBe(false);
+    const before = meta.eggs;
+    let found = 0;
+    for (let i = 0; i < 2000; i++) if (maybeDropEgg(game.ctx, 10, true)) found++;
+    expect(found).toBeGreaterThan(0);
+    expect(meta.eggs).toBe(before + found);
+    expect(meta.eggsFound).toBe(found);
+  });
+
+  it('Nest-Shop: Eier statt Harz, skalierbare Stufen ohne Obergrenze, Laubdecke begrenzt', () => {
+    const meta = createInitialMeta();
+    meta.eggs = 0;
+    expect(buyNestUpgrade(meta, 'nistmaterial')).toBe(false);
+    meta.eggs = 1e30;
+    for (let i = 0; i < 100; i++) expect(buyNestUpgrade(meta, 'nistmaterial')).toBe(true);
+    expect(nestUpgradePrice(meta, 'nistmaterial')).toBeDefined();
+    while (buyNestUpgrade(meta, 'laubdecke'));
+    expect(nestUpgradePrice(meta, 'laubdecke')).toBeUndefined();
+
+    const before = metaValues(createInitialMeta());
+    const m2 = createInitialMeta();
+    m2.nest.upgrades = { nistmaterial: 10, wildwechsel: 10, laubdecke: 3 };
+    const after = metaValues(m2);
+    expect(after.chamberSpeedMult).toBeCloseTo(before.chamberSpeedMult * 2);
+    expect(after.passiveEggMult).toBeCloseTo(before.passiveEggMult * 2);
+    expect(after.offlineCapSeconds).toBe(before.offlineCapSeconds + 3 * 3600);
   });
 });
 

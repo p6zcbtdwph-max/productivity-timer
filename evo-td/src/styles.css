@@ -513,3 +513,81 @@ body {
   align-items: center;
   gap: 6px;
 }
+
+/* Unter-Reiter und Mengenwahl */
+.subtabs,
+.amount-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin: 6px 0 10px;
+}
+
+.subtab {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.subtab.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(155, 231, 160, 0.08);
+}
+
+/* Turm-Panel erscheint nur bei Auswahl */
+.with-close {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn.close {
+  flex: none;
+}
+
+/* Kompendium: Arten als Karten */
+.species-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.species-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  min-width: 0;
+}
+
+.species-card .species-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.species-card.hidden-card {
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0 6px, transparent 6px 12px);
+  color: var(--muted);
+  min-height: 64px;
+}
+
+.species-card.hidden-card .species-name {
+  font-size: 1.4rem;
+}

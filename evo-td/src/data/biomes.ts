@@ -13,7 +13,7 @@ export const BIOME_BONUS = {
   /** Reichweite auf einer Anhöhe. */
   highGroundRange: 1.2,
   /** Schaden von Luft-Arten: Ausgleich für ihre globale Reichweite. */
-  airDamage: 0.7,
+  airDamage: 0.35,
 } as const;
 
 export const BIOME_NAMES: Readonly<Record<Biome, string>> = { luft: 'Luft', land: 'Land', erde: 'Erde', wasser: 'Wasser' };

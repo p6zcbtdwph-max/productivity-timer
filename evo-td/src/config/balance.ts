@@ -78,7 +78,7 @@ export const BALANCE = {
     fireRatePerLevel: 0.15,
     rangePerLevel: 0.1,
     /** Absolute Evolutionschance pro Prestige-Stufe. */
-    evolutionPerLevel: 0.01,
+    evolutionPerLevel: 0.003,
   },
 
   /** Verlegen von Türmen. */
@@ -87,13 +87,6 @@ export const BALANCE = {
     wavesPerCharge: 5,
     /** Kosten als Anteil der aktuellen Turmkosten. */
     costFactor: 0.5,
-  },
-
-  shop: {
-    /** Item-Preise wachsen pro Kauf um diesen Faktor (zusätzlich zur Tier-Skalierung). */
-    itemPriceGrowth: 1.1,
-    /** Items pro Turm. */
-    itemSlots: 3,
   },
 
   /** Gegner-Elemente (Spezial-Eigenschaften). */
@@ -113,26 +106,19 @@ export const BALANCE = {
   evolution: {
     /** Sekunden zwischen zwei Evolutionswürfen pro Turm. */
     checkInterval: 2,
-    baseChance: 0.02,
-    perLevel: 0.012,
+    baseChance: 0.004,
+    perLevel: 0.0015,
     /** Bonus pro weiterem Turm desselben Typs auf dem Feld. */
-    perSameType: 0.015,
-    maxChance: 0.4,
+    perSameType: 0.002,
+    /** Höchstens 5 % je Wurf (alle 2 s): im Schnitt frühestens alle ~40 s eine Evolution. */
+    maxChance: 0.05,
   },
 
   /** Evolutionskammern, Reviere und Winterruhe (Passiv-Modus, läuft in Echtzeit). */
   passive: {
-    /** Erste Kammer kostet so viel DNA, jede weitere das `chamberGrowth`-fache. */
-    chamberBaseCost: 50,
-    chamberGrowth: 4,
-    maxChambers: 8,
-    /** Einzeller für die Kammer: Preis wächst mit jedem Kauf. */
-    animalBaseCost: 25,
-    animalCostGrowth: 1.35,
+    /** Kammern, Ausbrüten und Eier: siehe data/nest.ts. */
     /** Evolutionen pro Stunde auf Tier 0; halbiert sich je Tier. */
     evolutionsPerHour: 2,
-    /** DNA pro Stunde eines Tier-0-Tiers im Revier; ×2 je Tier, ×(1 + Bestwelle/50). */
-    dnaPerHour: 0.5,
     /** Revierplätze je Karte ohne Artefakt. */
     mapSlots: 1,
     /** Offline-Obergrenze ohne Artefakt (Stunden). */

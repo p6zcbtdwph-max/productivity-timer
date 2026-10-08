@@ -24,8 +24,9 @@ Alternativ lokal:
 - [ ] HUD "Nächster Turm: X 💰" stimmt (grün, wenn bezahlbar); beim Überfahren eines freien Platzes steht der Preis
 - [ ] Wellen starten von selbst, Tempo 1×/2×/4×, Pause mit Leertaste
 - [ ] Auto-Bau an: baut, sobald Gold reicht
-- [ ] Erste Evolution zu Wurm oder Fisch passiert (Tier 2 ist gesperrt, bis Wurm/Fisch 300 XP gesammelt haben)
-- [ ] Turm anklicken: Panel verständlich? Formelzeile "Verrechnung" lesbar?
+- [ ] Evolution ist jetzt deutlich seltener; erste Evolution zu Wurm oder Fisch (Tier 2 gesperrt, bis Wurm/Fisch 1.500 XP haben)
+- [ ] Turm anklicken: Turm-Panel erscheint oben in der Seitenleiste (kein Reiter "Turm" mehr), ✕ oder Esc schließt es
+- [ ] Panel verständlich? Formelzeile "Verrechnung" lesbar?
 - [ ] Elemente erkennbar (Buchstaben T/G/P/N, Rahmen, Schildbalken)
 - [ ] Wie weit kommst du? Wann und warum stirbst du? → notieren
 - [ ] Run-Ende: DNA-Abrechnung verständlich ("neue Wellen" vs. "bereits erreichte")
@@ -41,10 +42,13 @@ Alternativ lokal:
 
 ## 3. Shop, Items, Global
 
-- [ ] Run-Shop: Upgrades kaufen, Preise steigen
-- [ ] Turm anklicken → Items direkt am Turm kaufen; max. 3, danach "Alle Plätze belegt"
-- [ ] Item wirkt nur auf diesen Turm (Verrechnung "Ausrüstung"), bleibt bei Evolution
-- [ ] Stammbaum: "🔒 Wurm-XP x/300" füllt sich beim Spielen; bei 300 Meldung "freigeschaltet", danach entwickeln sich Türme dorthin
+- [ ] Run-Shop: Upgrades kaufen, Preise steigen, keine Obergrenze
+- [ ] Mengenwahl ×1 / ×10 / ×100 / Max in jedem Shop (Run-Shop, Artefakte, Garten-Pflege, Nest-Shop); Knopf zeigt "+N: Preis"
+- [ ] Items-Reiter: Items findet man nur selten nach Wellen (Meldung "🎁 …"), mit Panel "+5 Items" testen
+- [ ] Anfangs 1 Ausrüstungsplatz; ausgerüstetes Item wirkt auf ALLE Türme (Verrechnung "Ausrüstung")
+- [ ] Artefakte Beutel (+Platz), Elsternnest (Fundchance), Perlmuschel (Verschmelzen), Pfauenfeder (Stärke)
+- [ ] Verschmelzen: zwei gleiche → "+1", Wirkung ×1,8; "Alles Gleiche verschmelzen"
+- [ ] Stammbaum: "🔒 Wurm-XP x/1.500" füllt sich beim Spielen; bei 1.500 Meldung "freigeschaltet", danach entwickeln sich Türme dorthin. Fühlt sich das schwer genug an?
 - [ ] Global: erstes Artefakt freischalten und aufstufen, "Unbekanntes Artefakt" als Ziel sichtbar
 - [ ] Zweiter Run: neue Bestwelle → spürbar mehr DNA? Gleiche Welle → fast nichts?
 - [ ] Ab Artefakt "Instinkt": Auto-Kauf-Schalter im Shop. Kauft einmal pro Welle, nur wenn kein Turm bezahlbar ist; Protokoll "🧠 Auto-Kauf (Gefahr|ruhig)"
@@ -62,35 +66,39 @@ Alternativ lokal:
 
 ## 5. Luft und Erde
 
-- [ ] Vogel/Libelle/Biene/Fledermaus: Reichweite "global (fliegt)", Faktor "Flug ×0.70"
+- [ ] Vogel/Libelle/Biene/Fledermaus: Reichweite "global (fliegt)", Faktor "Flug ×0.35" (deutlich schwächer als vorher)
 - [ ] Fühlt sich Luft zu stark oder zu schwach an?
 - [ ] Erd-Arten (Wurm, Tausendfüßer, Maulwurf …) auf Erd-Plätzen am Urkontinent
 
 ## 6. Passiv-Modus
 
-- [ ] Kammern: Kammer freischalten (DNA), Einzeller kaufen, Evolution über Zeit
-- [ ] Tier ins Revier schicken → DNA/h sichtbar
+- [ ] Start: 1 Kammer und 1 🥚 Ei (HUD); "Ei ausbrüten" → Einzeller, Evolution über Zeit
+- [ ] Eier findet man selten nach Wellen (Meldung "🥚 Ein Ei!"), weitere Kammern kosten Eier
+- [ ] Tier ins Revier schicken → 🥚/h sichtbar (keine DNA mehr)
+- [ ] Nest-Shop (Unter-Reiter): Nistmaterial, Wildwechsel, Brutpflege, Laubdecke für Eier
 - [ ] Tab schließen oder 5+ Minuten wechseln, zurückkommen → Bericht "Während du weg warst"
 - [ ] Panel "Zeit +1 h": Winterruhe rechnet nach, hält an der Wand, Run stirbt nicht
 - [ ] "Rest überspringen" funktioniert
 
 ## 7. Kompendium und Garten
 
-- [ ] Kompendium füllt sich mit gebauten Arten, Boni steigen mit Rekord-Level/Prestige
+- [ ] Kompendium: Unter-Reiter "Boni" und "Arten"; unbekannte Arten als verdeckte Karten, Boni steigen mit Rekord-Level/Prestige
 - [ ] Garten startet mit 1 Topf und 1 Moos-Samen; weitere Samen sehr selten (0,3 % je Welle, Bosse 3 %), nur aktiv
 - [ ] Samen pflanzen, "Garten +24 h": Level und Harz steigen
-- [ ] Topf 2 für 20 Harz, Pflege kaufen (Dünger, Kompost, Nistmaterial …)
+- [ ] Topf 2 für 20 Harz, Unter-Reiter "Pflege": Dünger, Kompost … (Passiv-Pflege ist jetzt im Nest-Shop)
 
 ## 8. Speichern
 
-- [ ] Seite neu laden: Run, DNA, Artefakte, Kammern, Garten bleiben erhalten
+- [ ] Seite neu laden: Run, DNA, Artefakte, Kammern, Eier, Items, Garten bleiben erhalten
+- [ ] Anderes Gerät / anderer Browser (eingeloggt bei claude.ai): Cloud-Stand wird geladen
 - [ ] Panel "Alles löschen" setzt komplett zurück
 
 ## Fragen für das Feedback
 
 - Erster Run: zu leicht, zu schwer, zu lang, zu kurz?
-- DNA-Tempo: fühlt sich Pushen lohnend an? Freischalt-XP (Tier 2: 300, ×5 je Tier) ok?
-- Samen: selten genug, aber nicht frustrierend?
+- DNA-Tempo: fühlt sich Pushen lohnend an? Freischalt-XP (Tier 2: 1.500, ×10 je Tier) ok?
+- Samen, Eier, Items: selten genug, aber nicht frustrierend?
+- Evolution: jetzt zu langsam oder richtig?
 - Was war unklar oder versteckt? Welche Anzeige fehlt?
 - Garten- und Kammer-Tempo: zu langsam am Anfang?
 - Luft mit globaler Reichweite: Balance?
@@ -100,5 +108,5 @@ Alternativ lokal:
 ## Bekannt / bewusst offen
 
 - Alle Zahlen sind erste Setzwerte (zentral in `src/config/balance.ts` und `src/data/*`).
-- Erde hat noch keine Sonderregel. Harz hat außer Garten/Passiv noch keine Verwendung.
+- Erde hat noch keine Sonderregel. Harz hat außer dem Garten noch keine Verwendung. Der Name "Eier" für die Währung ist vorläufig.
 - Keine echte Mac-App (Tauri) – läuft im Browser.

@@ -7,6 +7,8 @@ import type { CompendiumRecord } from '../data/compendium';
 import type { TowerId } from '../data/towers';
 import type { GardenUpgradeId, TreeId } from '../data/garden';
 import type { ModifierKind } from '../data/upgrades';
+import type { Item } from '../data/items';
+import { NEST, type NestUpgradeId } from '../data/nest';
 
 export interface MetaState {
   dna: number;
@@ -32,6 +34,25 @@ export interface MetaState {
   /** Rekorde je Art (Kompendium). */
   compendium: Record<TowerId, CompendiumRecord>;
   garden: GardenState;
+  /** Gefundene Items (über alle Runs) und welche davon ausgerüstet sind. */
+  items: ItemState;
+  /** Eier: Währung des Passiv-Modus (Kammern, Nest-Pflege). */
+  eggs: number;
+  eggsFound: number;
+  /** Nest-Pflege-Stufen (für Eier gekauft). */
+  nest: { upgrades: Partial<Record<NestUpgradeId, number>> };
+  /** Wie viele Stufen ein Klick in den Shops kauft. */
+  buyAmount: BuyAmount;
+}
+
+export type BuyAmount = 1 | 10 | 100 | 'max';
+
+export interface ItemState {
+  inventory: Item[];
+  /** IDs der ausgerüsteten Items (wirken auf alle Türme). */
+  equipped: number[];
+  nextId: number;
+  found: number;
 }
 
 export interface GardenPot {
@@ -85,9 +106,9 @@ export interface PassiveState {
   animalsBought: number;
   chambersUnlocked: number;
   animals: PassiveAnimal[];
-  /** Angesammelte Bruchteile passiver DNA (ausgezahlt wird ganzzahlig). */
-  dnaFraction: number;
-  dnaEarned: number;
+  /** Angesammelte Bruchteile gelegter Eier (ausgezahlt wird ganzzahlig). */
+  eggFraction: number;
+  eggsEarned: number;
 }
 
 export function createInitialMeta(): MetaState {
@@ -108,13 +129,18 @@ export function createInitialMeta(): MetaState {
       rngState: (Date.now() ^ 0x5bd1e995) >>> 0,
       nextAnimalId: 1,
       animalsBought: 0,
-      chambersUnlocked: 0,
+      chambersUnlocked: NEST.startChambers,
       animals: [],
-      dnaFraction: 0,
-      dnaEarned: 0,
+      eggFraction: 0,
+      eggsEarned: 0,
     },
     compendium: {},
     garden: createGarden(),
+    items: { inventory: [], equipped: [], nextId: 1, found: 0 },
+    eggs: NEST.starterEggs,
+    eggsFound: 0,
+    nest: { upgrades: {} },
+    buyAmount: 1,
   };
 }
 
@@ -130,17 +156,32 @@ export function normalizeMeta(loaded: Partial<MetaState> | undefined): MetaState
     ...loaded,
     upgrades: { ...fresh.upgrades, ...loaded.upgrades },
     autoUpgrades: { ...fresh.autoUpgrades, ...loaded.autoUpgrades },
-    passive: { ...fresh.passive, ...loaded.passive },
+    passive: normalizePassive({ ...fresh.passive, ...loaded.passive }),
     compendium: { ...loaded.compendium },
     garden: normalizeGarden({ ...fresh.garden, ...loaded.garden }),
+    items: { ...fresh.items, ...loaded.items },
+    nest: { upgrades: { ...migratedNestUpgrades(loaded.garden), ...loaded.nest?.upgrades } },
   };
+}
+
+function normalizePassive(passive: PassiveState): PassiveState {
+  return { ...passive, chambersUnlocked: Math.max(NEST.startChambers, passive.chambersUnlocked) };
+}
+
+/** Früher lagen die Passiv-Verbesserungen in der Garten-Pflege (Harz). */
+function migratedNestUpgrades(garden: Partial<GardenState> | undefined): Partial<Record<NestUpgradeId, number>> {
+  const old = (garden?.upgrades ?? {}) as Record<string, number | undefined>;
+  const result: Partial<Record<NestUpgradeId, number>> = {};
+  for (const id of ['nistmaterial', 'wildwechsel', 'laubdecke'] as const) if (old[id]) result[id] = old[id];
+  return result;
 }
 
 function normalizeGarden(garden: GardenState): GardenState {
   return {
     ...garden,
     pots: garden.pots.length > 0 ? garden.pots : [{ tree: null, level: 0, growth: 0 }],
-    upgrades: { ...garden.upgrades },
+    // Passiv-Verbesserungen sind ins Nest umgezogen.
+    upgrades: Object.fromEntries(Object.entries(garden.upgrades).filter(([id]) => !['nistmaterial', 'wildwechsel', 'laubdecke'].includes(id))),
   };
 }
 

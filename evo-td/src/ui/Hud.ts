@@ -18,6 +18,7 @@ export class Hud {
   private readonly dna = $('#hud-dna');
   private readonly mapName = $('#hud-map');
   private readonly resin = $('#hud-resin');
+  private readonly eggs = $('#hud-eggs');
   private readonly adapt = $('#hud-adapt');
   private readonly autoBuild = $<HTMLInputElement>('#hud-autobuild');
   private readonly speedButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-speed]'));
@@ -57,6 +58,7 @@ export class Hud {
     this.dna.textContent = formatNumber(this.game.meta.dna);
     this.mapName.textContent = this.game.map.name;
     this.resin.textContent = formatNumber(this.game.meta.garden.resin);
+    this.eggs.textContent = formatNumber(this.game.meta.eggs);
     const mode = this.game.map.adaptive;
     this.adapt.classList.toggle('hidden', !mode);
     if (mode) {

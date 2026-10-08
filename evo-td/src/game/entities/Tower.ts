@@ -1,4 +1,3 @@
-import type { Item } from '../../data/items';
 import type { Targeting, TowerId } from '../../data/towers';
 
 export interface Tower {
@@ -18,8 +17,6 @@ export interface Tower {
   evolutionTimer: number;
   /** Spieler hat die Evolution dieses Turms angehalten. */
   evolutionLocked: boolean;
-  /** Items dieses Turms (höchstens shop.itemSlots); fehlt in alten Spielständen. */
-  items?: Item[];
   /** Vom Spieler gewählte Zielpriorität; fehlt = Standard der Art. */
   targeting?: Targeting;
   kills: number;

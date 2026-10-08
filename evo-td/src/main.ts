@@ -21,18 +21,19 @@ import { ChambersPanel } from './ui/ChambersPanel';
 import { CompendiumPanel } from './ui/CompendiumPanel';
 import { GardenPanel } from './ui/GardenPanel';
 import { TREE_DEFS } from './data/garden';
+import { itemName, QUALITY_DEFS } from './data/items';
 import { OfflineReport } from './ui/OfflineReport';
 import { tickPassive } from './game/systems/PassiveSystem';
 import { CATEGORY_NAMES } from './game/systems/AdaptationSystem';
 import { Hud } from './ui/Hud';
 import { ShopPanel } from './ui/ShopPanel';
+import { ItemsPanel } from './ui/ItemsPanel';
 import { Tabs } from './ui/Tabs';
 import { TowerPanel, type TowerAction } from './ui/TowerPanel';
 import { TreeView } from './ui/TreeView';
 
 const runSaves = new SaveManager<GameState>(BALANCE.persistence.runKey, BALANCE.persistence.runVersion);
 const metaSaves = new SaveManager<MetaState>(BALANCE.persistence.metaKey, BALANCE.persistence.metaVersion);
-const savedRun = runSaves.load();
 // Cloud-Stand (nur als claude.ai-Artefakt): der neuere von lokal und Cloud gewinnt.
 const cloud = await CloudSave.connect();
 const [cloudRun, cloudMeta] = cloud
@@ -43,7 +44,8 @@ const [cloudRun, cloudMeta] = cloud
   : [undefined, undefined];
 const startRun = newer(runSaves.loadFile(), cloudRun)?.data;
 const startMeta = newer(metaSaves.loadFile(), cloudMeta)?.data;
-const game = new Game(getMap(savedRun?.mapId), normalizeMeta(metaSaves.load()), savedRun);
+// Gestartet wird mit dem jeweils neueren Stand (lokal oder Cloud).
+const game = new Game(getMap(startRun?.mapId), normalizeMeta(startMeta), startRun);
 
 const canvas = $<HTMLCanvasElement>('#game-canvas');
 const renderer = new CanvasRenderer(canvas, game.map);
@@ -53,6 +55,15 @@ const modeHint = $('#mode-hint');
 
 let hoveredSlot: number | undefined;
 let selectedTowerId: number | undefined;
+const towerCard = $('#tower-card');
+
+/** Turm auswählen; das Turm-Panel erscheint nur, solange ein Turm gewählt ist. */
+function selectTower(id: number | undefined): void {
+  selectedTowerId = id;
+  towerCard.classList.toggle('hidden', id === undefined);
+  if (id === undefined) setAction(undefined);
+  towerPanel.invalidate();
+}
 /** Laufende Mehrschritt-Aktion: Fusion oder Verlegen des ausgewählten Turms. */
 let activeAction: TowerAction | undefined;
 
@@ -100,12 +111,14 @@ const loop = new GameLoop(
       highlightFreeSlots: activeAction === 'relocate',
     });
     hud.render();
+    if (selectedTowerId !== undefined && !game.state.towers.some((t) => t.id === selectedTowerId)) selectTower(undefined);
+    if (selectedTowerId !== undefined) towerPanel.render(selectedTowerId, activeAction);
     switch (tabs.active) {
-      case 'tower':
-        towerPanel.render(selectedTowerId, activeAction);
-        break;
       case 'shop':
         shopPanel.render();
+        break;
+      case 'items':
+        itemsPanel.render();
         break;
       case 'tree':
         treeView.render();
@@ -131,8 +144,7 @@ const afterNewRun = (): void => {
   metaSaves.save(game.meta);
   cloud?.save('meta', BALANCE.persistence.metaVersion, game.meta, { force: true });
   cloud?.save('run', BALANCE.persistence.runVersion, game.state, { force: true });
-  selectedTowerId = undefined;
-  setAction(undefined);
+  selectTower(undefined);
   eventLog.clear();
   treeView.invalidate();
   globalPanel.invalidate();
@@ -175,8 +187,10 @@ const tabs = new Tabs();
 const hud = new Hud(game, loop, resetGame);
 const towerPanel = new TowerPanel(game, {
   onAction: (action) => setAction(activeAction === action ? undefined : action),
+  onClose: () => selectTower(undefined),
 });
 const shopPanel = new ShopPanel(game);
+const itemsPanel = new ItemsPanel(game);
 const treeView = new TreeView(game);
 const globalPanel = new GlobalPanel(game, endRun, switchMap);
 const chambersPanel = new ChambersPanel(game);
@@ -187,6 +201,8 @@ new ElementLegend();
 new DevPanel(game, loop, () => {
   game.invalidateStats();
   towerPanel.invalidate();
+  itemsPanel.invalidate();
+  chambersPanel.invalidate();
   treeView.invalidate();
   globalPanel.invalidate();
 }, wipeAll);
@@ -232,8 +248,7 @@ canvas.addEventListener('mouseleave', () => {
 canvas.addEventListener('click', (e) => {
   const slot = renderer.slotAt(e.clientX, e.clientY);
   if (slot === undefined) {
-    selectedTowerId = undefined;
-    setAction(undefined);
+    selectTower(undefined);
     return;
   }
   const existing = game.state.towers.find((t) => t.slot === slot);
@@ -248,8 +263,7 @@ canvas.addEventListener('click', (e) => {
   }
 
   if (existing) {
-    selectedTowerId = existing.id;
-    tabs.show('tower');
+    selectTower(existing.id);
     return;
   }
   if (game.obstacleAt(slot)) {
@@ -257,7 +271,7 @@ canvas.addEventListener('click', (e) => {
     return;
   }
   const built = game.build(slot);
-  if (built) selectedTowerId = built.id;
+  if (built) selectTower(built.id);
 });
 
 window.addEventListener('keydown', (e) => {
@@ -265,7 +279,10 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     loop.paused = !loop.paused;
   }
-  if (e.key === 'Escape') setAction(undefined);
+  if (e.key === 'Escape') {
+    if (activeAction) setAction(undefined);
+    else selectTower(undefined);
+  }
   if (selectedTowerId === undefined) return;
   if (e.key === 'l') game.toggleEvolutionLock(selectedTowerId);
   if (e.key === 't') {
@@ -296,7 +313,15 @@ $('#game-over-shop').addEventListener('click', () => {
   tabs.show('global');
 });
 game.bus.on('towerFused', ({ consumedId }) => {
-  if (selectedTowerId === consumedId) selectedTowerId = undefined;
+  if (selectedTowerId === consumedId) selectTower(undefined);
+});
+game.bus.on('itemFound', ({ item }) => {
+  renderer.float(game.map.cols / 2, 2, `🎁 ${itemName(item)}!`, QUALITY_DEFS[item.quality].color, 3);
+  itemsPanel.invalidate();
+});
+game.bus.on('eggFound', () => {
+  renderer.float(game.map.cols / 2, 1.5, '🥚 Ein Ei!', '#fff3c4', 2.5);
+  chambersPanel.invalidate();
 });
 
 // --- Speichern --------------------------------------------------------------

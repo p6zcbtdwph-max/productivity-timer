@@ -82,7 +82,7 @@ export class OfflineReport {
     items.push(el('p', { className: 'muted' }, [`${duration(away)} abwesend${away > cap ? `, angerechnet ${duration(cap)} (Obergrenze)` : ''}.`]));
 
     const list = el('ul');
-    if (passive.dna > 0) list.append(el('li', {}, [`🗺 Reviere: +${formatNumber(passive.dna)} DNA`]));
+    if (passive.eggs > 0) list.append(el('li', {}, [`🗺 Reviere: +${formatNumber(passive.eggs)} 🥚 Eier`]));
     if (passive.garden.resin > 0) list.append(el('li', {}, [`🍯 Garten: +${formatNumber(passive.garden.resin)} Harz`]));
     for (const g of passive.garden.levelUps) {
       list.append(el('li', {}, [`🌳 ${TREE_DEFS[g.tree].name} ist auf Level ${g.level} gewachsen`]));

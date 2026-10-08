@@ -5,7 +5,6 @@
  */
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
-import { metaValues } from './MetaSystem';
 
 export function canFuse(a: Tower, b: Tower): boolean {
   return a.id !== b.id && a.defId === b.defId && a.prestige === b.prestige;
@@ -27,11 +26,6 @@ export function fuseTowers(ctx: GameContext, target: Tower, consumed: Tower): bo
   if (consumed.level > target.level || (consumed.level === target.level && consumed.xp > target.xp)) {
     target.level = consumed.level;
     target.xp = consumed.xp;
-  }
-  // Items des verschmolzenen Turms wandern mit, soweit Platz ist.
-  const slots = metaValues(ctx.meta).itemSlots;
-  for (const item of consumed.items ?? []) {
-    if ((target.items?.length ?? 0) < slots) (target.items ??= []).push(item);
   }
   target.kills += consumed.kills;
   target.damageDealt += consumed.damageDealt;

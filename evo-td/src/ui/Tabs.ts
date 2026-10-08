@@ -2,15 +2,15 @@
 export class Tabs {
   private readonly buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('#tabs .tab'));
   private readonly panels = Array.from(document.querySelectorAll<HTMLElement>('#sidebar [data-panel]'));
-  active = 'tower';
+  active = 'shop';
 
   constructor() {
     for (const button of this.buttons) {
-      button.addEventListener('click', () => this.show(button.dataset['tab'] ?? 'tower'));
+      button.addEventListener('click', () => this.show(button.dataset['tab'] ?? 'shop'));
     }
     try {
       const stored = localStorage.getItem('evo-td-tab');
-      if (stored) this.show(stored);
+      if (stored && this.buttons.some((b) => b.dataset['tab'] === stored)) this.show(stored);
     } catch {
       /* ignorieren */
     }

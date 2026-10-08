@@ -16,7 +16,9 @@ import {
 import { getTowerDef, parentOf, unlockXp, UNLOCK_FROM_TIER, type TowerId } from '../../data/towers';
 import { overallBestWave, type MetaState } from '../MetaState';
 import { compendiumTotals, speciesXp, type CompendiumTotals } from './CompendiumSystem';
-import { gardenTotals, gardenUpgradeValues } from './GardenSystem';
+import { gardenTotals } from './GardenSystem';
+import { nestUpgradeValues } from './NestSystem';
+import { ITEMS } from '../../data/items';
 
 export function metaLevel(meta: MetaState, id: MetaUpgradeId): number {
   return meta.upgrades[id] ?? 0;
@@ -71,8 +73,12 @@ export interface MetaValues {
   achievementDnaMult: number;
   /** Additiv auf die Stärke sekundärer Boni (+0.05 je Stufe). */
   inheritance: number;
+  /** Items: Qualitäts-Glück, Ausrüstungsplätze, Fundchance, Stärke, Verschmelzen. */
   itemLuckMult: number;
   itemSlots: number;
+  itemFindMult: number;
+  itemPowerMult: number;
+  itemMerge: boolean;
   wavesPerRelocate: number;
   dnaMult: number;
   autoFusion: boolean;
@@ -81,7 +87,7 @@ export interface MetaValues {
   /** Passiv-Modus */
   chamberSpeedMult: number;
   mapSlots: number;
-  passiveDnaMult: number;
+  passiveEggMult: number;
   offlineCapSeconds: number;
   offlinePower: number;
   /** Kompendium-Boni aller je gezüchteten Arten. */
@@ -95,7 +101,7 @@ export interface MetaValues {
 export function metaValues(meta: MetaState): MetaValues {
   const d = META_UPGRADE_DEFS;
   const lv = (id: MetaUpgradeId): number => metaLevel(meta, id);
-  const care = gardenUpgradeValues(meta);
+  const nest = nestUpgradeValues(meta);
   const compendium = compendiumTotals(meta);
   const garden = gardenTotals(meta);
   const passiveSum = Object.fromEntries(
@@ -115,16 +121,19 @@ export function metaValues(meta: MetaState): MetaValues {
     achievementDnaMult: 1 + ach.dna,
     inheritance: d.inheritance.perLevel * lv('inheritance'),
     itemLuckMult: 1 + d.itemLuck.perLevel * lv('itemLuck'),
-    itemSlots: BALANCE.shop.itemSlots + d.itemSlots.perLevel * lv('itemSlots'),
+    itemSlots: ITEMS.baseSlots + d.itemSlots.perLevel * lv('itemSlots'),
+    itemFindMult: 1 + d.itemFind.perLevel * lv('itemFind'),
+    itemPowerMult: 1 + d.itemPower.perLevel * lv('itemPower'),
+    itemMerge: lv('itemMerge') > 0,
     wavesPerRelocate: Math.max(2, BALANCE.relocate.wavesPerCharge - d.relocate.perLevel * lv('relocate')),
     dnaMult: 1 + d.dnaGain.perLevel * lv('dnaGain'),
     autoFusion: lv('autoFusion') > 0,
     autoUpgrades: lv('autoUpgrades') > 0,
     autoArtifacts: lv('autoArtifacts') > 0,
-    chamberSpeedMult: (1 + d.hatchery.perLevel * lv('hatchery')) * care.chamberSpeedMult,
+    chamberSpeedMult: (1 + d.hatchery.perLevel * lv('hatchery')) * nest.chamberSpeedMult,
     mapSlots: BALANCE.passive.mapSlots + d.territory.perLevel * lv('territory'),
-    passiveDnaMult: (1 + d.amber.perLevel * lv('amber')) * care.territoryDnaMult,
-    offlineCapSeconds: (BALANCE.passive.offlineCapHours + d.hibernation.perLevel * lv('hibernation') + care.offlineHours) * 3600,
+    passiveEggMult: (1 + d.amber.perLevel * lv('amber')) * nest.territoryEggMult,
+    offlineCapSeconds: (BALANCE.passive.offlineCapHours + d.hibernation.perLevel * lv('hibernation') + nest.offlineHours) * 3600,
     offlinePower: Math.min(1, BALANCE.passive.offlinePower + d.winterFur.perLevel * lv('winterFur')),
     compendium,
     garden,
@@ -235,6 +244,11 @@ export function unlockArtifact(meta: MetaState, id: MetaUpgradeId): boolean {
   meta.dna -= META_UPGRADE_DEFS[id].unlockCost;
   meta.upgrades[id] = 1;
   return true;
+}
+
+/** Preis von Stufe `level` auf `level + 1` (für Mehrfachkauf). */
+export function metaUpgradeCostAt(id: MetaUpgradeId, level: number): number {
+  return metaUpgradeCost(META_UPGRADE_DEFS[id], level);
 }
 
 /** Preis der nächsten Stufe eines besessenen Artefakts (undefined = max oder nicht besessen). */

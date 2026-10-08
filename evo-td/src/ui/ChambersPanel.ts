@@ -1,4 +1,4 @@
-/** Evolutionskammern und Reviere (Passiv-Modus). */
+/** Evolutionskammern, Reviere und Nest-Shop (Passiv-Modus, Währung Eier). */
 import { MAPS } from '../data/map';
 import { getTowerDef } from '../data/towers';
 import type { Game } from '../game/Game';
@@ -6,7 +6,7 @@ import type { PassiveAnimal } from '../game/MetaState';
 import { bestWaveOn, isMapUnlocked, metaValues } from '../game/systems/MetaSystem';
 import {
   animalCost,
-  animalDnaPerHour,
+  animalEggsPerHour,
   animalInChamber,
   assignToMap,
   buyAnimal,
@@ -16,12 +16,18 @@ import {
   releaseAnimal,
   returnToChamber,
   toggleChamberLock,
-  totalDnaPerHour,
+  totalEggsPerHour,
   unlockChamber,
 } from '../game/systems/PassiveSystem';
 import { childrenOf } from '../data/towers';
 import { $, el, formatNumber } from './dom';
 import { askConfirm } from './Confirm';
+import { NEST, NEST_UPGRADES, nestUpgradeCost } from '../data/nest';
+import { buyNestUpgrade, eggChance, nestUpgradeLevel } from '../game/systems/NestSystem';
+import { executeBulk } from '../game/systems/BulkBuy';
+import { bulkButton, buyAmountBar, levelLabel, pct, SubTabs } from './widgets';
+
+type ChambersTab = 'kammern' | 'reviere' | 'nest';
 
 function hours(h: number): string {
   if (h < 1) return `${Math.round(h * 60)} min`;
@@ -31,6 +37,7 @@ function hours(h: number): string {
 export class ChambersPanel {
   private readonly root = $('#chambers-panel');
   private lastKey = '';
+  private readonly sub = new SubTabs<ChambersTab>('chambers', [['kammern', 'Kammern'], ['reviere', 'Reviere'], ['nest', 'Nest-Shop']], () => this.invalidate());
 
   constructor(private readonly game: Game) {}
 
@@ -53,7 +60,7 @@ export class ChambersPanel {
 
   render(): void {
     const { meta } = this.game;
-    const key = JSON.stringify([meta.dna, meta.passive.animals, meta.passive.chambersUnlocked, meta.upgrades, meta.bestWaveByMap, meta.unlockedTowers.length]);
+    const key = JSON.stringify([this.sub.active, meta.eggs, meta.nest, meta.buyAmount, meta.passive.animals, meta.passive.chambersUnlocked, meta.upgrades, meta.bestWaveByMap, meta.unlockedTowers.length]);
     if (key === this.lastKey) return;
     this.lastKey = key;
     const values = metaValues(meta);
@@ -64,7 +71,7 @@ export class ChambersPanel {
       const animal = animalInChamber(meta, c);
       if (!animal) {
         const cost = animalCost(meta);
-        const buy = el('button', { className: 'btn small', disabled: meta.dna < cost }, [`Einzeller kaufen: ${formatNumber(cost)} 🧬`]);
+        const buy = el('button', { className: 'btn small', disabled: meta.eggs < cost }, [`Ei ausbrüten: ${formatNumber(cost)} 🥚`]);
         buy.addEventListener('click', this.act(() => buyAnimal(meta, c)));
         chambers.append(el('li', {}, [el('span', { className: 'muted' }, [`Kammer ${c + 1}: leer`]), buy]));
         continue;
@@ -99,7 +106,7 @@ export class ChambersPanel {
     }
     const nextChamber = chamberUnlockCost(meta);
     if (nextChamber !== undefined) {
-      const b = el('button', { className: 'btn small', disabled: meta.dna < nextChamber }, [`${formatNumber(nextChamber)} 🧬`]);
+      const b = el('button', { className: 'btn small', disabled: meta.eggs < nextChamber }, [`${formatNumber(nextChamber)} 🥚`]);
       b.addEventListener('click', this.act(() => unlockChamber(meta)));
       chambers.append(el('li', {}, [el('span', {}, [`🔒 Kammer ${meta.passive.chambersUnlocked + 1} freischalten`]), b]));
     }
@@ -116,7 +123,7 @@ export class ChambersPanel {
         el('li', {}, [
           el('strong', {}, [`🗺 ${map.name}`]),
           el('span', { className: 'muted small' }, [`${residents.length}/${values.mapSlots} Plätze`]),
-          el('span', { className: 'desc' }, [`Bestwelle ${bestWaveOn(meta, map.id)}: Tiere hier bringen ×${(1 + bestWaveOn(meta, map.id) / 50).toFixed(2)} DNA.`]),
+          el('span', { className: 'desc' }, [`Bestwelle ${bestWaveOn(meta, map.id)}: Tiere hier legen ×${(1 + bestWaveOn(meta, map.id) / 50).toFixed(2)} Eier.`]),
         ]),
       );
       for (const animal of residents) {
@@ -124,25 +131,64 @@ export class ChambersPanel {
         back.addEventListener('click', this.act(() => returnToChamber(meta, animal.id)));
         territories.append(
           el('li', {}, [
-            el('span', {}, [...this.animalLabel(animal), el('span', { className: 'muted small' }, [` ${animalDnaPerHour(meta, animal).toFixed(1)} DNA/h`])]),
+            el('span', {}, [...this.animalLabel(animal), el('span', { className: 'muted small' }, [` ${animalEggsPerHour(meta, animal).toFixed(2)} 🥚/h`])]),
             back,
           ]),
         );
       }
     }
 
+    // --- Nest-Shop ------------------------------------------------------------
+    const shop = el('ul', { className: 'shop-list' });
+    for (const def of NEST_UPGRADES) {
+      const level = nestUpgradeLevel(meta, def.id);
+      const control = bulkButton({
+        meta,
+        level,
+        maxLevel: def.maxLevel,
+        cost: (l) => nestUpgradeCost(def, l),
+        budget: meta.eggs,
+        currency: '🥚',
+        onBuy: this.act(() => executeBulk(meta.buyAmount, level, def.maxLevel, (l) => nestUpgradeCost(def, l), meta.eggs, () => buyNestUpgrade(meta, def.id))),
+      });
+      shop.append(
+        el('li', {}, [
+          el('span', {}, [`${def.name} `, el('span', { className: 'muted' }, [levelLabel(level, def.maxLevel)])]),
+          control,
+          el('span', { className: 'desc' }, [def.description]),
+        ]),
+      );
+    }
+
+    const content: Node[] =
+      this.sub.active === 'kammern'
+        ? [
+            el('p', { className: 'muted small' }, [
+              'Brüte Eier in Kammern aus. Die Tiere entwickeln sich in Echtzeit, auch wenn das Spiel geschlossen ist, aber nur zu freigeschalteten Arten.',
+            ]),
+            chambers,
+          ]
+        : this.sub.active === 'reviere'
+          ? [
+              el('p', { className: 'muted small' }, [
+                `Im Revier einer Karte legen Tiere Eier: ×2 je Tier, mehr je höher deine Bestwelle dort. Zusammen ${totalEggsPerHour(meta).toFixed(2)} 🥚/h.`,
+              ]),
+              territories,
+            ]
+          : [
+              el('p', { className: 'muted small' }, ['Verbesserungen für den Passiv-Modus, bezahlt mit Eiern.']),
+              buyAmountBar(meta, () => this.invalidate()),
+              shop,
+            ];
+
     this.root.replaceChildren(
-      el('h2', {}, [`🥚 Evolutionskammern`]),
+      el('h2', {}, [`🥚 ${formatNumber(meta.eggs)} Eier · Evolutionskammern`]),
       el('p', { className: 'muted small' }, [
-        `🧬 ${formatNumber(meta.dna)} DNA · ${totalDnaPerHour(meta).toFixed(1)} DNA/h aus Revieren · `,
-        `offline bis ${Math.round(values.offlineCapSeconds / 3600)} h, Winterruhe mit ${Math.round(values.offlinePower * 100)} % Kraft.`,
+        `Eier findest du sehr selten nach aktiv geschafften Wellen (ab Welle ${NEST.fromWave}: ${pct(eggChance(meta, NEST.fromWave, false))}, Bosswellen ${pct(eggChance(meta, 10, true))}) und von Tieren in Revieren. `,
+        `Offline bis ${Math.round(values.offlineCapSeconds / 3600)} h, Winterruhe mit ${Math.round(values.offlinePower * 100)} % Kraft.`,
       ]),
-      el('p', { className: 'muted small' }, [
-        'Tiere in Kammern entwickeln sich in Echtzeit, auch wenn das Spiel geschlossen ist, aber nur zu freigeschalteten Arten. Im Revier einer Karte bringen sie DNA: ×2 je Tier, mehr je höher deine Bestwelle dort.',
-      ]),
-      chambers,
-      el('h2', { style: 'margin-top:14px' }, ['Reviere']),
-      territories,
+      this.sub.element(),
+      ...content,
     );
   }
 }

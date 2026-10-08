@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/core/Rng';
-import { BALANCE } from '../src/config/balance';
 import { GARDEN, RARITIES, resinPerHour, TREE_DEFS, TREE_IDS, treeBonus } from '../src/data/garden';
 import { START_MAP } from '../src/data/map';
 import { Game } from '../src/game/Game';
@@ -157,15 +156,16 @@ describe('Garten: Samenfund', () => {
 });
 
 describe('Pflege (Harz)', () => {
-  it('kostet Harz mit steigendem Preis und Obergrenze', () => {
+  it('kostet Harz mit steigendem Preis, skaliert ohne Obergrenze', () => {
     const meta = createInitialMeta();
     expect(buyGardenUpgrade(meta, 'duenger')).toBe(false);
     meta.garden.resin = 1e9;
     const first = gardenUpgradePrice(meta, 'duenger') ?? 0;
     expect(buyGardenUpgrade(meta, 'duenger')).toBe(true);
     expect(gardenUpgradePrice(meta, 'duenger')).toBeGreaterThan(first);
-    while (buyGardenUpgrade(meta, 'laubdecke'));
-    expect(gardenUpgradePrice(meta, 'laubdecke')).toBeUndefined();
+    meta.garden.resin = 1e30;
+    for (let i = 0; i < 100; i++) expect(buyGardenUpgrade(meta, 'kompost')).toBe(true);
+    expect(gardenUpgradePrice(meta, 'kompost')).toBeDefined();
   });
 
   it('Dünger beschleunigt das Wachstum, Harzkanäle nicht das Wachstum aber das Harz', () => {
@@ -205,16 +205,13 @@ describe('Pflege (Harz)', () => {
     expect(rareLucky).toBeGreaterThan(rare * 1.5);
   });
 
-  it('Passiv-Pflege wirkt auf Kammern, Reviere und Offline-Zeit', () => {
-    const meta = createInitialMeta();
-    const before = metaValues(meta);
-    meta.garden.upgrades.nistmaterial = 10;
-    meta.garden.upgrades.wildwechsel = 10;
-    meta.garden.upgrades.laubdecke = 3;
-    const after = metaValues(meta);
-    expect(after.chamberSpeedMult).toBeCloseTo(before.chamberSpeedMult * 2);
-    expect(after.passiveDnaMult).toBeCloseTo(before.passiveDnaMult * 2);
-    expect(after.offlineCapSeconds).toBe(before.offlineCapSeconds + 3 * HOUR);
+  it('alte Passiv-Pflege aus dem Garten zieht ins Nest um', () => {
+    const old = createInitialMeta() as unknown as { garden: { upgrades: Record<string, number> }; nest?: unknown };
+    old.garden.upgrades = { duenger: 2, nistmaterial: 4, laubdecke: 1 };
+    delete old.nest;
+    const meta = normalizeMeta(old as never);
+    expect(meta.garden.upgrades).toEqual({ duenger: 2 });
+    expect(meta.nest.upgrades).toEqual({ nistmaterial: 4, laubdecke: 1 });
   });
 });
 

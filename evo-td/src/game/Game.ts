@@ -27,9 +27,12 @@ import { updateProjectiles } from './systems/ProjectileSystem';
 import { updateStatuses } from './systems/StatusSystem';
 import { updateWaves } from './systems/WaveSystem';
 import { canRelocate, relocateCharges, relocateCost, relocateTower } from './systems/RelocateSystem';
-import { buyItemForTower, buyUpgrade } from './systems/ShopSystem';
-import type { ItemQuality } from '../data/items';
-import type { ModifierKind } from '../data/upgrades';
+import { buyUpgrade, upgradePrice } from './systems/ShopSystem';
+import { UPGRADE_DEFS, upgradeCost, type ModifierKind } from '../data/upgrades';
+import { META_UPGRADE_DEFS } from '../data/meta';
+import { executeBulk } from './systems/BulkBuy';
+import { metaLevel, metaUpgradeCostAt, metaUpgradePrice } from './systems/MetaSystem';
+import { discardItem, mergeAll, mergeItem, toggleEquip } from './systems/ItemSystem';
 
 export class Game {
   readonly bus = new EventBus<GameEvents>();
@@ -59,7 +62,7 @@ export class Game {
     for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused'] as const) this.bus.on(event, record);
     for (const tower of this.state.towers) recordSpecies(this.meta, tower.defId, tower.level, tower.prestige);
     const clear = (): void => this.invalidateStats();
-    for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused', 'towerRelocated', 'upgradeBought', 'itemObtained'] as const) {
+    for (const event of ['towerBuilt', 'towerEvolved', 'towerLevelUp', 'towerFused', 'towerRelocated', 'upgradeBought', 'itemFound'] as const) {
       this.bus.on(event, clear);
     }
   }
@@ -176,10 +179,38 @@ export class Game {
     return buyUpgrade(this.ctx, kind);
   }
 
-  /** Item direkt für einen Turm kaufen. */
-  buyItemFor(towerId: number, quality: ItemQuality): boolean {
-    const tower = this.state.towers.find((t) => t.id === towerId);
-    return !!tower && buyItemForTower(this.ctx, tower, quality) !== undefined;
+  /** Kauft so viele Stufen, wie die Mengenwahl (×1/×10/×100/Max) vorgibt. */
+  buyUpgradeBulk(kind: ModifierKind): number {
+    if (this.state.gameOver) return 0;
+    const def = UPGRADE_DEFS[kind];
+    return executeBulk(this.meta.buyAmount, this.state.upgrades[kind], Infinity, (l) => upgradeCost(def, l), this.state.gold, () => this.buyUpgrade(kind));
+  }
+
+  /** Preis der nächsten Stufe (für Anzeigen). */
+  upgradePrice(kind: ModifierKind): number {
+    return upgradePrice(this.ctx, kind);
+  }
+
+  // Items (global, über alle Runs) ------------------------------------------
+
+  toggleEquip(itemId: number): boolean {
+    this.invalidateStats();
+    return toggleEquip(this.meta, itemId);
+  }
+
+  mergeItem(itemId: number): boolean {
+    this.invalidateStats();
+    return mergeItem(this.meta, itemId);
+  }
+
+  mergeAllItems(): number {
+    this.invalidateStats();
+    return mergeAll(this.meta);
+  }
+
+  discardItem(itemId: number): boolean {
+    this.invalidateStats();
+    return discardItem(this.meta, itemId);
   }
 
   /** Debug/Test-Helfer: erzwingt eine Evolution. */
@@ -236,6 +267,15 @@ export class Game {
   buyMetaUpgrade(id: MetaUpgradeId): boolean {
     this.invalidateStats();
     return buyMetaUpgrade(this.meta, id);
+  }
+
+  /** Mehrfachkauf von Artefakt-Stufen nach der Mengenwahl. */
+  buyMetaUpgradeBulk(id: MetaUpgradeId): number {
+    if (metaUpgradePrice(this.meta, id) === undefined) return 0;
+    this.invalidateStats();
+    return executeBulk(this.meta.buyAmount, metaLevel(this.meta, id), META_UPGRADE_DEFS[id].maxLevel, (l) => metaUpgradeCostAt(id, l), this.meta.dna, () =>
+      buyMetaUpgrade(this.meta, id),
+    );
   }
 
   unlockArtifact(id: MetaUpgradeId): boolean {

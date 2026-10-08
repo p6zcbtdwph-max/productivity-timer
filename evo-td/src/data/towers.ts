@@ -769,5 +769,5 @@ export const UNLOCK_FROM_TIER = 2;
 export function unlockXp(id: TowerId): number {
   const tier = getTowerDef(id).tier;
   if (tier < UNLOCK_FROM_TIER) return 0;
-  return Math.round(300 * 5 ** (tier - UNLOCK_FROM_TIER));
+  return Math.round(1500 * 10 ** (tier - UNLOCK_FROM_TIER));
 }

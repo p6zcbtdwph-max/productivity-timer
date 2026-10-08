@@ -67,13 +67,13 @@ describe('Arten freischalten (über Kompendium-XP)', () => {
     meta.dna = 1_000_000; // DNA hilft nicht
     expect(isUnlocked(meta, 'wurm')).toBe(true);
     expect(isUnlocked(meta, 'schnecke')).toBe(false);
-    expect(unlockProgress(meta, 'schnecke')).toEqual({ parent: 'wurm', xp: 0, need: 300 });
-    const unlocked = addSpeciesXp(meta, 'wurm', 300);
+    expect(unlockProgress(meta, 'schnecke')).toEqual({ parent: 'wurm', xp: 0, need: 1500 });
+    const unlocked = addSpeciesXp(meta, 'wurm', 1500);
     expect(unlocked).toEqual(expect.arrayContaining([...childrenOf('wurm')]));
     expect(isUnlocked(meta, 'schnecke')).toBe(true);
     expect(meta.dna).toBe(1_000_000);
     expect(addSpeciesXp(meta, 'wurm', 1000)).toEqual([]); // nur einmal gemeldet
-    expect(speciesXp(meta, 'wurm')).toBe(1300);
+    expect(speciesXp(meta, 'wurm')).toBe(2500);
   });
 
   it('XP von Türmen zählen im Kompendium und melden Freischaltungen', () => {
@@ -88,7 +88,7 @@ describe('Arten freischalten (über Kompendium-XP)', () => {
       expect(by).toBe('wurm');
       seen.push(id);
     });
-    grantXp(game.ctx, tower, 299);
+    grantXp(game.ctx, tower, 1499);
     expect(seen).toEqual([]);
     grantXp(game.ctx, tower, 1);
     expect(seen.sort()).toEqual([...childrenOf('wurm')].sort());

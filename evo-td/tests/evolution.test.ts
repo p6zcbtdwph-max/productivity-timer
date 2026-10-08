@@ -4,8 +4,10 @@ import { START_MAP } from '../src/data/map';
 import { Game } from '../src/game/Game';
 import { createInitialState } from '../src/game/GameState';
 import { createInitialMeta } from '../src/game/MetaState';
-import { evolutionChance } from '../src/game/systems/EvolutionSystem';
-import { BASE_MAX_TIER, BASE_TOWER_IDS, childrenOf, getTowerDef } from '../src/data/towers';
+import { evolutionChance, unlockedChildren } from '../src/game/systems/EvolutionSystem';
+import { isUnlocked } from '../src/game/systems/MetaSystem';
+import { speciesXp } from '../src/game/systems/CompendiumSystem';
+import { BASE_MAX_TIER, BASE_TOWER_IDS, childrenOf, getTowerDef, unlockXp } from '../src/data/towers';
 
 describe('Evolution', () => {
   it('Chance steigt mit Level und gleichartigen Türmen, bleibt aber gedeckelt', () => {
@@ -16,14 +18,21 @@ describe('Evolution', () => {
     expect(evolutionChance(1000, 1000)).toBe(BALANCE.evolution.maxChance);
   });
 
-  it('ohne Freischaltung bleibt es bei Tier 1', () => {
+  it('wählt nur freigeschaltete Nachfahren (Tier 2 erst nach genug Eltern-XP)', () => {
     const game = new Game(START_MAP, createInitialMeta(), createInitialState(9));
+    expect(unlockedChildren(game.ctx, 'wurm')).toEqual([]);
     game.state.gold = 10_000;
     const tower = game.build(0);
     if (!tower) throw new Error('Bau fehlgeschlagen');
     tower.level = 500;
-    for (let i = 0; i < 60 * 120; i++) game.update(BALANCE.stepSeconds);
-    expect(getTowerDef(tower.defId).tier).toBe(1);
+    let evolutions = 0;
+    game.bus.on('towerEvolved', ({ from, to }) => {
+      evolutions++;
+      expect(isUnlocked(game.meta, to)).toBe(true);
+      if (getTowerDef(to).tier >= 2) expect(speciesXp(game.meta, from)).toBeGreaterThanOrEqual(unlockXp(to));
+    });
+    for (let i = 0; i < 60 * 600; i++) game.update(BALANCE.stepSeconds);
+    expect(evolutions).toBeGreaterThan(0);
   });
 
   it('ein gesperrter Turm entwickelt sich nie, ein freier irgendwann', () => {
@@ -37,7 +46,7 @@ describe('Evolution', () => {
     locked.level = 200;
     free.level = 200;
 
-    for (let i = 0; i < 60 * 60; i++) game.update(BALANCE.stepSeconds);
+    for (let i = 0; i < 60 * 600; i++) game.update(BALANCE.stepSeconds);
 
     expect(locked.defId).toBe('einzeller');
     expect(free.defId).not.toBe('einzeller');

@@ -4,10 +4,12 @@
  *
  * - In einer Kammer lebt ein gekauftes Tier und entwickelt sich zufällig zu
  *   freigeschalteten Nachfahren. Höhere Tiers brauchen länger.
- * - Im Revier einer Karte bringt ein Tier DNA pro Stunde: ×2 je Tier und
+ * - Im Revier einer Karte legt ein Tier Eier: ×2 je Tier und
  *   ×(1 + Bestwelle der Karte / 50).
+ * Kammern und Ausbrüten kosten Eier.
  */
 import { BALANCE } from '../../config/balance';
+import { NEST } from '../../data/nest';
 import { Rng } from '../../core/Rng';
 import { MAPS } from '../../data/map';
 import { getTowerDef, ROOT_TOWER, type TowerId } from '../../data/towers';
@@ -23,14 +25,14 @@ const P = BALANCE.passive;
 
 export function chamberUnlockCost(meta: MetaState): number | undefined {
   const n = meta.passive.chambersUnlocked;
-  if (n >= P.maxChambers) return undefined;
-  return Math.round(P.chamberBaseCost * P.chamberGrowth ** n);
+  if (n >= NEST.maxChambers) return undefined;
+  return Math.round(NEST.chamberBaseCost * NEST.chamberGrowth ** Math.max(0, n - NEST.startChambers));
 }
 
 export function unlockChamber(meta: MetaState): boolean {
   const cost = chamberUnlockCost(meta);
-  if (cost === undefined || meta.dna < cost) return false;
-  meta.dna -= cost;
+  if (cost === undefined || meta.eggs < cost) return false;
+  meta.eggs -= cost;
   meta.passive.chambersUnlocked++;
   return true;
 }
@@ -44,15 +46,16 @@ export function freeChamber(meta: MetaState): number | undefined {
   return undefined;
 }
 
+/** Eier, die das Ausbrüten des nächsten Einzellers kostet. */
 export function animalCost(meta: MetaState): number {
-  return Math.round(P.animalBaseCost * P.animalCostGrowth ** meta.passive.animalsBought);
+  return Math.round(NEST.hatchBaseCost * NEST.hatchGrowth ** meta.passive.animalsBought);
 }
 
-/** Kauft einen Einzeller in eine freie Kammer. */
+/** Brütet ein Ei in einer freien Kammer aus: ein Einzeller schlüpft. */
 export function buyAnimal(meta: MetaState, chamber: number): PassiveAnimal | undefined {
   const cost = animalCost(meta);
-  if (chamber >= meta.passive.chambersUnlocked || animalInChamber(meta, chamber) || meta.dna < cost) return undefined;
-  meta.dna -= cost;
+  if (chamber >= meta.passive.chambersUnlocked || animalInChamber(meta, chamber) || meta.eggs < cost) return undefined;
+  meta.eggs -= cost;
   meta.passive.animalsBought++;
   const animal: PassiveAnimal = { id: meta.passive.nextAnimalId++, defId: ROOT_TOWER, chamber, mapId: null, evolutionLocked: false };
   meta.passive.animals.push(animal);
@@ -110,16 +113,16 @@ export function returnToChamber(meta: MetaState, animalId: number): boolean {
   return true;
 }
 
-/** DNA pro Stunde eines Tiers im Revier. */
-export function animalDnaPerHour(meta: MetaState, animal: PassiveAnimal): number {
+/** Eier pro Stunde eines Tiers im Revier. */
+export function animalEggsPerHour(meta: MetaState, animal: PassiveAnimal): number {
   if (!animal.mapId) return 0;
   const tier = getTowerDef(animal.defId).tier;
   const mapFactor = 1 + bestWaveOn(meta, animal.mapId) / 50;
-  return P.dnaPerHour * 2 ** tier * mapFactor * metaValues(meta).passiveDnaMult;
+  return NEST.eggsPerHour * 2 ** tier * mapFactor * metaValues(meta).passiveEggMult;
 }
 
-export function totalDnaPerHour(meta: MetaState): number {
-  return meta.passive.animals.reduce((sum, a) => sum + animalDnaPerHour(meta, a), 0);
+export function totalEggsPerHour(meta: MetaState): number {
+  return meta.passive.animals.reduce((sum, a) => sum + animalEggsPerHour(meta, a), 0);
 }
 
 // --- Echtzeit-Abrechnung -------------------------------------------------------
@@ -128,7 +131,7 @@ export interface PassiveReport {
   seconds: number;
   /** Abgeschnittene Zeit über der Offline-Obergrenze. */
   cappedSeconds: number;
-  dna: number;
+  eggs: number;
   evolutions: { animalId: number; from: TowerId; to: TowerId }[];
   garden: GardenReport;
 }
@@ -144,18 +147,17 @@ export function tickPassive(meta: MetaState, nowMs: number): PassiveReport {
   passive.lastTick = nowMs;
   const cap = metaValues(meta).offlineCapSeconds;
   const seconds = Math.min(raw, cap);
-  const report: PassiveReport = { seconds, cappedSeconds: raw - seconds, dna: 0, evolutions: [], garden: { resin: 0, levelUps: [] } };
+  const report: PassiveReport = { seconds, cappedSeconds: raw - seconds, eggs: 0, evolutions: [], garden: { resin: 0, levelUps: [] } };
   if (seconds <= 0) return report;
   report.garden = tickGarden(meta, seconds);
 
-  // DNA aus Revieren (mit den Werten vom Beginn des Zeitraums)
-  const earned = (totalDnaPerHour(meta) * seconds) / 3600 + passive.dnaFraction;
+  // Eier aus Revieren (mit den Werten vom Beginn des Zeitraums)
+  const earned = (totalEggsPerHour(meta) * seconds) / 3600 + (passive.eggFraction ?? 0);
   const whole = Math.floor(earned);
-  passive.dnaFraction = earned - whole;
-  meta.dna += whole;
-  meta.totalDnaEarned += whole;
-  passive.dnaEarned += whole;
-  report.dna = whole;
+  passive.eggFraction = earned - whole;
+  meta.eggs += whole;
+  passive.eggsEarned = (passive.eggsEarned ?? 0) + whole;
+  report.eggs = whole;
 
   // Evolutionen in den Kammern
   const rng = new Rng(passive.rngState);

@@ -27,10 +27,10 @@ export class EventLog {
     });
     game.bus.on('towerRelocated', ({ tower }) => this.push(`🚚 ${getTowerDef(tower.defId).name} verlegt`));
     game.bus.on('upgradeBought', ({ kind, level }) => this.push(`Upgrade ${UPGRADE_DEFS[kind].name} auf Stufe ${level}`));
-    game.bus.on('itemObtained', ({ item, boughtQuality, tower }) => {
-      const lucky = item.quality !== boughtQuality ? ' (Glück: aufgewertet!)' : '';
-      this.push(`🎁 ${getTowerDef(tower.defId).name}: ${describeItem(item)}${lucky}`, item.quality === 'legendaer' ? 'evo' : '');
+    game.bus.on('itemFound', ({ item, wave }) => {
+      this.push(`🎁 Item gefunden (Welle ${wave}): ${describeItem(item)}`, 'evo');
     });
+    game.bus.on('eggFound', ({ wave }) => this.push(`🥚 Ein Ei gefunden (Welle ${wave})`, 'evo'));
     game.bus.on('runEnded', ({ report }) => {
       this.push(`🧬 Run beendet in Welle ${report.wave}: +${report.total} DNA`, 'evo');
       if (report.newMilestones > 0) this.push(`🏆 Neuer Karten-Erfolg: +${report.newMilestones * 10} % Schaden`, 'evo');

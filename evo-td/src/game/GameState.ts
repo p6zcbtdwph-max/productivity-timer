@@ -77,8 +77,6 @@ export interface GameState {
   autoBuild: boolean;
   /** Stufen der globalen Upgrades. */
   upgrades: Record<ModifierKind, number>;
-  /** Anzahl bisher gekaufter Items (Preissteigerung). */
-  itemPurchases: number;
   /** Verbrauchte Verlegungen (verfügbar = floor(welle / wavesPerCharge) - verbraucht). */
   relocatesUsed: number;
   gameOver: boolean;
@@ -121,7 +119,6 @@ export function createInitialState(
     discovered: ['einzeller'],
     autoBuild: false,
     upgrades: { damage: 0, fireRate: 0, range: 0, evolution: 0, secondary: 0, passive: 0 },
-    itemPurchases: 0,
     relocatesUsed: 0,
     gameOver: false,
     stats: { kills: 0, evolutions: 0, fusions: 0, goldEarned: 0 },

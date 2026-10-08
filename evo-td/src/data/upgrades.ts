@@ -50,7 +50,7 @@ export const UPGRADE_DEFS: Readonly<Record<ModifierKind, UpgradeDef>> = {
     id: 'evolution',
     name: 'Evolutionschance',
     description: 'Jeder Evolutionswurf gelingt häufiger.',
-    perLevel: 0.004,
+    perLevel: 0.001,
     baseCost: 100,
     costGrowth: 1.6,
   },

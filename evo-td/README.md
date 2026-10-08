@@ -18,21 +18,29 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
 
 - Du baust ausschließlich **Einzeller** (jeder weitere wird teurer).
 - Türme sammeln XP durch Schaden und Kills und steigen im Level.
-- Alle 2 Sekunden würfelt jeder Turm auf **Evolution**. Die Chance steigt mit Level, Anzahl
-  gleichartiger Türme, Prestige und Upgrades. **Ab Tier 2 muss jede Art freigeschaltet
-  sein**, sonst steht sie nicht zur Wahl. Freigeschaltet wird über **XP im Kompendium**: Die XP
-  aller Türme einer Art zählen über alle Runs; hat die Elternart `300 × 5^(Tier − 2)` XP gesammelt,
-  wird das Kind frei (Tier 2: 300, Tier 3: 1.500, Tier 4: 7.500 …). Fortschritt im Stammbaum.
+- Alle 2 Sekunden würfelt jeder Turm auf **Evolution**. Die Chance ist klein (Grund 0,4 %,
+  höchstens 5 % je Wurf) und steigt mit Level, Anzahl gleichartiger Türme, Prestige und Upgrades.
+  **Ab Tier 2 muss jede Art freigeschaltet sein**, sonst steht sie nicht zur Wahl. Freigeschaltet
+  wird über **XP im Kompendium**: Die XP aller Türme einer Art zählen über alle Runs; hat die
+  Elternart `1.500 × 10^(Tier − 2)` XP gesammelt, wird das Kind frei (Tier 2: 1.500, Tier 3: 15.000,
+  Tier 4: 150.000, Mutationen ab 1,5 Mio.). Fortschritt im Stammbaum.
 - **Jede Art hat genau einen Bonus.** Bei einer Evolution bleiben die Boni erhalten:
   eigener Bonus 100 %, Vorfahren 50 %, Geschwister 25 %, direkt angrenzende Türme 25 %.
 - **Prestige durch Fusion** (`F`): zwei gleiche Türme gleicher Prestige-Stufe → ein Turm mit
   Prestige +1. **Verlegen** (`V`): eine Verlegung je 5 Wellen, kostet Gold.
 - **Gold** fließt in neue Einzeller (Kosten des nächsten Turms stehen immer im HUD und beim
-  Überfahren eines freien Platzes), Verlegungen, globale Upgrades für alle Türme und **Items**.
-- **Items** kauft man direkt am Turm (Turm anklicken): Bronze bis Platin, Kategorie zufällig,
-  verkettete Glücks-Aufwertung bis Legendär. **Höchstens 3 Items je Turm** (Artefakt Beutel
-  gibt spät mehr). Items wirken nur auf ihren Turm, bleiben bei Evolution erhalten und wandern
-  bei einer Fusion mit, soweit Platz ist.
+  Überfahren eines freien Platzes), Verlegungen und globale Upgrades für alle Türme.
+- **Items** (Reiter "Items") gibt es nicht für Gold: Man **findet** sie sehr selten nach aktiv
+  geschafften Wellen (ab Welle 3: 0,8 %, Bosswellen 6 %). Qualität verkettet gewürfelt
+  (Bronze 75 %, … Legendär < 0,02 %). Items bleiben über alle Runs; **ausgerüstet wirken sie als
+  Perks auf alle Türme** (Topf "Ausrüstung"). Am Anfang **1 Platz**.
+  - **Verschmelzen** (ab Artefakt Perlmuschel): zwei gleiche Items (Art, Qualität, Stufe) → eines
+    eine Stufe höher, Wirkung ×1,8. Unendlich stapelbar.
+  - Artefakte: Beutel (+1 Platz, max. 8), Elsternnest (Fundchance), Pfauenfeder (Stärke),
+    Vierblättriger Klee (höhere Qualität).
+- **Mehrfachkauf**: Jeder Shop hat ×1 / ×10 / ×100 / Max. Skalierbare Verbesserungen haben
+  **keine Obergrenze**; begrenzt bleibt nur, was eine natürliche Grenze hat (Startleben,
+  Plätze, Offline-Stunden, Turmkosten-Wachstum, Grund-Evolutionschance, Verlegen).
 - **Roboter-Elemente** ab Welle 4: Titan-Kern (zweites Leben), Gold-Legierung, Plasma-Schild,
   Nanobots. Gegner-HP verdoppelt sich alle 5 Wellen, Bosse kosten 3 Leben.
 
@@ -43,11 +51,13 @@ irgendwann; was bleibt, ist DNA für den **Globalen Shop**.
   Bestwelle dieser Karte zählen voll**, bereits erreichte Wellen bringen 10 %.
 - **Artefakte** in fester Reihenfolge. Das nächste Artefakt braucht das vorige, eine Bestwelle
   und DNA; danach lässt es sich mit DNA weiter aufstufen. Reihenfolge (Bestwelle):
-  Goldener Kiesel (0), Ursuppe (10), Raubtierzahn (15), Schildkrötenpanzer (20),
-  **Instinkt** (25, Auto-Kauf im Run), Kolibriherz (30), Brutwärme (35), Fossil (40),
-  Revierstein (45), Zellkern (50), Bernstein (55), **Symbiose-Koralle** (60, Auto-Fusion),
-  Winterschlaf-Höhle (70), Vierblättriger Klee (75), Winterfell (85), Doppelhelix (90),
-  **Gedächtnis** (100, Auto-Kauf von Artefakt-Stufen am Run-Ende), Zugvogelfeder (125), Beutel (150).
+  Goldener Kiesel (0), Ursuppe (10), Raubtierzahn (15), Schildkrötenpanzer (20), **Beutel**
+  (22, Item-Plätze), **Instinkt** (25, Auto-Kauf im Run), **Elsternnest** (28, Item-Fundchance),
+  Kolibriherz (30), Brutwärme (35), Fossil (40), Revierstein (45), **Perlmuschel** (48, Items
+  verschmelzen), Zellkern (50), Bernstein (55, Eier aus Revieren), **Symbiose-Koralle** (60,
+  Auto-Fusion), **Pfauenfeder** (65, Item-Stärke), Winterschlaf-Höhle (70), Vierblättriger Klee
+  (75), Winterfell (85), Doppelhelix (90), **Gedächtnis** (100, Auto-Kauf von Artefakt-Stufen am
+  Run-Ende), Zugvogelfeder (125).
 - **Auto-Modi**: Instinkt (Schalter im Shop) kauft **einmal pro Welle** Run-Upgrades, und nur,
   wenn gerade kein neuer Turm bezahlbar ist. Er schaut, wie weit die Roboter in der letzten Welle
   kamen: über die Hälfte des Weges oder ein Durchbruch → **Gefahr**, Schaden und Feuerrate zuerst;
@@ -73,7 +83,7 @@ Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerech
   - Land: Frosch, Echse, Schlange, Spitzmaus, Igel, Wolf, Elefant, Affe, Skorpion, Spinne, Käfer
   - Erde: Wurm, Tausendfüßer, Skolopender, Saftkugler, Maulwurf
   - Luft: Insekt, Libelle, Biene, Vogel, Fledermaus. **Luft-Arten haben immer globale Reichweite**
-    (sie fliegen und erreichen jedes Ziel auf der Karte), machen dafür aber nur 70 % Schaden
+    (sie fliegen und erreichen jedes Ziel auf der Karte), machen dafür aber nur 35 % Schaden
     (Faktor "Flug", einstellbar in `src/data/biomes.ts`).
 - **Hindernisse** blockieren Bauplätze und lassen sich per Klick räumen (1,5 × Turmkosten).
 - **Anhöhen / Kräne**: ×1,2 Reichweite.
@@ -82,21 +92,27 @@ Gewechselt wird im Reiter "Global"; der laufende Run wird dabei mit DNA abgerech
   Das HUD zeigt die Resistenzen und die Wellen bis zur nächsten Anpassung.
 - Reviere und Erfolge gelten je Karte; Tiere lassen sich nur freigeschalteten Karten zuweisen.
 
-## Passiv-Modus: Evolutionskammern, Reviere, Winterruhe
+## Passiv-Modus: Eier, Evolutionskammern, Reviere, Winterruhe
 
-- **Evolutionskammern** (Reiter "Kammern"): Kammern mit DNA freischalten (50, dann ×4, maximal 8).
-  In eine Kammer kauft man einen Einzeller für DNA (Preis steigt je Kauf). Er entwickelt sich
+- **Eier** (🥚) sind die Währung des Passiv-Modus. Man startet mit 1 Ei und 1 Kammer. Weitere
+  Eier findet man so selten wie Samen (ab Welle 5: 0,3 % je aktiv geschaffter Welle, Bosswellen
+  3 %), und Tiere in Revieren legen welche.
+- **Evolutionskammern** (Reiter "Kammern", Unter-Reiter Kammern | Reviere | Nest-Shop): weitere
+  Kammern für Eier (5, dann ×3, maximal 8). In einer Kammer brütet man ein Ei aus (1 Ei, Preis
+  steigt je Kauf um ×1,35); ein Einzeller schlüpft und entwickelt sich
   in Echtzeit, auch bei geschlossenem Spiel, zufällig zu **freigeschalteten** Nachfahren.
   Tier 0 entwickelt sich im Schnitt 2× pro Stunde, jedes Tier halbiert das Tempo. Evolution
   pro Kammer stoppbar.
-- **Reviere**: Tiere aus der Kammer weist man einer Karte zu. Dort bringen sie DNA pro Stunde:
-  `0,5 × 2^Tier × (1 + Bestwelle der Karte / 50)`. Ein Platz je Karte, mehr per Artefakt.
+- **Reviere**: Tiere aus der Kammer weist man einer Karte zu. Dort legen sie Eier (keine DNA):
+  `0,05 × 2^Tier × (1 + Bestwelle der Karte / 50)` pro Stunde. Ein Platz je Karte, mehr per Artefakt.
+- **Nest-Shop** (für Eier): Nistmaterial (+10 % Kammer-Tempo), Wildwechsel (+10 % Eier aus
+  Revieren), Brutpflege (+10 % Eier-Fundchance), alle ohne Obergrenze; Laubdecke (+1 h Offline, max. 8).
 - **Winterruhe**: Kehrst du nach mindestens einer Minute zurück (Tab oder neu geöffnet), wird
   der laufende Run mit 50 % Kraft nachgerechnet. Bricht ein Roboter durch, wird auf den Anfang
   dieser Welle zurückgesetzt und angehalten: offline stirbt der Run nie. Obergrenze 8 Stunden.
-  Ein Bericht zeigt DNA, Kammer-Evolutionen, Wellen, Gold und wo die Wand war.
+  Ein Bericht zeigt Eier, Kammer-Evolutionen, Wellen, Gold und wo die Wand war.
 - **Artefakte dazu**: Brutwärme (Kammer-Tempo), Revierstein (+Revierplätze), Bernstein
-  (+passive DNA), Winterschlaf-Höhle (+2 h Offline je Stufe), Winterfell (+5 % Offline-Kraft je Stufe).
+  (+Eier aus Revieren), Winterschlaf-Höhle (+2 h Offline je Stufe), Winterfell (+5 % Offline-Kraft je Stufe).
 - Entwickler-Panel: "Zeit +1 h" simuliert eine Stunde Abwesenheit.
 
 ## Garten
@@ -112,21 +128,11 @@ Reiter "Garten": Bäume aus der Pflanzen-Evolution wachsen in Töpfen.
   (Level 10 nach ~2 Tagen, Level 30 nach ~3 Wochen), maximal Level 100.
 - **Boni** steigen mit Level und Seltenheit (×1 / ×1,5 / ×2 / ×3). Schaden, Feuerrate und
   Reichweite als eigener Topf "Garten", der Rest wirkt wie Kompendium-Boni.
-- **Harz** (🍯): Währung für Garten und Passiv-Modus, `0,2 × Level × Seltenheit` pro Stunde und Baum.
-- **Pflege** (für Harz, mit Stufen):
-
-  | Pflege | Wirkung je Stufe | Max |
-  |---|---|---|
-  | Dünger | Bäume wachsen +15 % schneller | 20 |
-  | Kompost | Baum-Boni +10 % | 30 |
-  | Harzkanäle | +15 % Harz | 20 |
-  | Vogelfutter | +15 % Samenchance | 15 |
-  | Veredelung | seltene Samen +15 % wahrscheinlicher | 15 |
-  | Nistmaterial | Evolutionskammern +10 % schneller | 20 |
-  | Wildwechsel | +10 % DNA aus Revieren | 20 |
-  | Laubdecke | +1 h Offline-Obergrenze | 8 |
-
-  Die Passiv-Pflege wirkt zusätzlich zu den Artefakten (multiplikativ bzw. additiv bei Stunden).
+- **Harz** (🍯): Währung für den Garten, `0,2 × Level × Seltenheit` pro Stunde und Baum.
+- **Pflege** (Unter-Reiter "Pflege", für Harz, alle ohne Obergrenze): Dünger (+15 % Wachstum),
+  Kompost (+10 % Baum-Boni), Harzkanäle (+15 % Harz), Vogelfutter (+15 % Samenchance),
+  Veredelung (seltene Samen +15 % wahrscheinlicher). Die frühere Passiv-Pflege ist in den
+  Nest-Shop umgezogen (alte Stände werden übernommen).
 
 | Baum | Seltenheit | Bonus je Level |
 |---|---|---|
@@ -143,7 +149,9 @@ Entwickler-Panel: "+500 Harz", "+5 Samen" und "Garten +24 h".
 
 ## Kompendium
 
-Reiter "Kompendium": jede Art, die du je hattest (Run, Winterruhe oder Evolutionskammer), mit
+Reiter "Kompendium" mit Unter-Reitern **Boni** (Gesamtwirkung) und **Arten** (Übersicht als
+Karten je Tier; unbekannte Arten bleiben verdeckt, Mutationen erscheinen erst nach dem ersten
+Züchten): jede Art, die du je hattest (Run, Winterruhe oder Evolutionskammer), mit
 Rekord-Level und Rekord-Prestige. Jede Art gibt dauerhaft einen kleinen Bonus. Der Typ folgt aus
 ihrer Eigenschaft:
 
@@ -177,7 +185,7 @@ Kampfwerte werden aus **Tier** (Schaden ×2 pro Tier) und **Archetyp** abgeleite
 ```
 Schaden = Basis(Tier, Archetyp)
         × (1 + Σ Art-Boni)          Topf "Art": eigener, Vorfahren-, Geschwister-, Nachbar-Boni (additiv)
-        × (1 + Σ Ausrüstung)        Topf "Ausrüstung": Run-Upgrades + Items des Turms (additiv)
+        × (1 + Σ Ausrüstung)        Topf "Ausrüstung": Run-Upgrades + ausgerüstete Items (additiv)
         × Π Mutations-Faktoren      reine Multiplikatoren (Titan ×1.25 ...), stapeln multiplikativ
         × (1 + 0.10 · gleiche Nachbarn)  Synergie: angrenzende Türme derselben Art
         × (1 + 0.75 · Prestige)
@@ -216,7 +224,11 @@ npm run dev
 
 3. `http://localhost:5173` im Browser öffnen.
 
-**Entwickler-Panel**: Taste `D`. Gold und DNA geben, Wellen überspringen, Bestwelle erhöhen,
+**Oberfläche**: Reiter Shop, Items, Stammbaum, Global, Kammern, Kompendium, Garten, Protokoll;
+größere Reiter sind in Unter-Reiter geteilt. Das Turm-Panel erscheint nur, wenn ein Turm
+angeklickt ist (✕ oder `Esc` schließt es).
+
+**Entwickler-Panel**: Taste `D`. Gold, DNA, Eier und Items geben, Wellen überspringen, Bestwelle erhöhen,
 Arten und Artefakte freischalten, 8×/16× Tempo, alles löschen. In der Browser-Konsole ist das
 Spiel als `window.evoTd.game` erreichbar.
 
@@ -246,7 +258,7 @@ src/
     systems/               Wave, Movement, Status, Element, Combat, Projectile, Damage, Level, Stats,
                            Modifier, Meta, Evolution, Build, Fusion, Relocate, Shop, Auto, Compendium, Garden
   render/CanvasRenderer.ts Darstellung (liest nur)
-  ui/                      HUD, Tabs, Turm-Panel, Shop (Upgrades, Auto-Kauf), Stammbaum (XP-Fortschritt), Global, Protokoll
+  ui/                      HUD, Tabs + Unter-Reiter (widgets), Turm-Panel, Shop, Items, Stammbaum, Global, Kammern, Kompendium, Garten, Protokoll
   persistence/             SaveManager (localStorage, versioniert; je ein Key für Run und Meta)
 tests/                     Vitest
 ```

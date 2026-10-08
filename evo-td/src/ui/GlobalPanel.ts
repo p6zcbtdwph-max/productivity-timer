@@ -10,9 +10,12 @@ import {
   isMapUnlocked,
   canUnlockArtifact,
   metaLevel,
-  metaUpgradePrice,
+  metaUpgradeCostAt,
   metaValues,
 } from '../game/systems/MetaSystem';
+import { bulkButton, buyAmountBar, levelLabel, SubTabs } from './widgets';
+
+type GlobalTab = 'artefakte' | 'karten' | 'run';
 import { $, el, formatNumber } from './dom';
 import { askConfirm } from './Confirm';
 
@@ -24,6 +27,7 @@ const TEASER_COUNT = 1;
 export class GlobalPanel {
   private readonly root = $('#global-panel');
   private lastKey = '';
+  private readonly sub = new SubTabs<GlobalTab>('global', [['artefakte', 'Artefakte'], ['karten', 'Karten & Erfolge'], ['run', 'Run']], () => this.invalidate());
 
   constructor(
     private readonly game: Game,
@@ -38,7 +42,7 @@ export class GlobalPanel {
   render(): void {
     const { meta } = this.game;
     const preview = this.game.dnaPreview();
-    const key = JSON.stringify([meta.dna, meta.bestWaveByMap, meta.upgrades, meta.autoArtifacts, meta.autoFusionEnabled, preview.total, this.game.map.id]);
+    const key = JSON.stringify([this.sub.active, meta.buyAmount, meta.dna, meta.bestWaveByMap, meta.upgrades, meta.autoArtifacts, meta.autoFusionEnabled, preview.total, this.game.map.id]);
     if (key === this.lastKey) return;
     this.lastKey = key;
     const values = metaValues(meta);
@@ -132,20 +136,27 @@ export class GlobalPanel {
 
       // owned
       const level = metaLevel(meta, def.id);
-      const price = metaUpgradePrice(meta, def.id);
       const controls: (Node | string)[] = [];
-      if (price === undefined) {
-        controls.push(el('span', { className: 'muted small' }, [def.maxLevel === 1 ? 'aktiv' : 'max']));
+      if (def.maxLevel === 1) {
+        controls.push(el('span', { className: 'muted small' }, ['aktiv']));
       } else {
-        const button = el('button', { className: 'btn small', disabled: meta.dna < price }, [`${formatNumber(price)} 🧬`]);
-        button.addEventListener('click', () => {
-          this.game.buyMetaUpgrade(def.id);
-          this.invalidate();
-        });
-        controls.push(button);
+        controls.push(
+          bulkButton({
+            meta,
+            level,
+            maxLevel: def.maxLevel,
+            cost: (l) => metaUpgradeCostAt(def.id, l),
+            budget: meta.dna,
+            currency: '🧬',
+            onBuy: () => {
+              this.game.buyMetaUpgradeBulk(def.id);
+              this.invalidate();
+            },
+          }),
+        );
       }
       const row: (Node | string)[] = [
-        el('span', {}, [`${def.icon} ${def.name} `, el('span', { className: 'muted' }, [def.maxLevel > 1 ? `${level}/${def.maxLevel}` : ''])]),
+        el('span', {}, [`${def.icon} ${def.name} `, el('span', { className: 'muted' }, [def.maxLevel > 1 ? levelLabel(level, def.maxLevel) : ''])]),
         el('span', { className: 'row-controls' }, controls),
         el('span', { className: 'desc' }, [def.description]),
       ];
@@ -173,26 +184,33 @@ export class GlobalPanel {
       extras.push(el('label', { className: 'toggle' }, [box, ' Auto-Fusion aktiv']));
     }
 
+    const content: Node[] =
+      this.sub.active === 'artefakte'
+        ? [
+            el('p', { className: 'muted small' }, [
+              'Feste Reihenfolge: das nächste Artefakt braucht das vorige, eine Bestwelle und DNA. Skalierbare Artefakte haben keine Obergrenze.',
+            ]),
+            buyAmountBar(meta, () => this.invalidate()),
+            artifacts,
+            el('div', { className: 'actions' }, extras),
+          ]
+        : this.sub.active === 'karten'
+          ? [el('h3', {}, ['Karten']), maps, el('h3', {}, ['Erfolge']), achievements]
+          : [
+              el('p', {}, [
+                `Dieser Run: Welle ${preview.wave}. Neue Wellen bringen ${formatNumber(preview.fromNewWaves)} DNA, `,
+                `bereits erreichte nur ${formatNumber(preview.fromRepeatedWaves)}.`,
+              ]),
+              endButton,
+            ];
+
     this.root.replaceChildren(
       el('h2', {}, [`🧬 ${formatNumber(meta.dna)} DNA`]),
       el('p', { className: 'muted small' }, [
         `Bestwelle ${overallBestWave(meta)} · ${meta.runs} Runs · ${formatNumber(meta.totalDnaEarned)} DNA insgesamt`,
       ]),
-      el('p', {}, [
-        `Dieser Run: Welle ${preview.wave}. Neue Wellen bringen ${formatNumber(preview.fromNewWaves)} DNA, `,
-        `bereits erreichte nur ${formatNumber(preview.fromRepeatedWaves)}.`,
-      ]),
-      endButton,
-      el('h2', { style: 'margin-top:14px' }, ['Karten']),
-      maps,
-      el('h2', { style: 'margin-top:14px' }, ['Erfolge']),
-      achievements,
-      el('h2', { style: 'margin-top:14px' }, ['Artefakte']),
-      el('p', { className: 'muted small' }, [
-        'Feste Reihenfolge: das nächste Artefakt braucht das vorige, eine Bestwelle und DNA. Evolutionen schaltest du im Stammbaum frei.',
-      ]),
-      artifacts,
-      el('div', { className: 'actions' }, extras),
+      this.sub.element(),
+      ...content,
     );
   }
 }

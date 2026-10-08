@@ -15,6 +15,8 @@ import { metaValues } from './MetaSystem';
 import { adaptRobots } from './AdaptationSystem';
 import { runAutoUpgrades } from './AutoSystem';
 import { maybeDropSeed } from './GardenSystem';
+import { maybeDropItem } from './ItemSystem';
+import { maybeDropEgg } from './NestSystem';
 
 export interface SpawnOrder {
   defId: EnemyId;
@@ -115,6 +117,10 @@ export function onEnemyRemoved(ctx: GameContext): void {
     ctx.state.gold += bonus;
     ctx.state.stats.goldEarned += bonus;
     ctx.bus.emit('waveCleared', { wave: wave.current, bonus });
-    maybeDropSeed(ctx, wave.current, wave.current % BALANCE.waves.bossEvery === 0);
+    // Seltene Funde, nur beim aktiven Spielen.
+    const boss = wave.current % BALANCE.waves.bossEvery === 0;
+    maybeDropSeed(ctx, wave.current, boss);
+    maybeDropEgg(ctx, wave.current, boss);
+    maybeDropItem(ctx, wave.current, boss);
   }
 }

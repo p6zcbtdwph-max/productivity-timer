@@ -18,6 +18,7 @@
         <span class="hud-item" title="Verlegungen">🚚 <strong id="hud-relocates">0</strong></span>
         <span class="hud-item" title="DNA (Globaler Shop)">🧬 <strong id="hud-dna">0</strong></span>
         <span class="hud-item" title="Harz (Garten)">🍯 <strong id="hud-resin">0</strong></span>
+        <span class="hud-item" title="Eier (Kammern)">🥚 <strong id="hud-eggs">0</strong></span>
         <span class="hud-item hidden" id="hud-adapt" title="Roboter-Resistenzen (Roboterfabrik)"></span>
       </div>
       <div class="hud-group">
@@ -57,9 +58,12 @@
         </div>
       </section>
       <aside id="sidebar">
+        <section id="tower-card" class="hidden">
+          <div id="tower-panel" class="card"></div>
+        </section>
         <nav id="tabs">
-          <button class="tab active" data-tab="tower">Turm</button>
-          <button class="tab" data-tab="shop">Shop</button>
+          <button class="tab active" data-tab="shop">Shop</button>
+          <button class="tab" data-tab="items">Items</button>
           <button class="tab" data-tab="tree">Stammbaum</button>
           <button class="tab" data-tab="global">Global</button>
           <button class="tab" data-tab="chambers">Kammern</button>
@@ -67,11 +71,11 @@
           <button class="tab" data-tab="garden">Garten</button>
           <button class="tab" data-tab="log">Protokoll</button>
         </nav>
-        <section data-panel="tower">
-          <div id="tower-panel" class="card"></div>
-        </section>
-        <section data-panel="shop" class="hidden">
+        <section data-panel="shop">
           <div id="shop-panel" class="card"></div>
+        </section>
+        <section data-panel="items" class="hidden">
+          <div id="items-panel" class="card"></div>
         </section>
         <section data-panel="tree" class="hidden">
           <div id="tree-view" class="card"></div>

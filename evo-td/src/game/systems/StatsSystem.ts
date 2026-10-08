@@ -33,8 +33,6 @@ import { baseStatsFor, getTowerDef, lineageOf, siblingsOf, type Targeting, type 
 import type { Tower } from '../entities/Tower';
 import type { GameContext } from '../GameContext';
 import { levelMultiplier } from './LevelSystem';
-import { towerItemModifiers } from './ShopSystem';
-import type { Item } from '../../data/items';
 import { BIOME_BONUS, hasGlobalRange, speciesBiome } from '../../data/biomes';
 import { metaValues, type MetaValues } from './MetaSystem';
 import { globalModifiers, NO_MODIFIERS, type GlobalModifiers } from './ModifierSystem';
@@ -160,7 +158,7 @@ export function environmentFor(ctx: GameContext, tower: Pick<Tower, 'id' | 'slot
   const slotBiome = ctx.map.slotBiome[tower.slot] ?? null;
   return {
     neighbours: neighbourDefIds(ctx, tower),
-    modifiers: globalModifiers(ctx.state),
+    modifiers: globalModifiers(ctx.state, ctx.meta),
     meta: metaValues(ctx.meta),
     terrain: {
       biomeMatch: slotBiome !== null && slotBiome === speciesBiome(tower.defId),
@@ -195,16 +193,11 @@ export function twinCount(defId: TowerId, env: StatsEnvironment): number {
 }
 
 export function computeStats(
-  tower: Pick<Tower, 'defId' | 'level' | 'prestige'> & { items?: readonly Item[] },
-  envIn: StatsEnvironment = EMPTY_ENVIRONMENT,
+  tower: Pick<Tower, 'defId' | 'level' | 'prestige'>,
+  env: StatsEnvironment = EMPTY_ENVIRONMENT,
 ): EffectiveStats {
   const def = getTowerDef(tower.defId);
   const base = baseStatsFor(def.tier, def.archetype);
-  // Items wirken nur auf diesen Turm; "sekundäre Effekte" fließen in die Erb-Stärke.
-  const own = towerItemModifiers(tower.items);
-  const env: StatsEnvironment = own.secondary > 0
-    ? { ...envIn, modifiers: { ...envIn.modifiers, secondary: envIn.modifiers.secondary + own.secondary } }
-    : envIn;
   const level = levelMultiplier(tower.level);
   const p = BALANCE.prestige;
   const m = env.modifiers;
@@ -289,7 +282,7 @@ export function computeStats(
   const damageB = breakdown({
     base: base.damage,
     art: 1 + artDamage,
-    ausruestung: 1 + m.damage + own.damage,
+    ausruestung: 1 + m.damage,
     mutation: mutationDamage,
     synergie: 1 + syn.damagePerTwin * twins,
     prestige: 1 + p.damagePerLevel * tower.prestige,
@@ -304,7 +297,7 @@ export function computeStats(
   const fireRateB = breakdown({
     base: 1 / base.cooldown,
     art: 1 + artFireRate,
-    ausruestung: 1 + m.fireRate + own.fireRate,
+    ausruestung: 1 + m.fireRate,
     mutation: 1,
     synergie: 1 + syn.fireRatePerTwin * twins,
     prestige: 1 + p.fireRatePerLevel * tower.prestige,
@@ -319,7 +312,7 @@ export function computeStats(
   const rangeB = breakdown({
     base: base.range,
     art: 1 + artRange,
-    ausruestung: 1 + m.range + own.range,
+    ausruestung: 1 + m.range,
     mutation: 1,
     synergie: 1,
     prestige: 1 + p.rangePerLevel * tower.prestige,
@@ -348,8 +341,8 @@ export function computeStats(
     targets: 1 + Math.round(extraTargets),
     splashRadius,
     shieldBreaker: shieldBreaker + extra.shieldBreaker,
-    goldMultiplier: (1 + artGold) * (1 + m.passive + own.passive) * (1 + extra.gold),
-    xpMultiplier: (1 + artXp) * (1 + m.passive + own.passive) * (1 + extra.xp),
+    goldMultiplier: (1 + artGold) * (1 + m.passive) * (1 + extra.gold),
+    xpMultiplier: (1 + artXp) * (1 + m.passive) * (1 + extra.xp),
     onHit,
     targeting: def.targeting,
     breakdown: { damage: damageB, fireRate: fireRateB, range: rangeB },

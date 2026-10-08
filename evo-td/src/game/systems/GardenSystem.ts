@@ -66,9 +66,6 @@ export interface GardenUpgradeValues {
   resinMult: number;
   seedChanceMult: number;
   rarityLuck: number;
-  chamberSpeedMult: number;
-  territoryDnaMult: number;
-  offlineHours: number;
 }
 
 export function gardenUpgradeValues(meta: MetaState): GardenUpgradeValues {
@@ -79,9 +76,6 @@ export function gardenUpgradeValues(meta: MetaState): GardenUpgradeValues {
     resinMult: 1 + v('harzkanal'),
     seedChanceMult: 1 + v('vogelfutter'),
     rarityLuck: v('veredelung'),
-    chamberSpeedMult: 1 + v('nistmaterial'),
-    territoryDnaMult: 1 + v('wildwechsel'),
-    offlineHours: v('laubdecke'),
   };
 }
 
