@@ -10,6 +10,7 @@ import { normalizeMeta, type MetaState } from './game/MetaState';
 import { getTowerDef } from './data/towers';
 import { formatNumber } from './ui/dom';
 import { SaveManager } from './persistence/SaveManager';
+import { CloudSave, newer } from './persistence/CloudSave';
 import { CanvasRenderer } from './render/CanvasRenderer';
 import { $ } from './ui/dom';
 import { DevPanel } from './ui/DevPanel';
@@ -33,6 +34,16 @@ import { TreeView } from './ui/TreeView';
 const runSaves = new SaveManager<GameState>(BALANCE.persistence.runKey, BALANCE.persistence.runVersion);
 const metaSaves = new SaveManager<MetaState>(BALANCE.persistence.metaKey, BALANCE.persistence.metaVersion);
 const savedRun = runSaves.load();
+// Cloud-Stand (nur als claude.ai-Artefakt): der neuere von lokal und Cloud gewinnt.
+const cloud = await CloudSave.connect();
+const [cloudRun, cloudMeta] = cloud
+  ? await Promise.all([
+      cloud.load<GameState>('run', BALANCE.persistence.runVersion),
+      cloud.load<MetaState>('meta', BALANCE.persistence.metaVersion),
+    ])
+  : [undefined, undefined];
+const startRun = newer(runSaves.loadFile(), cloudRun)?.data;
+const startMeta = newer(metaSaves.loadFile(), cloudMeta)?.data;
 const game = new Game(getMap(savedRun?.mapId), normalizeMeta(metaSaves.load()), savedRun);
 
 const canvas = $<HTMLCanvasElement>('#game-canvas');
@@ -122,6 +133,8 @@ const loop = new GameLoop(
 const afterNewRun = (): void => {
   runSaves.clear();
   metaSaves.save(game.meta);
+  cloud?.save('meta', BALANCE.persistence.metaVersion, game.meta, { force: true });
+  cloud?.save('run', BALANCE.persistence.runVersion, game.state, { force: true });
   selectedTowerId = undefined;
   setAction(undefined);
   eventLog.clear();
@@ -154,7 +167,12 @@ const endRun = (): void => {
 const wipeAll = (): void => {
   runSaves.clear();
   metaSaves.clear();
-  location.reload();
+  // Cloud-Stand mit frischen Ständen überschreiben, dann neu laden.
+  const freshMeta = normalizeMeta(undefined);
+  cloud?.save('meta', BALANCE.persistence.metaVersion, freshMeta, { force: true });
+  game.reset();
+  cloud?.save('run', BALANCE.persistence.runVersion, game.state, { force: true });
+  setTimeout(() => location.reload(), 800);
 };
 
 const tabs = new Tabs();
@@ -284,12 +302,21 @@ game.bus.on('towerFused', ({ consumedId }) => {
 
 // --- Speichern --------------------------------------------------------------
 
-const saveAll = (): void => {
+/** Felder, die sich ständig ändern, lösen allein keinen Cloud-Schreibvorgang aus. */
+const metaVolatile = (m: MetaState): unknown => ({ ...m, lastSeen: 0, passive: { ...m.passive, lastTick: 0 } });
+
+let autosaves = 0;
+const saveAll = (force = false): void => {
   if (!game.state.gameOver) runSaves.save(game.state);
   metaSaves.save(game.meta);
+  // Cloud: höchstens alle 3 Autosaves (30 s), sofort beim Verlassen der Seite.
+  if (cloud && (force || ++autosaves % 3 === 0)) {
+    if (!game.state.gameOver) cloud.save('run', BALANCE.persistence.runVersion, game.state, { force });
+    cloud.save('meta', BALANCE.persistence.metaVersion, game.meta, { volatile: metaVolatile, force });
+  }
 };
-setInterval(saveAll, BALANCE.persistence.autosaveSeconds * 1000);
-window.addEventListener('beforeunload', saveAll);
+setInterval(() => saveAll(), BALANCE.persistence.autosaveSeconds * 1000);
+window.addEventListener('beforeunload', () => saveAll(true));
 
 // --- Winterruhe: Abwesenheit beim Start und beim Zurückkehren in den Tab ------
 
@@ -301,7 +328,7 @@ const offlineReport = new OfflineReport(game, loop, () => {
 const startedAwayFrom = game.meta.lastSeen;
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') void offlineReport.resume(game.meta.lastSeen);
-  else saveAll();
+  else saveAll(true);
 });
 
 loop.start();

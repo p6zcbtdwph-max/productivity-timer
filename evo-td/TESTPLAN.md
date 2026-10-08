@@ -6,6 +6,11 @@ danach mit Panel (`D`) die späten Features ansehen.
 
 ## 0. Starten
 
+Einfachster Weg: https://claude.ai/artifact/6N4xzURPckaHNcyuywSJw9 im Browser öffnen
+(eingeloggt bei claude.ai). Spielstand wird in der Cloud gesichert.
+
+Alternativ lokal:
+
 - [ ] Node.js LTS installiert (nodejs.org)
 - [ ] Im Terminal:
       `git clone https://github.com/p6zcbtdwph-max/productivity-timer.git`

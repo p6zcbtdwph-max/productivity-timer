@@ -11,6 +11,7 @@ import { BASE_TOWER_IDS, childrenOf, getTowerDef, type TowerId } from '../data/t
 import type { GameLoop } from '../core/GameLoop';
 import type { Game } from '../game/Game';
 import { $, el } from './dom';
+import { askConfirm } from './Confirm';
 
 export class DevPanel {
   private readonly root = $('#dev-panel');
@@ -108,7 +109,7 @@ export class DevPanel {
           document.dispatchEvent(new Event('visibilitychange'));
         }),
         this.button('Alles löschen', () => {
-          if (confirm('Run UND globalen Fortschritt (DNA, Artefakte, Freischaltungen) löschen?')) this.onWipe();
+          void askConfirm('Run UND globalen Fortschritt (DNA, Artefakte, Freischaltungen, Garten) löschen?', 'Alles löschen').then((ok) => ok && this.onWipe());
         }),
       ]),
       el('p', { className: 'muted small' }, [`Speicher-Keys: ${BALANCE.persistence.runKey}, ${BALANCE.persistence.metaKey}`]),

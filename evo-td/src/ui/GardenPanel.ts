@@ -14,6 +14,7 @@ import {
   uproot,
 } from '../game/systems/GardenSystem';
 import { $, el, formatNumber } from './dom';
+import { askConfirm } from './Confirm';
 
 function duration(hours: number): string {
   const total = Math.round(hours * 60);
@@ -92,7 +93,7 @@ export class GardenPanel {
       const progress = pot.level >= GARDEN.maxLevel ? 'ausgewachsen' : `Level ${pot.level + 1} in ${duration((need - pot.growth) / care.growthMult)} (${Math.floor((pot.growth / need) * 100)} %)`;
       const dig = el('button', { className: 'btn small danger' }, ['Ausgraben']);
       dig.addEventListener('click', () => {
-        if (confirm(`${tree.name} (Level ${pot.level}) ausgraben? Der Baum ist dann verloren.`)) this.act(() => uproot(meta, index))();
+        void askConfirm(`${tree.name} (Level ${pot.level}) ausgraben? Der Baum ist dann verloren.`, 'Ausgraben').then((ok) => ok && this.act(() => uproot(meta, index))());
       });
       pots.append(
         el('li', {}, [

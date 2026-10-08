@@ -186,6 +186,12 @@ Feuerrate und Reichweite folgen demselben Muster. Krit-Chance additiv (gedeckelt
 additiv auf den Multiplikator, Gold/XP = (1 + Art) × (1 + Ausrüstung). Das Turm-Panel zeigt die
 Aufschlüsselung für jeden Turm.
 
+## Online spielen (ohne Installation)
+
+Private Testversion auf claude.ai: https://claude.ai/artifact/6N4xzURPckaHNcyuywSJw9
+Der Spielstand wird dort zusätzlich in der Cloud gespeichert (privat pro Person), also auch
+geräteübergreifend. Aktualisieren: `npm run build`, dann die Seite neu veröffentlichen.
+
 ## Auf dem Mac starten
 
 1. Node.js LTS von nodejs.org installieren.

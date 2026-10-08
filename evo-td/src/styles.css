@@ -444,3 +444,28 @@ body {
   margin: 2px 4px 2px 0;
   font-size: 0.85rem;
 }
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 16px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.confirm-box {
+  width: min(420px, 100%);
+}
+
+.btn:focus-visible,
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#dev-panel {
+  max-width: calc(100% - 24px);
+}

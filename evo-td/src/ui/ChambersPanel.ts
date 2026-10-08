@@ -21,6 +21,7 @@ import {
 } from '../game/systems/PassiveSystem';
 import { childrenOf } from '../data/towers';
 import { $, el, formatNumber } from './dom';
+import { askConfirm } from './Confirm';
 
 function hours(h: number): string {
   if (h < 1) return `${Math.round(h * 60)} min`;
@@ -85,7 +86,7 @@ export class ChambersPanel {
       });
       const release = el('button', { className: 'btn small danger' }, ['Freilassen']);
       release.addEventListener('click', () => {
-        if (confirm(`${getTowerDef(animal.defId).name} freilassen? Das Tier ist dann weg.`)) this.act(() => releaseAnimal(meta, animal.id))();
+        void askConfirm(`${getTowerDef(animal.defId).name} freilassen? Das Tier ist dann weg.`, 'Freilassen').then((ok) => ok && this.act(() => releaseAnimal(meta, animal.id))());
       });
       chambers.append(
         el('li', {}, [

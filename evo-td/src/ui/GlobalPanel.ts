@@ -14,6 +14,7 @@ import {
   metaValues,
 } from '../game/systems/MetaSystem';
 import { $, el, formatNumber } from './dom';
+import { askConfirm } from './Confirm';
 
 const ACH_LABEL = { damage: 'Schaden', fireRate: 'Feuerrate', dna: 'DNA' } as const;
 
@@ -45,7 +46,7 @@ export class GlobalPanel {
     // --- Kopf & Run beenden --------------------------------------------------
     const endButton = el('button', { className: 'btn warn' }, [`Run beenden: +${formatNumber(preview.total)} DNA`]);
     endButton.addEventListener('click', () => {
-      if (confirm(`Run jetzt beenden und ${preview.total} DNA kassieren? Der Run-Fortschritt geht verloren.`)) this.onEndRun();
+      void askConfirm(`Run jetzt beenden und ${preview.total} DNA kassieren? Der Run-Fortschritt geht verloren.`, 'Run beenden').then((ok) => ok && this.onEndRun());
     });
 
     // --- Karten ------------------------------------------------------------
@@ -62,7 +63,7 @@ export class GlobalPanel {
           const msg = preview.wave > 0
             ? `Zur Karte ${map.name} wechseln? Der laufende Run endet mit +${preview.total} DNA.`
             : `Zur Karte ${map.name} wechseln?`;
-          if (confirm(msg)) this.onSwitchMap(map.id);
+          void askConfirm(msg, 'Karte wechseln').then((ok) => ok && this.onSwitchMap(map.id));
         });
         control = b;
       }

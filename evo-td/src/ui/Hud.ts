@@ -3,6 +3,7 @@ import { tierForWave } from '../config/balance';
 import type { Game } from '../game/Game';
 import type { GameLoop } from '../core/GameLoop';
 import { $, formatNumber } from './dom';
+import { askConfirm } from './Confirm';
 import { DAMAGE_CATEGORIES } from '../game/GameState';
 import { CATEGORY_NAMES } from '../game/systems/AdaptationSystem';
 
@@ -37,7 +38,7 @@ export class Hud {
       loop.paused = !loop.paused;
     });
     $('#hud-reset').addEventListener('click', () => {
-      if (confirm('Run wirklich abbrechen? Es gibt dafür keine DNA.')) onReset();
+      void askConfirm('Run wirklich abbrechen? Es gibt dafür keine DNA.', 'Run abbrechen').then((ok) => ok && onReset());
     });
   }
 
